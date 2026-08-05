@@ -1,0 +1,72 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# TypeScript
+*.tsbuildinfo
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.tmp/
+temp/
+
+# NestJS CLI
+nest-cli.json
+
+# Runtime files
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Optional package manager files
+.pnp.*
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+# Docker (optional)
+docker-compose.override.yml
+
+# Uploads (if storing locally)
+uploads/
+public/uploads/
+
+# Database (if using SQLite)
+*.sqlite
+*.sqlite3
+
+# Generated files
+*.tgz
