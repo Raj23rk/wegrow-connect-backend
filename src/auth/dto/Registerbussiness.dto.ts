@@ -68,4 +68,12 @@ export class RegisterBusinessDto {
   @IsOptional()
   @IsString()
   state?: string;
+  
+  @ApiProperty({
+  type: 'string',
+  format: 'binary',
+  required: false,
+})
+@IsOptional()
+visitingCardUrl?: any;
 }

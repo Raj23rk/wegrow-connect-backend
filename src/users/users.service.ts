@@ -62,4 +62,25 @@ export class UsersService {
       message: 'User profile deleted successfully',
     };
   }
+
+  async uploadDocument(
+  id: string,
+  field: 'idCardUrl' | 'visitingCardUrl',
+  filePath: string,
+) {
+  const user = await this.userModel.findById(id);
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  user[field] = filePath;
+
+  await user.save();
+
+  return {
+    message: 'Document uploaded successfully',
+    data: user,
+  };
+}
 }

@@ -63,8 +63,19 @@ export class RegisterStudentDto {
   @IsString()
   city?: string;
 
+ 
+
+@ApiProperty({
+  type: 'string',
+  format: 'binary',
+  required: false,
+})
+@IsOptional()
+idCardUrl?: any;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   state?: string;
+  
 }

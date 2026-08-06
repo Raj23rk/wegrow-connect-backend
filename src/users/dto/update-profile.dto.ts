@@ -92,4 +92,14 @@ export class UpdateProfileDto {
   @ApiProperty({ required: false })
   @IsOptional()
   website?: string;
+
+  @ApiProperty({ required: false })
+@IsOptional()
+idCardUrl?: string;
+
+@ApiProperty({ required: false })
+@IsOptional()
+visitingCardUrl?: string;
+
+  
 }

@@ -71,6 +71,11 @@ export class User {
   @Prop({ type: [String], default: [] })
   skills?: string[];
 
+  @Prop()
+idCardUrl?: string;
+
+
+
   // ----------------------------
   // Business Fields
   // ----------------------------
@@ -89,6 +94,8 @@ export class User {
 
   @Prop()
   website?: string;
+  @Prop()
+visitingCardUrl?: string;
 
   // ----------------------------
   // Subscription
