@@ -8,11 +8,15 @@ import { RegisterStudentDto } from './dto/Registerstudent.dto';
 import { UserDocument, UserRole } from 'src/users/schemas/user.schema';
 import { RegisterBusinessDto } from './dto/Registerbussiness.dto';
 
+import * as crypto from 'crypto';
+
+
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+
   ) {}
 
  
@@ -101,4 +105,6 @@ async registerBusiness(dto: RegisterBusinessDto) {
     accessToken: this.jwtService.sign(payload),
   };
 }
+
+
 }

@@ -116,6 +116,15 @@ subscriptionStatus: SubscriptionStatus = SubscriptionStatus.FREE_TRIAL;
 
   @Prop({ default: 0 })
   workshopsAttended!: number;
+
+   @Prop({ default: true })
+  isActive !: boolean;
+
+    @Prop({ type: String, default: null })
+  resetPasswordToken?: string | null;
+
+  @Prop({ type: Date, default: null })
+  resetPasswordExpires?: Date | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
