@@ -2,6 +2,8 @@ import {
     Injectable,
     BadRequestException,
     NotFoundException,
+    InternalServerErrorException,
+    Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -13,41 +15,225 @@ import {
 } from './schemas/booking.schema';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+
 
 @Injectable()
 export class BookingsService {
+      private readonly logger = new Logger(BookingsService.name);
+
     constructor(
         @InjectModel(Booking.name)
         private readonly bookingModel: Model<BookingDocument>,
+                private readonly notificationsService: NotificationsService,
+        
     ) { }
 
     // ================= CREATE BOOKING =================
 
-    async create(userId: string, dto: CreateBookingDto) {
-        const alreadyBooked = await this.bookingModel.findOne({
-            user: userId,
-            event: dto.event,
-            isActive: true,
-        });
+    // async create(userId: string, dto: CreateBookingDto) {
+    //     const alreadyBooked = await this.bookingModel.findOne({
+    //         user: userId,
+    //         event: dto.event,
+    //         isActive: true,
+    //     });
 
-        if (alreadyBooked) {
-            throw new BadRequestException('Already booked this event');
-        }
+    //     if (alreadyBooked) {
+    //         throw new BadRequestException('Already booked this event');
+    //     }
 
-        const booking = await this.bookingModel.create({
-            user: userId,
-            event: dto.event,
-            status: BookingStatus.PENDING,
-        });
+    //     const booking = await this.bookingModel.create({
+    //         user: userId,
+    //         event: dto.event,
+    //         status: BookingStatus.PENDING,
+    //     });
 
-        return await this.bookingModel
-            .findById(booking._id)
-            .populate('user', 'name email phone')
-            .populate(
-                'event',
-                'title description image location date type',
-            );
+    //     return await this.bookingModel
+    //         .findById(booking._id)
+    //         .populate('user', 'name email phone')
+    //         .populate(
+    //             'event',
+    //             'title description image location date type',
+    //         );
+    // }
+    async create(
+  userId: string,
+  dto: CreateBookingDto,
+) {
+  try {
+    // ============================================================
+    // 1. CHECK ALREADY BOOKED
+    // ============================================================
+
+    const alreadyBooked =
+      await this.bookingModel.findOne({
+        user: userId,
+        event: dto.event,
+        isActive: true,
+      });
+
+    if (alreadyBooked) {
+      throw new BadRequestException(
+        'Already booked this event',
+      );
     }
+
+    // ============================================================
+    // 2. CREATE BOOKING
+    // ============================================================
+
+    const booking =
+      await this.bookingModel.create({
+        user: userId,
+        event: dto.event,
+        status: BookingStatus.PENDING,
+      });
+
+    this.logger.log(
+      `Booking created successfully: ${booking._id}`,
+    );
+
+    // ============================================================
+    // 3. GET BOOKING WITH USER + EVENT
+    // ============================================================
+
+    const bookingDetails =
+      await this.bookingModel
+        .findById(booking._id)
+        .populate(
+          'user',
+          'firstName lastName name email phone',
+        )
+        .populate(
+          'event',
+          'title description image location date type price',
+        );
+
+    if (!bookingDetails) {
+      throw new InternalServerErrorException(
+        'Booking created but details could not be retrieved',
+      );
+    }
+
+    // ============================================================
+    // 4. GET USER DETAILS
+    // ============================================================
+
+    const user = bookingDetails.user as any;
+    const event = bookingDetails.event as any;
+
+    if (!user) {
+      this.logger.warn(
+        `User not found for booking ${booking._id}`,
+      );
+
+      return bookingDetails;
+    }
+
+    if (!event) {
+      this.logger.warn(
+        `Event not found for booking ${booking._id}`,
+      );
+
+      return bookingDetails;
+    }
+
+    // ============================================================
+    // 5. USER NAME
+    // ============================================================
+
+    const userName =
+      `${user.firstName || ''} ${
+        user.lastName || ''
+      }`.trim() ||
+      user.name ||
+      'User';
+
+    // ============================================================
+    // 6. CREATE DATABASE NOTIFICATION
+    // ============================================================
+
+    try {
+      const notification =
+        await this.notificationsService
+          .createBookingNotification(
+            user._id.toString(),
+            event._id.toString(),
+            event.title,
+          );
+
+      this.logger.log(
+        `Booking notification created: ${notification._id}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to create booking notification for user ${user._id}`,
+        error instanceof Error
+          ? error.stack
+          : String(error),
+      );
+    }
+
+    // ============================================================
+    // 7. SEND BOOKING EMAIL
+    // ============================================================
+
+    if (user.email) {
+      this.notificationsService
+        .sendBookingConfirmationNotification(
+          user.email,
+          userName,
+          event.title,
+          event.description,
+          event.location,
+          event.date?.toString(),
+          event.price,
+          bookingDetails.status,
+        )
+        .then(() => {
+          this.logger.log(
+            `Booking confirmation email sent to ${user.email}`,
+          );
+        })
+        .catch((error) => {
+          this.logger.error(
+            `Failed to send booking email to ${user.email}`,
+            error instanceof Error
+              ? error.stack
+              : String(error),
+          );
+        });
+    } else {
+      this.logger.warn(
+        `User ${user._id} does not have an email`,
+      );
+    }
+
+    // ============================================================
+    // 8. RETURN BOOKING
+    // ============================================================
+
+    return bookingDetails;
+
+  } catch (error) {
+    if (error instanceof BadRequestException) {
+      throw error;
+    }
+
+    this.logger.error(
+      'Failed to create booking',
+      error instanceof Error
+        ? error.stack
+        : String(error),
+    );
+
+    throw new InternalServerErrorException(
+      error instanceof Error
+        ? error.message
+        : 'Failed to create booking',
+    );
+  }
+}
 
     // ================= MY BOOKINGS =================
 

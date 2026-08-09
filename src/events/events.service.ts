@@ -120,7 +120,7 @@ async create(dto: CreateEventDto): Promise<EventDocument> {
     );
 
     // ============================================================
-    // 2. FIND ACTIVE USERS
+    // 2. FIND ALL ACTIVE USERS
     // ============================================================
 
     const users = await this.userModel.find({
@@ -136,9 +136,9 @@ async create(dto: CreateEventDto): Promise<EventDocument> {
     // ============================================================
 
     for (const user of users) {
-      // ----------------------------------------------------------
+      // ==========================================================
       // USER NAME
-      // ----------------------------------------------------------
+      // ==========================================================
 
       const userName =
         `${user.firstName || ''} ${
@@ -151,14 +151,11 @@ async create(dto: CreateEventDto): Promise<EventDocument> {
 
       try {
         const notification =
-          await this.notificationsService
-            .createNewEventNotification(
-              user._id.toString(),
-
-              savedEvent._id.toString(),
-
-              savedEvent.title,
-            );
+          await this.notificationsService.createNewEventNotification(
+            user._id.toString(),
+            savedEvent._id.toString(),
+            savedEvent.title,
+          );
 
         this.logger.log(
           `Notification created for user ${user._id}: ${notification._id}`,
@@ -166,7 +163,6 @@ async create(dto: CreateEventDto): Promise<EventDocument> {
       } catch (error) {
         this.logger.error(
           `Failed to create notification for user ${user._id}`,
-
           error instanceof Error
             ? error.stack
             : String(error),
@@ -174,7 +170,7 @@ async create(dto: CreateEventDto): Promise<EventDocument> {
       }
 
       // ==========================================================
-      // B. SEND EMAIL
+      // B. SEND EMAIL NOTIFICATION
       // ==========================================================
 
       if (!user.email) {
@@ -188,23 +184,21 @@ async create(dto: CreateEventDto): Promise<EventDocument> {
       this.notificationsService
         .sendNewEventNotification(
           user.email,
-
           userName,
-
           savedEvent.title,
-
           savedEvent.description,
-
           savedEvent.location,
-
           savedEvent.date?.toString(),
-
           savedEvent.price,
         )
+        .then(() => {
+          this.logger.log(
+            `Event notification email sent to ${user.email}`,
+          );
+        })
         .catch((error) => {
           this.logger.error(
             `Failed to send event email to ${user.email}`,
-
             error instanceof Error
               ? error.stack
               : String(error),
@@ -217,7 +211,19 @@ async create(dto: CreateEventDto): Promise<EventDocument> {
     // ============================================================
 
     return savedEvent;
+
   } catch (error) {
+    // ============================================================
+    // ERROR HANDLING
+    // ============================================================
+
+    this.logger.error(
+      'Failed to create event',
+      error instanceof Error
+        ? error.stack
+        : String(error),
+    );
+
     throw new InternalServerErrorException(
       error instanceof Error
         ? error.message
@@ -225,7 +231,6 @@ async create(dto: CreateEventDto): Promise<EventDocument> {
     );
   }
 }
-
     // ============================================================
     // GET ALL EVENTS
     // ============================================================
