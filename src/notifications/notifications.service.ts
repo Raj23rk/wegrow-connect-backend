@@ -3558,6 +3558,6 @@ async sendBookingConfirmationNotification(
     `🎟️ Booking Received - ${eventTitle}`,
     html,
   );
-}
+}  
 
 }
