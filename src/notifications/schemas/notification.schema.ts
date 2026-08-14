@@ -1,8 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
-export type NotificationDocument =
-  HydratedDocument<Notification>;
+export type NotificationDocument = HydratedDocument<Notification>;
 
 export enum NotificationType {
   NEW_EVENT = 'NEW_EVENT',
@@ -11,6 +10,8 @@ export enum NotificationType {
   BOOKING_CANCELLED = 'BOOKING_CANCELLED',
   LOGIN = 'LOGIN',
   GENERAL = 'GENERAL',
+  BOOKING = 'BOOKING',
+  SYSTEM = 'SYSTEM',
 }
 
 @Schema({
@@ -82,5 +83,4 @@ export class Notification {
   isRead!: boolean;
 }
 
-export const NotificationSchema =
-  SchemaFactory.createForClass(Notification);
+export const NotificationSchema = SchemaFactory.createForClass(Notification);

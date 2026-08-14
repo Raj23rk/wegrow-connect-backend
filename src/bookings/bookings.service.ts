@@ -1,4 +1,3 @@
-
 import {
   Injectable,
   BadRequestException,
@@ -49,9 +48,7 @@ export class BookingsService {
       });
 
       if (alreadyBooked) {
-        throw new BadRequestException(
-          'Already booked this event',
-        );
+        throw new BadRequestException('Already booked this event');
       }
 
       // ============================================================
@@ -65,9 +62,7 @@ export class BookingsService {
         isActive: true,
       });
 
-      this.logger.log(
-        `Booking created successfully: ${booking._id}`,
-      );
+      this.logger.log(`Booking created successfully: ${booking._id}`);
 
       // ============================================================
       // 3. GET BOOKING WITH USER + EVENT
@@ -75,14 +70,8 @@ export class BookingsService {
 
       const bookingDetails = await this.bookingModel
         .findById(booking._id)
-        .populate(
-          'user',
-          'name firstName lastName email phone',
-        )
-        .populate(
-          'event',
-          'title description image location date type price',
-        );
+        .populate('user', 'name firstName lastName email phone')
+        .populate('event', 'title description image location date type price');
 
       if (!bookingDetails) {
         throw new InternalServerErrorException(
@@ -98,17 +87,13 @@ export class BookingsService {
       const event = bookingDetails.event as any;
 
       if (!user) {
-        this.logger.warn(
-          `User not found for booking ${booking._id}`,
-        );
+        this.logger.warn(`User not found for booking ${booking._id}`);
 
         return bookingDetails;
       }
 
       if (!event) {
-        this.logger.warn(
-          `Event not found for booking ${booking._id}`,
-        );
+        this.logger.warn(`Event not found for booking ${booking._id}`);
 
         return bookingDetails;
       }
@@ -134,15 +119,11 @@ export class BookingsService {
             event.title,
           );
 
-        this.logger.log(
-          `Booking notification created: ${notification._id}`,
-        );
+        this.logger.log(`Booking notification created: ${notification._id}`);
       } catch (error) {
         this.logger.error(
           `Failed to create booking notification for user ${user._id}`,
-          error instanceof Error
-            ? error.stack
-            : String(error),
+          error instanceof Error ? error.stack : String(error),
         );
       }
 
@@ -163,22 +144,16 @@ export class BookingsService {
             bookingDetails.status,
           )
           .then(() => {
-            this.logger.log(
-              `Booking confirmation email sent to ${user.email}`,
-            );
+            this.logger.log(`Booking confirmation email sent to ${user.email}`);
           })
           .catch((error) => {
             this.logger.error(
               `Failed to send booking email to ${user.email}`,
-              error instanceof Error
-                ? error.stack
-                : String(error),
+              error instanceof Error ? error.stack : String(error),
             );
           });
       } else {
-        this.logger.warn(
-          `User ${user._id} does not have an email`,
-        );
+        this.logger.warn(`User ${user._id} does not have an email`);
       }
 
       // ============================================================
@@ -193,15 +168,11 @@ export class BookingsService {
 
       this.logger.error(
         'Failed to create booking',
-        error instanceof Error
-          ? error.stack
-          : String(error),
+        error instanceof Error ? error.stack : String(error),
       );
 
       throw new InternalServerErrorException(
-        error instanceof Error
-          ? error.message
-          : 'Failed to create booking',
+        error instanceof Error ? error.message : 'Failed to create booking',
       );
     }
   }
@@ -218,10 +189,7 @@ export class BookingsService {
   ) {
     page = Math.max(Number(page) || 1, 1);
 
-    limit = Math.min(
-      Math.max(Number(limit) || 10, 1),
-      100,
-    );
+    limit = Math.min(Math.max(Number(limit) || 10, 1), 100);
 
     const filter: any = {
       user: userId,
@@ -234,14 +202,8 @@ export class BookingsService {
 
     let bookings = await this.bookingModel
       .find(filter)
-      .populate(
-        'user',
-        'name firstName lastName email phone',
-      )
-      .populate(
-        'event',
-        'title description image location date type price',
-      )
+      .populate('user', 'name firstName lastName email phone')
+      .populate('event', 'title description image location date type price')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -251,19 +213,13 @@ export class BookingsService {
 
     bookings = bookings.map((booking: any) => {
       if (booking.user) {
-        const firstName =
-          booking.user.firstName || '';
+        const firstName = booking.user.firstName || '';
 
-        const lastName =
-          booking.user.lastName || '';
+        const lastName = booking.user.lastName || '';
 
-        const fullName =
-          `${firstName} ${lastName}`.trim();
+        const fullName = `${firstName} ${lastName}`.trim();
 
-        booking.user.name =
-          booking.user.name ||
-          fullName ||
-          'User';
+        booking.user.name = booking.user.name || fullName || 'User';
 
         delete booking.user.firstName;
         delete booking.user.lastName;
@@ -277,35 +233,24 @@ export class BookingsService {
     // ============================================================
 
     if (search && search.trim()) {
-      const searchText =
-        search.trim().toLowerCase();
+      const searchText = search.trim().toLowerCase();
 
-      bookings = bookings.filter(
-        (booking: any) => {
-          const userName =
-            booking.user?.name
-              ?.toLowerCase() || '';
+      bookings = bookings.filter((booking: any) => {
+        const userName = booking.user?.name?.toLowerCase() || '';
 
-          const email =
-            booking.user?.email
-              ?.toLowerCase() || '';
+        const email = booking.user?.email?.toLowerCase() || '';
 
-          const phone =
-            booking.user?.phone
-              ?.toLowerCase() || '';
+        const phone = booking.user?.phone?.toLowerCase() || '';
 
-          const eventTitle =
-            booking.event?.title
-              ?.toLowerCase() || '';
+        const eventTitle = booking.event?.title?.toLowerCase() || '';
 
-          return (
-            userName.includes(searchText) ||
-            email.includes(searchText) ||
-            phone.includes(searchText) ||
-            eventTitle.includes(searchText)
-          );
-        },
-      );
+        return (
+          userName.includes(searchText) ||
+          email.includes(searchText) ||
+          phone.includes(searchText) ||
+          eventTitle.includes(searchText)
+        );
+      });
     }
 
     // ============================================================
@@ -320,36 +265,23 @@ export class BookingsService {
 
     const skip = (page - 1) * limit;
 
-    const paginatedBookings =
-      bookings.slice(
-        skip,
-        skip + limit,
-      );
+    const paginatedBookings = bookings.slice(skip, skip + limit);
 
     // ============================================================
     // STATUS COUNTS
     // ============================================================
 
-    const pendingCount =
-      bookings.filter(
-        (booking: any) =>
-          booking.status ===
-          BookingStatus.PENDING,
-      ).length;
+    const pendingCount = bookings.filter(
+      (booking: any) => booking.status === BookingStatus.PENDING,
+    ).length;
 
-    const confirmedCount =
-      bookings.filter(
-        (booking: any) =>
-          booking.status ===
-          BookingStatus.CONFIRMED,
-      ).length;
+    const confirmedCount = bookings.filter(
+      (booking: any) => booking.status === BookingStatus.CONFIRMED,
+    ).length;
 
-    const cancelledCount =
-      bookings.filter(
-        (booking: any) =>
-          booking.status ===
-          BookingStatus.CANCELLED,
-      ).length;
+    const cancelledCount = bookings.filter(
+      (booking: any) => booking.status === BookingStatus.CANCELLED,
+    ).length;
 
     // ============================================================
     // RESPONSE
@@ -371,10 +303,7 @@ export class BookingsService {
         page,
         limit,
         total,
-        totalPages:
-          total === 0
-            ? 0
-            : Math.ceil(total / limit),
+        totalPages: total === 0 ? 0 : Math.ceil(total / limit),
       },
     };
   }
@@ -383,21 +312,14 @@ export class BookingsService {
   // ALL BOOKINGS - ADMIN
   // ============================================================
 
-  async findAll(
-    page: number = 1,
-    limit: number = 10,
-    search?: string,
-  ) {
+  async findAll(page: number = 1, limit: number = 10, search?: string) {
     // ============================================================
     // PAGINATION
     // ============================================================
 
     page = Math.max(Number(page) || 1, 1);
 
-    limit = Math.min(
-      Math.max(Number(limit) || 10, 1),
-      100,
-    );
+    limit = Math.min(Math.max(Number(limit) || 10, 1), 100);
 
     // ============================================================
     // BASE FILTER
@@ -416,14 +338,8 @@ export class BookingsService {
 
     let bookings = await this.bookingModel
       .find(filter)
-      .populate(
-        'user',
-        'name firstName lastName email phone',
-      )
-      .populate(
-        'event',
-        'title description image location date type price',
-      )
+      .populate('user', 'name firstName lastName email phone')
+      .populate('event', 'title description image location date type price')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -433,19 +349,13 @@ export class BookingsService {
 
     bookings = bookings.map((booking: any) => {
       if (booking.user) {
-        const firstName =
-          booking.user.firstName || '';
+        const firstName = booking.user.firstName || '';
 
-        const lastName =
-          booking.user.lastName || '';
+        const lastName = booking.user.lastName || '';
 
-        const fullName =
-          `${firstName} ${lastName}`.trim();
+        const fullName = `${firstName} ${lastName}`.trim();
 
-        booking.user.name =
-          booking.user.name ||
-          fullName ||
-          'User';
+        booking.user.name = booking.user.name || fullName || 'User';
 
         // Remove unnecessary fields
         delete booking.user.firstName;
@@ -468,44 +378,31 @@ export class BookingsService {
     let filteredBookings = bookings;
 
     if (search && search.trim()) {
-      const searchText =
-        search.trim().toLowerCase();
+      const searchText = search.trim().toLowerCase();
 
-      filteredBookings =
-        bookings.filter(
-          (booking: any) => {
-            const userName =
-              booking.user?.name
-                ?.toLowerCase() || '';
+      filteredBookings = bookings.filter((booking: any) => {
+        const userName = booking.user?.name?.toLowerCase() || '';
 
-            const email =
-              booking.user?.email
-                ?.toLowerCase() || '';
+        const email = booking.user?.email?.toLowerCase() || '';
 
-            const phone =
-              booking.user?.phone
-                ?.toLowerCase() || '';
+        const phone = booking.user?.phone?.toLowerCase() || '';
 
-            const eventTitle =
-              booking.event?.title
-                ?.toLowerCase() || '';
+        const eventTitle = booking.event?.title?.toLowerCase() || '';
 
-            return (
-              userName.includes(searchText) ||
-              email.includes(searchText) ||
-              phone.includes(searchText) ||
-              eventTitle.includes(searchText)
-            );
-          },
+        return (
+          userName.includes(searchText) ||
+          email.includes(searchText) ||
+          phone.includes(searchText) ||
+          eventTitle.includes(searchText)
         );
+      });
     }
 
     // ============================================================
     // TOTAL AFTER SEARCH
     // ============================================================
 
-    const total =
-      filteredBookings.length;
+    const total = filteredBookings.length;
 
     // ============================================================
     // STATUS COUNTS
@@ -513,26 +410,17 @@ export class BookingsService {
     // These counts are based on filtered results.
     // ============================================================
 
-    const pendingCount =
-      filteredBookings.filter(
-        (booking: any) =>
-          booking.status ===
-          BookingStatus.PENDING,
-      ).length;
+    const pendingCount = filteredBookings.filter(
+      (booking: any) => booking.status === BookingStatus.PENDING,
+    ).length;
 
-    const confirmedCount =
-      filteredBookings.filter(
-        (booking: any) =>
-          booking.status ===
-          BookingStatus.CONFIRMED,
-      ).length;
+    const confirmedCount = filteredBookings.filter(
+      (booking: any) => booking.status === BookingStatus.CONFIRMED,
+    ).length;
 
-    const cancelledCount =
-      filteredBookings.filter(
-        (booking: any) =>
-          booking.status ===
-          BookingStatus.CANCELLED,
-      ).length;
+    const cancelledCount = filteredBookings.filter(
+      (booking: any) => booking.status === BookingStatus.CANCELLED,
+    ).length;
 
     // ============================================================
     // PAGINATION
@@ -540,11 +428,7 @@ export class BookingsService {
 
     const skip = (page - 1) * limit;
 
-    const paginatedBookings =
-      filteredBookings.slice(
-        skip,
-        skip + limit,
-      );
+    const paginatedBookings = filteredBookings.slice(skip, skip + limit);
 
     // ============================================================
     // RESPONSE
@@ -566,10 +450,7 @@ export class BookingsService {
         page,
         limit,
         total,
-        totalPages:
-          total === 0
-            ? 0
-            : Math.ceil(total / limit),
+        totalPages: total === 0 ? 0 : Math.ceil(total / limit),
       },
     };
   }
@@ -579,23 +460,14 @@ export class BookingsService {
   // ============================================================
 
   async findOne(id: string) {
-    const booking =
-      await this.bookingModel
-        .findById(id)
-        .populate(
-          'user',
-          'name firstName lastName email phone',
-        )
-        .populate(
-          'event',
-          'title description image location date type price',
-        )
-        .lean();
+    const booking = await this.bookingModel
+      .findById(id)
+      .populate('user', 'name firstName lastName email phone')
+      .populate('event', 'title description image location date type price')
+      .lean();
 
     if (!booking) {
-      throw new NotFoundException(
-        'Booking not found',
-      );
+      throw new NotFoundException('Booking not found');
     }
 
     // ============================================================
@@ -605,19 +477,13 @@ export class BookingsService {
     const bookingData: any = booking;
 
     if (bookingData.user) {
-      const firstName =
-        bookingData.user.firstName || '';
+      const firstName = bookingData.user.firstName || '';
 
-      const lastName =
-        bookingData.user.lastName || '';
+      const lastName = bookingData.user.lastName || '';
 
-      const fullName =
-        `${firstName} ${lastName}`.trim();
+      const fullName = `${firstName} ${lastName}`.trim();
 
-      bookingData.user.name =
-        bookingData.user.name ||
-        fullName ||
-        'User';
+      bookingData.user.name = bookingData.user.name || fullName || 'User';
 
       delete bookingData.user.firstName;
       delete bookingData.user.lastName;
@@ -631,33 +497,23 @@ export class BookingsService {
   // ============================================================
 
   async cancel(id: string) {
-    const booking =
-      await this.bookingModel
-        .findByIdAndUpdate(
-          id,
-          {
-            status:
-              BookingStatus.CANCELLED,
+    const booking = await this.bookingModel
+      .findByIdAndUpdate(
+        id,
+        {
+          status: BookingStatus.CANCELLED,
 
-            isActive: false,
-          },
-          {
-            new: true,
-          },
-        )
-        .populate(
-          'user',
-          'name firstName lastName email phone',
-        )
-        .populate(
-          'event',
-          'title description image location date type price',
-        );
+          isActive: false,
+        },
+        {
+          new: true,
+        },
+      )
+      .populate('user', 'name firstName lastName email phone')
+      .populate('event', 'title description image location date type price');
 
     if (!booking) {
-      throw new NotFoundException(
-        'Booking not found',
-      );
+      throw new NotFoundException('Booking not found');
     }
 
     return booking;
@@ -667,30 +523,18 @@ export class BookingsService {
   // UPDATE BOOKING STATUS
   // ============================================================
 
-  async updateStatus(
-    id: string,
-    dto: UpdateBookingStatusDto,
-  ) {
+  async updateStatus(id: string, dto: UpdateBookingStatusDto) {
     // ============================================================
     // FIND BOOKING
     // ============================================================
 
-    const booking =
-      await this.bookingModel
-        .findById(id)
-        .populate(
-          'user',
-          'name firstName lastName email phone',
-        )
-        .populate(
-          'event',
-          'title description image location date type price',
-        );
+    const booking = await this.bookingModel
+      .findById(id)
+      .populate('user', 'name firstName lastName email phone')
+      .populate('event', 'title description image location date type price');
 
     if (!booking) {
-      throw new NotFoundException(
-        'Booking not found',
-      );
+      throw new NotFoundException('Booking not found');
     }
 
     // ============================================================
@@ -700,19 +544,14 @@ export class BookingsService {
     booking.status = dto.status;
 
     // If cancelled, make inactive
-    if (
-      dto.status ===
-      BookingStatus.CANCELLED
-    ) {
+    if (dto.status === BookingStatus.CANCELLED) {
       booking.isActive = false;
     }
 
     // If confirmed/pending, keep active
     if (
-      dto.status ===
-        BookingStatus.CONFIRMED ||
-      dto.status ===
-        BookingStatus.PENDING
+      dto.status === BookingStatus.CONFIRMED ||
+      dto.status === BookingStatus.PENDING
     ) {
       booking.isActive = true;
     }
@@ -729,9 +568,7 @@ export class BookingsService {
     if (user && event) {
       const userName =
         user.name ||
-        `${user.firstName || ''} ${
-          user.lastName || ''
-        }`.trim() ||
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
         'User';
 
       // ============================================================
@@ -739,35 +576,25 @@ export class BookingsService {
       // ============================================================
 
       try {
-        if (
-          dto.status ===
-          BookingStatus.CONFIRMED
-        ) {
-          await this.notificationsService
-            .createBookingConfirmedNotification(
-              user._id.toString(),
-              event._id.toString(),
-              event.title,
-            );
+        if (dto.status === BookingStatus.CONFIRMED) {
+          await this.notificationsService.createBookingConfirmedNotification(
+            user._id.toString(),
+            event._id.toString(),
+            event.title,
+          );
         }
 
-        if (
-          dto.status ===
-          BookingStatus.CANCELLED
-        ) {
-          await this.notificationsService
-            .createBookingCancelledNotification(
-              user._id.toString(),
-              event._id.toString(),
-              event.title,
-            );
+        if (dto.status === BookingStatus.CANCELLED) {
+          await this.notificationsService.createBookingCancelledNotification(
+            user._id.toString(),
+            event._id.toString(),
+            event.title,
+          );
         }
       } catch (error) {
         this.logger.error(
           'Failed to create status notification',
-          error instanceof Error
-            ? error.stack
-            : String(error),
+          error instanceof Error ? error.stack : String(error),
         );
       }
 
@@ -780,23 +607,20 @@ export class BookingsService {
 
       if (user.email) {
         try {
-          await this.notificationsService
-            .sendBookingConfirmationNotification(
-              user.email,
-              userName,
-              event.title,
-              event.description,
-              event.location,
-              event.date?.toString(),
-              event.price,
-              booking.status,
-            );
+          await this.notificationsService.sendBookingConfirmationNotification(
+            user.email,
+            userName,
+            event.title,
+            event.description,
+            event.location,
+            event.date?.toString(),
+            event.price,
+            booking.status,
+          );
         } catch (error) {
           this.logger.error(
             `Failed to send status email to ${user.email}`,
-            error instanceof Error
-              ? error.stack
-              : String(error),
+            error instanceof Error ? error.stack : String(error),
           );
         }
       }
@@ -809,4 +633,3 @@ export class BookingsService {
     return booking;
   }
 }
-

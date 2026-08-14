@@ -35,25 +35,24 @@ export class AuthController {
   // }
 
   @Post('register/student')
-@UseInterceptors(FileInterceptor('idCardUrl', multerConfig))
-@ApiConsumes('multipart/form-data')
-@ApiOperation({ summary: 'Student Register' })
-async register(
-  @UploadedFile() file: Express.Multer.File,
-  @Body() registerDto: RegisterStudentDto,
-) {
-  if (file) {
-    registerDto.idCardUrl = file.path;
+  @UseInterceptors(FileInterceptor('idCardUrl', multerConfig))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Student Register' })
+  async register(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() registerDto: RegisterStudentDto,
+  ) {
+    if (file) {
+      registerDto.idCardUrl = file.path;
+    }
+
+    const data = await this.authService.registerStudent(registerDto);
+
+    return {
+      message: 'Registration Successful',
+      data,
+    };
   }
-
-  const data = await this.authService.registerStudent(registerDto);
-
-  return {
-    message: 'Registration Successful',
-    data,
-  };
-}
-
 
   //  @Post('register/business')
   // @ApiOperation({ summary: 'Register a new user' })
@@ -64,24 +63,24 @@ async register(
   // }
 
   @Post('register/business')
-@UseInterceptors(FileInterceptor('visitingCardUrl', multerConfig))
-@ApiConsumes('multipart/form-data')
-@ApiOperation({ summary: 'Business Register' })
-async businessRegister(
-  @UploadedFile() file: Express.Multer.File,
-  @Body() registerDto: RegisterBusinessDto,
-) {
-  if (file) {
-    registerDto.visitingCardUrl = file.path;
+  @UseInterceptors(FileInterceptor('visitingCardUrl', multerConfig))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Business Register' })
+  async businessRegister(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() registerDto: RegisterBusinessDto,
+  ) {
+    if (file) {
+      registerDto.visitingCardUrl = file.path;
+    }
+
+    const data = await this.authService.registerBusiness(registerDto);
+
+    return {
+      message: 'Registration Successful',
+      data,
+    };
   }
-
-  const data = await this.authService.registerBusiness(registerDto);
-
-  return {
-    message: 'Registration Successful',
-    data,
-  };
-}
 
   @Post('login')
   @HttpCode(HttpStatus.OK)

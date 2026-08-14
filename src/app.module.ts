@@ -12,7 +12,6 @@ import { BookingsModule } from './bookings/bookings.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ContactModule } from './contact/contact.module';
 
-
 @Module({
   imports: [
     // ============================================================
@@ -31,12 +30,8 @@ import { ContactModule } from './contact/contact.module';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
 
-      useFactory: async (
-        configService: ConfigService,
-      ) => ({
-        uri: configService.get<string>(
-          'DATABASE_URL',
-        ),
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('DATABASE_URL'),
       }),
 
       inject: [ConfigService],
@@ -58,12 +53,8 @@ import { ContactModule } from './contact/contact.module';
     ContactModule,
   ],
 
-  controllers: [
-    AppController,
-  ],
+  controllers: [AppController],
 
-  providers: [
-    AppService,
-  ],
+  providers: [AppService],
 })
 export class AppModule {}

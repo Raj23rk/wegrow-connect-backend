@@ -1,10 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import {
-  Contact,
-  ContactSchema,
-} from './schemas/contact.schema';
+import { Contact, ContactSchema } from './schemas/contact.schema';
 
 import { ContactController } from './contact.controller';
 import { ContactService } from './contact.service';
@@ -19,16 +16,10 @@ import { ContactService } from './contact.service';
     ]),
   ],
 
-  controllers: [
-    ContactController,
-  ],
+  controllers: [ContactController],
 
-  providers: [
-    ContactService,
-  ],
+  providers: [ContactService],
 
-  exports: [
-    ContactService,
-  ],
+  exports: [ContactService],
 })
 export class ContactModule {}

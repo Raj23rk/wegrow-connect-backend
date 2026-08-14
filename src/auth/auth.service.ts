@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -10,55 +14,50 @@ import { RegisterBusinessDto } from './dto/Registerbussiness.dto';
 
 import * as crypto from 'crypto';
 
-
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-
   ) {}
 
- 
+  // studentRegsiter
+  async registerStudent(dto: RegisterStudentDto) {
+    const existingUser = await this.usersService.findOneByEmail(dto.email);
 
-// studentRegsiter
-async registerStudent(dto: RegisterStudentDto) {
-  const existingUser = await this.usersService.findOneByEmail(dto.email);
+    if (existingUser) {
+      throw new BadRequestException('Email already exists');
+    }
 
-  if (existingUser) {
-    throw new BadRequestException('Email already exists');
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    const user = await this.usersService.create({
+      ...dto,
+      password: hashedPassword,
+      role: UserRole.STUDENT,
+    });
+
+    return this.generateToken(user);
   }
 
-  const hashedPassword = await bcrypt.hash(dto.password, 10);
+  //BussinessRegsiter
+  async registerBusiness(dto: RegisterBusinessDto) {
+    const existingUser = await this.usersService.findOneByEmail(dto.email);
 
-  const user = await this.usersService.create({
-    ...dto,
-    password: hashedPassword,
-    role: UserRole.STUDENT,
-  });
+    if (existingUser) {
+      throw new BadRequestException('Email already exists');
+    }
 
-  return this.generateToken(user);
-}
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-//BussinessRegsiter
-async registerBusiness(dto: RegisterBusinessDto) {
-  const existingUser = await this.usersService.findOneByEmail(dto.email);
+    const user = await this.usersService.create({
+      ...dto,
+      password: hashedPassword,
+      role: UserRole.BUSINESS,
+    });
 
-  if (existingUser) {
-    throw new BadRequestException('Email already exists');
+    return this.generateToken(user);
   }
-
-  const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-  const user = await this.usersService.create({
-    ...dto,
-    password: hashedPassword,
-    role: UserRole.BUSINESS,
-  });
-
-  return this.generateToken(user);
-}
-
 
   //login api
   async login(loginDto: LoginDto) {
@@ -67,7 +66,10 @@ async registerBusiness(dto: RegisterBusinessDto) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -85,26 +87,23 @@ async registerBusiness(dto: RegisterBusinessDto) {
     };
   }
 
-
-  //Token 
+  //Token
   private generateToken(user: UserDocument) {
-  const payload = {
-    sub: user._id,
-    email: user.email,
-    role: user.role,
-  };
-
-  return {
-    user: {
-      id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
+    const payload = {
+      sub: user._id,
       email: user.email,
       role: user.role,
-    },
-    accessToken: this.jwtService.sign(payload),
-  };
-}
+    };
 
-
+    return {
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+      },
+      accessToken: this.jwtService.sign(payload),
+    };
+  }
 }

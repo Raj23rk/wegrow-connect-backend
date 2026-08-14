@@ -10,38 +10,38 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterStudentDto {
   @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    firstName!: string;
+  @IsString()
+  @IsNotEmpty()
+  firstName!: string;
 
   @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    lastName!: string;
+  @IsString()
+  @IsNotEmpty()
+  lastName!: string;
 
   @ApiProperty()
-    @IsEmail()
-    email!: string;
+  @IsEmail()
+  email!: string;
 
   @ApiProperty()
-    @IsString()
-    @MinLength(6)
-    password!: string;
+  @IsString()
+  @MinLength(6)
+  password!: string;
 
   @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    phone!: string;
+  @IsString()
+  @IsNotEmpty()
+  phone!: string;
 
   @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    college!: string;
+  @IsString()
+  @IsNotEmpty()
+  college!: string;
 
   @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    course!: string;
+  @IsString()
+  @IsNotEmpty()
+  course!: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -49,9 +49,9 @@ export class RegisterStudentDto {
   department?: string;
 
   @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    year!: string;
+  @IsString()
+  @IsNotEmpty()
+  year!: string;
 
   @ApiProperty({ required: false, type: [String] })
   @IsOptional()
@@ -63,19 +63,16 @@ export class RegisterStudentDto {
   @IsString()
   city?: string;
 
- 
-
-@ApiProperty({
-  type: 'string',
-  format: 'binary',
-  required: false,
-})
-@IsOptional()
-idCardUrl?: any;
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    required: false,
+  })
+  @IsOptional()
+  idCardUrl?: any;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   state?: string;
-  
 }

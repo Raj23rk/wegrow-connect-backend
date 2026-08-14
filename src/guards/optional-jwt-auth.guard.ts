@@ -1,19 +1,12 @@
-import {
-  ExecutionContext,
-  Injectable,
-} from '@nestjs/common';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Injectable()
 export class OptionalJwtAuthGuard extends JwtAuthGuard {
-  async canActivate(
-    context: ExecutionContext,
-  ): Promise<boolean> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
-      const result = await super.canActivate(
-        context,
-      );
+      const result = await super.canActivate(context);
 
       return !!result;
     } catch (error) {

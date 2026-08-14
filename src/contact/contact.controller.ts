@@ -9,12 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 
-import {
-  ApiOperation,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { ContactService } from './contact.service';
 import { CreateContactDto } from './dto/create-contact.dto';
@@ -22,9 +17,7 @@ import { CreateContactDto } from './dto/create-contact.dto';
 @ApiTags('Contact')
 @Controller('contact')
 export class ContactController {
-  constructor(
-    private readonly contactService: ContactService,
-  ) {}
+  constructor(private readonly contactService: ContactService) {}
 
   // =====================================================
   // CREATE CONTACT QUERY
@@ -36,25 +29,18 @@ export class ContactController {
   })
   @ApiResponse({
     status: 201,
-    description:
-      'Contact query submitted successfully.',
+    description: 'Contact query submitted successfully.',
   })
   @ApiResponse({
     status: 400,
     description: 'Invalid request.',
   })
-  async create(
-    @Body() createContactDto: CreateContactDto,
-  ) {
-    const data =
-      await this.contactService.create(
-        createContactDto,
-      );
+  async create(@Body() createContactDto: CreateContactDto) {
+    const data = await this.contactService.create(createContactDto);
 
     return {
       success: true,
-      message:
-        'Your query has been submitted successfully.',
+      message: 'Your query has been submitted successfully.',
       data,
     };
   }
@@ -65,8 +51,7 @@ export class ContactController {
 
   @Get('all')
   @ApiOperation({
-    summary:
-      'Get all contact queries with pagination and search',
+    summary: 'Get all contact queries with pagination and search',
   })
   @ApiQuery({
     name: 'page',
@@ -95,18 +80,16 @@ export class ContactController {
     @Query('queryAbout')
     queryAbout?: string,
   ) {
-    const data =
-      await this.contactService.findAll(
-        Number(page),
-        Number(limit),
-        search,
-        queryAbout,
-      );
+    const data = await this.contactService.findAll(
+      Number(page),
+      Number(limit),
+      search,
+      queryAbout,
+    );
 
     return {
       success: true,
-      message:
-        'Contact queries fetched successfully.',
+      message: 'Contact queries fetched successfully.',
       data,
     };
   }
@@ -119,16 +102,12 @@ export class ContactController {
   @ApiOperation({
     summary: 'Get contact query by ID',
   })
-  async findOne(
-    @Param('id') id: string,
-  ) {
-    const data =
-      await this.contactService.findById(id);
+  async findOne(@Param('id') id: string) {
+    const data = await this.contactService.findById(id);
 
     return {
       success: true,
-      message:
-        'Contact query fetched successfully.',
+      message: 'Contact query fetched successfully.',
       data,
     };
   }
@@ -141,16 +120,12 @@ export class ContactController {
   @ApiOperation({
     summary: 'Mark contact query as resolved',
   })
-  async resolve(
-    @Param('id') id: string,
-  ) {
-    const data =
-      await this.contactService.resolve(id);
+  async resolve(@Param('id') id: string) {
+    const data = await this.contactService.resolve(id);
 
     return {
       success: true,
-      message:
-        'Contact query marked as resolved.',
+      message: 'Contact query marked as resolved.',
       data,
     };
   }
@@ -163,16 +138,12 @@ export class ContactController {
   @ApiOperation({
     summary: 'Deactivate contact query',
   })
-  async remove(
-    @Param('id') id: string,
-  ) {
-    const data =
-      await this.contactService.remove(id);
+  async remove(@Param('id') id: string) {
+    const data = await this.contactService.remove(id);
 
     return {
       success: true,
-      message:
-        'Contact query deleted successfully.',
+      message: 'Contact query deleted successfully.',
       data,
     };
   }

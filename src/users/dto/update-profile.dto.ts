@@ -1,42 +1,32 @@
-import {
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
-
 export class UpdateProfileDto {
-
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   firstName?: string;
-
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   lastName?: string;
 
-
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   phone?: string;
-
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   city?: string;
 
-
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   state?: string;
-
 
   // Student fields
 
@@ -45,24 +35,20 @@ export class UpdateProfileDto {
   @IsString()
   college?: string;
 
-
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   course?: string;
-
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   department?: string;
 
-
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   year?: string;
-
 
   // Business fields
 
@@ -71,35 +57,29 @@ export class UpdateProfileDto {
   @IsString()
   companyName?: string;
 
-
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   businessType?: string;
-
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   designation?: string;
 
-
   @ApiProperty({ required: false })
   @IsOptional()
   experience?: number;
-
 
   @ApiProperty({ required: false })
   @IsOptional()
   website?: string;
 
   @ApiProperty({ required: false })
-@IsOptional()
-idCardUrl?: string;
+  @IsOptional()
+  idCardUrl?: string;
 
-@ApiProperty({ required: false })
-@IsOptional()
-visitingCardUrl?: string;
-
-  
+  @ApiProperty({ required: false })
+  @IsOptional()
+  visitingCardUrl?: string;
 }

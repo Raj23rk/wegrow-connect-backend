@@ -53,5 +53,4 @@ export class Contact extends Document {
   isResolved!: boolean;
 }
 
-export const ContactSchema =
-  SchemaFactory.createForClass(Contact);
+export const ContactSchema = SchemaFactory.createForClass(Contact);

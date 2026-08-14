@@ -10,44 +10,43 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterBusinessDto {
   @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    firstName!: string;
+  @IsString()
+  @IsNotEmpty()
+  firstName!: string;
 
   @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    lastName!: string;
+  @IsString()
+  @IsNotEmpty()
+  lastName!: string;
 
   @ApiProperty()
-    @IsEmail()
-    email!: string;
+  @IsEmail()
+  email!: string;
 
   @ApiProperty()
-    @IsString()
-    @MinLength(6)
-    password!: string;
-
-   @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    phone!: string;
-
+  @IsString()
+  @MinLength(6)
+  password!: string;
 
   @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    companyName!: string;
+  @IsString()
+  @IsNotEmpty()
+  phone!: string;
 
   @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    businessType!: string;
+  @IsString()
+  @IsNotEmpty()
+  companyName!: string;
 
   @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    designation!: string;
+  @IsString()
+  @IsNotEmpty()
+  businessType!: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  designation!: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -68,12 +67,12 @@ export class RegisterBusinessDto {
   @IsOptional()
   @IsString()
   state?: string;
-  
+
   @ApiProperty({
-  type: 'string',
-  format: 'binary',
-  required: false,
-})
-@IsOptional()
-visitingCardUrl?: any;
+    type: 'string',
+    format: 'binary',
+    required: false,
+  })
+  @IsOptional()
+  visitingCardUrl?: any;
 }

@@ -38,8 +38,7 @@ export class CreateContactDto {
   @IsNotEmpty()
   @Length(10, 10)
   @Matches(/^[6-9][0-9]{9}$/, {
-    message:
-      'Mobile number must be a valid 10-digit Indian mobile number',
+    message: 'Mobile number must be a valid 10-digit Indian mobile number',
   })
   mobileNumber!: string;
 
@@ -47,8 +46,7 @@ export class CreateContactDto {
     example: ['BUSINESS', 'COURSE'],
     enum: QueryAbout,
     isArray: true,
-    description:
-      'Select one or more query categories',
+    description: 'Select one or more query categories',
   })
   @IsArray()
   @IsNotEmpty()
@@ -58,8 +56,7 @@ export class CreateContactDto {
   queryAbout!: QueryAbout[];
 
   @ApiProperty({
-    example:
-      'I want to know more about your upcoming workshops.',
+    example: 'I want to know more about your upcoming workshops.',
     description: 'User query/message',
   })
   @IsString()

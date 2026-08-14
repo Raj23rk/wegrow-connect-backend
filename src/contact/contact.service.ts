@@ -1,15 +1,9 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import {
-  Contact,
-  QueryAbout,
-} from './schemas/contact.schema';
+import { Contact, QueryAbout } from './schemas/contact.schema';
 
 import { CreateContactDto } from './dto/create-contact.dto';
 
@@ -24,13 +18,8 @@ export class ContactService {
   // CREATE CONTACT QUERY
   // =====================================================
 
-  async create(
-    createContactDto: CreateContactDto,
-  ) {
-    const contact =
-      await this.contactModel.create(
-        createContactDto,
-      );
+  async create(createContactDto: CreateContactDto) {
+    const contact = await this.contactModel.create(createContactDto);
 
     return contact;
   }
@@ -39,12 +28,7 @@ export class ContactService {
   // GET ALL CONTACT QUERIES
   // =====================================================
 
-  async findAll(
-    page = 1,
-    limit = 10,
-    search?: string,
-    queryAbout?: string,
-  ) {
+  async findAll(page = 1, limit = 10, search?: string, queryAbout?: string) {
     const skip = (page - 1) * limit;
 
     const filter: any = {
@@ -90,33 +74,27 @@ export class ContactService {
 
     if (
       queryAbout &&
-      Object.values(QueryAbout).includes(
-        queryAbout.toUpperCase() as QueryAbout,
-      )
+      Object.values(QueryAbout).includes(queryAbout.toUpperCase() as QueryAbout)
     ) {
-      filter.queryAbout =
-        queryAbout.toUpperCase();
+      filter.queryAbout = queryAbout.toUpperCase();
     }
 
     // ===================================================
     // DATABASE
     // ===================================================
 
-    const [contacts, total] =
-      await Promise.all([
-        this.contactModel
-          .find(filter)
-          .sort({
-            createdAt: -1,
-          })
-          .skip(skip)
-          .limit(limit)
-          .lean(),
+    const [contacts, total] = await Promise.all([
+      this.contactModel
+        .find(filter)
+        .sort({
+          createdAt: -1,
+        })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
 
-        this.contactModel.countDocuments(
-          filter,
-        ),
-      ]);
+      this.contactModel.countDocuments(filter),
+    ]);
 
     return {
       contacts,
@@ -124,11 +102,9 @@ export class ContactService {
         total,
         page,
         limit,
-        totalPages: Math.ceil(
-          total / limit,
-        ),
+        totalPages: Math.ceil(total / limit),
       },
-    }; 
+    };
   }
 
   // =====================================================
@@ -136,16 +112,13 @@ export class ContactService {
   // =====================================================
 
   async findById(id: string) {
-    const contact =
-      await this.contactModel.findOne({
-        _id: id,
-        isActive: true,
-      });
+    const contact = await this.contactModel.findOne({
+      _id: id,
+      isActive: true,
+    });
 
     if (!contact) {
-      throw new NotFoundException(
-        'Contact query not found',
-      );
+      throw new NotFoundException('Contact query not found');
     }
 
     return contact;
@@ -156,24 +129,21 @@ export class ContactService {
   // =====================================================
 
   async resolve(id: string) {
-    const contact =
-      await this.contactModel.findOneAndUpdate(
-        {
-          _id: id,
-          isActive: true,
-        },
-        {
-          isResolved: true,
-        },
-        {
-          new: true,
-        },
-      );
+    const contact = await this.contactModel.findOneAndUpdate(
+      {
+        _id: id,
+        isActive: true,
+      },
+      {
+        isResolved: true,
+      },
+      {
+        new: true,
+      },
+    );
 
     if (!contact) {
-      throw new NotFoundException(
-        'Contact query not found',
-      );
+      throw new NotFoundException('Contact query not found');
     }
 
     return contact;
@@ -184,24 +154,21 @@ export class ContactService {
   // =====================================================
 
   async remove(id: string) {
-    const contact =
-      await this.contactModel.findOneAndUpdate(
-        {
-          _id: id,
-          isActive: true,
-        },
-        {
-          isActive: false,
-        },
-        {
-          new: true,
-        },
-      );
+    const contact = await this.contactModel.findOneAndUpdate(
+      {
+        _id: id,
+        isActive: true,
+      },
+      {
+        isActive: false,
+      },
+      {
+        new: true,
+      },
+    );
 
     if (!contact) {
-      throw new NotFoundException(
-        'Contact query not found',
-      );
+      throw new NotFoundException('Contact query not found');
     }
 
     return contact;

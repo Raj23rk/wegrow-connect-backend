@@ -1,15 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import {
-  Event,
-  EventSchema,
-} from './schemas/event.schema';
+import { Event, EventSchema } from './schemas/event.schema';
 
-import {
-  User,
-  UserSchema,
-} from '../users/schemas/user.schema';
+import { User, UserSchema } from '../users/schemas/user.schema';
 
 import { EventsController } from './events.controller';
 import { EventsService } from './events.service';
@@ -34,12 +28,8 @@ import { NotificationsModule } from '../notifications/notifications.module';
     NotificationsModule,
   ],
 
-  controllers: [
-    EventsController,
-  ],
+  controllers: [EventsController],
 
-  providers: [
-    EventsService,
-  ],
+  providers: [EventsService],
 })
 export class EventsModule {}

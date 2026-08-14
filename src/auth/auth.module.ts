@@ -8,7 +8,6 @@ import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './jwt.strategy';
 import { NotificationsModule } from '../notifications/notifications.module';
 
-
 @Module({
   imports: [
     UsersModule,

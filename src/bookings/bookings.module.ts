@@ -1,10 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import {
-  Booking,
-  BookingSchema,
-} from './schemas/booking.schema';
+import { Booking, BookingSchema } from './schemas/booking.schema';
 
 import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
@@ -24,16 +21,10 @@ import { NotificationsModule } from '../notifications/notifications.module';
     NotificationsModule,
   ],
 
-  controllers: [
-    BookingsController,
-  ],
+  controllers: [BookingsController],
 
-  providers: [
-    BookingsService,
-  ],
+  providers: [BookingsService],
 
-  exports: [
-    BookingsService,
-  ],
+  exports: [BookingsService],
 })
 export class BookingsModule {}

@@ -3,34 +3,67 @@ import { Document } from 'mongoose';
 
 export type UserDocument = User & Document;
 
+// ============================================================
+// USER ROLE
+// ============================================================
+
 export enum UserRole {
   STUDENT = 'STUDENT',
   BUSINESS = 'BUSINESS',
   ADMIN = 'ADMIN',
 }
 
+// ============================================================
+// USER STATUS
+// ============================================================
+
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  PENDING = 'PENDING',
+  INACTIVE = 'INACTIVE',
+}
+
+// ============================================================
+// SUBSCRIPTION STATUS
+// ============================================================
+
 export enum SubscriptionStatus {
-FREE_TRIAL = 'FREE_TRIAL',
+  FREE_TRIAL = 'FREE_TRIAL',
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
 }
 
+// ============================================================
+// USER SCHEMA
+// ============================================================
+
 @Schema({ timestamps: true })
 export class User {
-  // Basic Details
+  // ============================================================
+  // BASIC DETAILS
+  // ============================================================
+
   @Prop({ required: true })
   firstName!: string;
 
   @Prop({ required: true })
   lastName!: string;
 
-  @Prop({ required: true, unique: true, lowercase: true, trim: true })
+  @Prop({
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+  })
   email!: string;
 
   @Prop({ required: true })
   password!: string;
 
-  @Prop({ unique: true, sparse: true })
+  @Prop({
+    unique: true,
+    sparse: true,
+  })
   phone!: string;
 
   @Prop({
@@ -39,6 +72,28 @@ export class User {
     required: true,
   })
   role!: UserRole;
+
+  // ============================================================
+  // USER STATUS
+  // ============================================================
+
+  @Prop({
+    type: String,
+    enum: UserStatus,
+    default: UserStatus.ACTIVE,
+  })
+  status!: UserStatus;
+
+  // ============================================================
+  // ORGANIZATION
+  // ============================================================
+
+  @Prop({
+    type: String,
+    default: '',
+    trim: true,
+  })
+  organization?: string;
 
   @Prop({ default: false })
   isEmailVerified!: boolean;
@@ -52,9 +107,9 @@ export class User {
   @Prop()
   state?: string;
 
-  // ----------------------------
-  // Student Fields
-  // ----------------------------
+  // ============================================================
+  // STUDENT FIELDS
+  // ============================================================
 
   @Prop()
   college?: string;
@@ -68,17 +123,18 @@ export class User {
   @Prop()
   year?: string;
 
-  @Prop({ type: [String], default: [] })
+  @Prop({
+    type: [String],
+    default: [],
+  })
   skills?: string[];
 
   @Prop()
-idCardUrl?: string;
+  idCardUrl?: string;
 
-
-
-  // ----------------------------
-  // Business Fields
-  // ----------------------------
+  // ============================================================
+  // BUSINESS FIELDS
+  // ============================================================
 
   @Prop()
   companyName?: string;
@@ -94,36 +150,48 @@ idCardUrl?: string;
 
   @Prop()
   website?: string;
+
   @Prop()
-visitingCardUrl?: string;
+  visitingCardUrl?: string;
 
-  // ----------------------------
-  // Subscription
-  // ----------------------------
+  // ============================================================
+  // SUBSCRIPTION
+  // ============================================================
 
-@Prop({
-  type: String,
-  enum: SubscriptionStatus,
-  default: SubscriptionStatus.FREE_TRIAL,
-})
-subscriptionStatus: SubscriptionStatus = SubscriptionStatus.FREE_TRIAL;
+  @Prop({
+    type: String,
+    enum: SubscriptionStatus,
+    default: SubscriptionStatus.FREE_TRIAL,
+  })
+  subscriptionStatus: SubscriptionStatus = SubscriptionStatus.FREE_TRIAL;
+
   @Prop()
   subscriptionExpiry?: Date;
 
-  // ----------------------------
-  // Workshop
-  // ----------------------------
+  // ============================================================
+  // WORKSHOP
+  // ============================================================
 
   @Prop({ default: 0 })
   workshopsAttended!: number;
 
-   @Prop({ default: true })
-  isActive !: boolean;
+  @Prop({ default: true })
+  isActive!: boolean;
 
-    @Prop({ type: String, default: null })
+  // ============================================================
+  // PASSWORD RESET
+  // ============================================================
+
+  @Prop({
+    type: String,
+    default: null,
+  })
   resetPasswordToken?: string | null;
 
-  @Prop({ type: Date, default: null })
+  @Prop({
+    type: Date,
+    default: null,
+  })
   resetPasswordExpires?: Date | null;
 }
 
