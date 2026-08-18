@@ -31,6 +31,7 @@ async function bootstrap() {
       'http://localhost:3000',
       'http://localhost:5173',
       'https://wegrow-connect-frontend.vercel.app',
+      'https://wegrow-connect-frontend-vhry.vercel.app',
     ],
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
