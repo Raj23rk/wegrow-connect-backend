@@ -1,4 +1,3 @@
-
 import {
   Injectable,
   NotFoundException,
@@ -167,10 +166,7 @@ export class NotificationsService {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate(
-          'eventId',
-          'title description image location date price type',
-        )
+        .populate('eventId', 'title description image location date price type')
         .lean(),
 
       this.notificationModel.countDocuments(filter),
@@ -372,8 +368,7 @@ export class NotificationsService {
       'We look forward to seeing you at the workshop!',
     ];
 
-    const closingPhrase =
-      phrases[Math.floor(Math.random() * phrases.length)];
+    const closingPhrase = phrases[Math.floor(Math.random() * phrases.length)];
 
     // ============================================================
     // HTML EMAIL
@@ -1030,22 +1025,14 @@ export class NotificationsService {
 </html>
 `;
 
-    return this.sendEmail(
-      email,
-      `New Event: ${eventTitle}`,
-      html,
-    );
+    return this.sendEmail(email, `New Event: ${eventTitle}`, html);
   }
 
   // ============================================================
   // COMMON EMAIL - RESEND
   // ============================================================
 
-  async sendEmail(
-    to: string,
-    subject: string,
-    html: string,
-  ): Promise<boolean> {
+  async sendEmail(to: string, subject: string, html: string): Promise<boolean> {
     try {
       if (!process.env.RESEND_API_KEY) {
         this.logger.error('RESEND_API_KEY is not configured');
@@ -2149,28 +2136,17 @@ export class NotificationsService {
 </html>
 `;
 
-    return this.sendEmail(
-      email,
-      `🎟️ Booking Received - ${eventTitle}`,
-      html,
-    );
+    return this.sendEmail(email, `🎟️ Booking Received - ${eventTitle}`, html);
   }
 
   // ============================================================
   // ADMIN - GET ALL NOTIFICATIONS
   // ============================================================
 
-  async getAdminNotifications(
-    page = 1,
-    limit = 10,
-    search = '',
-  ) {
+  async getAdminNotifications(page = 1, limit = 10, search = '') {
     page = Math.max(Number(page) || 1, 1);
 
-    limit = Math.min(
-      Math.max(Number(limit) || 10, 1),
-      100,
-    );
+    limit = Math.min(Math.max(Number(limit) || 10, 1), 100);
 
     const skip = (page - 1) * limit;
 
@@ -2217,14 +2193,8 @@ export class NotificationsService {
         })
         .skip(skip)
         .limit(limit)
-        .populate(
-          'eventId',
-          'title description image location date price type',
-        )
-        .populate(
-          'userId',
-          'firstName lastName email phone role',
-        )
+        .populate('eventId', 'title description image location date price type')
+        .populate('userId', 'firstName lastName email phone role')
         .lean(),
 
       this.notificationModel.countDocuments(filter),
@@ -2266,17 +2236,15 @@ export class NotificationsService {
     // UNIQUE USERS REACHED
     // ============================================================
 
-    const uniqueUsersReached =
-      await this.notificationModel.distinct('userId');
+    const uniqueUsersReached = await this.notificationModel.distinct('userId');
 
     // ============================================================
     // UNIQUE USERS VIEWED
     // ============================================================
 
-    const uniqueUsersViewed =
-      await this.notificationModel.distinct('userId', {
-        isRead: true,
-      });
+    const uniqueUsersViewed = await this.notificationModel.distinct('userId', {
+      isRead: true,
+    });
 
     // ============================================================
     // VIEW RATE
@@ -2285,10 +2253,7 @@ export class NotificationsService {
     const viewRate =
       totalNotifications > 0
         ? Number(
-            (
-              (readNotificationCount / totalNotifications) *
-              100
-            ).toFixed(2),
+            ((readNotificationCount / totalNotifications) * 100).toFixed(2),
           )
         : 0;
 
@@ -2296,36 +2261,31 @@ export class NotificationsService {
     // TYPE COUNTS
     // ============================================================
 
-    const typeCounts =
-      await this.notificationModel.aggregate([
-        {
-          $group: {
-            _id: '$type',
+    const typeCounts = await this.notificationModel.aggregate([
+      {
+        $group: {
+          _id: '$type',
 
-            count: {
-              $sum: 1,
-            },
+          count: {
+            $sum: 1,
           },
         },
+      },
 
-        {
-          $sort: {
-            count: -1,
-          },
+      {
+        $sort: {
+          count: -1,
         },
-      ]);
+      },
+    ]);
 
     // ============================================================
     // LOG
     // ============================================================
 
-    this.logger.log(
-      `Admin notifications found: ${notifications.length}`,
-    );
+    this.logger.log(`Admin notifications found: ${notifications.length}`);
 
-    this.logger.log(
-      `Total notifications: ${totalNotifications}`,
-    );
+    this.logger.log(`Total notifications: ${totalNotifications}`);
 
     // ============================================================
     // RESPONSE
@@ -2348,11 +2308,9 @@ export class NotificationsService {
 
           unreadNotificationCount,
 
-          uniqueUsersReached:
-            uniqueUsersReached.length,
+          uniqueUsersReached: uniqueUsersReached.length,
 
-          uniqueUsersViewed:
-            uniqueUsersViewed.length,
+          uniqueUsersViewed: uniqueUsersViewed.length,
 
           viewRate: `${viewRate}%`,
 
@@ -2372,16 +2330,11 @@ export class NotificationsService {
 
           limit,
 
-          totalPages:
-            total === 0
-              ? 0
-              : Math.ceil(total / limit),
+          totalPages: total === 0 ? 0 : Math.ceil(total / limit),
 
-          hasNextPage:
-            page < Math.ceil(total / limit),
+          hasNextPage: page < Math.ceil(total / limit),
 
-          hasPreviousPage:
-            page > 1,
+          hasPreviousPage: page > 1,
         },
 
         search: searchText,
@@ -2501,4 +2454,3 @@ export class NotificationsService {
     });
   }
 }
-

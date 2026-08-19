@@ -110,7 +110,9 @@ export class SubscriptionsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'User: Verify Razorpay payment and activate subscription' })
+  @ApiOperation({
+    summary: 'User: Verify Razorpay payment and activate subscription',
+  })
   verifyPayment(@Request() req: any, @Body() dto: VerifyPaymentDto) {
     return this.subscriptionsService.verifyPayment(req.user.userId, dto);
   }

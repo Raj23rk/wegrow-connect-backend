@@ -72,4 +72,3 @@ import { InvoicesModule } from './invoices/invoices.module';
   providers: [AppService],
 })
 export class AppModule {}
-

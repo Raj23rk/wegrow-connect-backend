@@ -1,19 +1,29 @@
 import {
+  BadRequestException,
   Injectable,
-  NotFoundException,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+
 import * as path from 'path';
 import * as fs from 'fs';
-import puppeteer from 'puppeteer';
 
-import { Invoice, InvoiceDocument, InvoiceStatus } from './schemas/invoice.schema';
+import { chromium, Browser } from 'playwright';
+
+import {
+  Invoice,
+  InvoiceDocument,
+  InvoiceStatus,
+} from './schemas/invoice.schema';
+
 import { User, UserDocument } from '../users/schemas/user.schema';
+
 import { GenerateInvoiceDto } from './dto/generate-invoice.dto';
+
 import { generateInvoiceHtml } from './invoice.template';
 
 @Injectable()
@@ -29,16 +39,19 @@ export class InvoicesService {
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
   ) {
-    // --------------------------------------------------------
-    // ENSURE INVOICE DIRECTORY EXISTS
-    // --------------------------------------------------------
+    // ============================================================
+    // INVOICE DIRECTORY
+    // ============================================================
 
     this.invoiceDir = path.resolve(
       process.env.INVOICES_PATH || './uploads/invoices',
     );
 
     if (!fs.existsSync(this.invoiceDir)) {
-      fs.mkdirSync(this.invoiceDir, { recursive: true });
+      fs.mkdirSync(this.invoiceDir, {
+        recursive: true,
+      });
+
       this.logger.log(`Created invoice directory: ${this.invoiceDir}`);
     }
   }
@@ -63,35 +76,110 @@ export class InvoicesService {
 
   private formatDate(date: Date): string {
     const d = new Date(date);
+
     const day = String(d.getDate()).padStart(2, '0');
-    const month = d.toLocaleString('en-IN', { month: 'long' });
+
+    const month = d.toLocaleString('en-IN', {
+      month: 'long',
+    });
+
     const year = d.getFullYear();
+
     return `${day} ${month} ${year}`;
   }
 
   // ============================================================
-  // GENERATE PDF FROM HTML
+  // GENERATE PDF USING PLAYWRIGHT
   // ============================================================
 
-  private async generatePdf(html: string, outputPath: string): Promise<void> {
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+  private async generatePdf(
+    html: string,
+    outputPath: string,
+  ): Promise<void> {
+    this.logger.log('Starting Playwright PDF generation...');
+
+    let browser: Browser | null = null;
 
     try {
-      const page = await browser.newPage();
+      // ----------------------------------------------------------
+      // START CHROMIUM
+      // ----------------------------------------------------------
 
-      await page.setContent(html, { waitUntil: 'domcontentloaded' });
+      browser = await chromium.launch({
+        headless: true,
+      });
+
+      this.logger.log('Playwright Chromium browser started');
+
+      // ----------------------------------------------------------
+      // CREATE PAGE
+      // ----------------------------------------------------------
+
+      const page = await browser.newPage({
+        viewport: {
+          width: 1280,
+          height: 720,
+        },
+      });
+
+      // ----------------------------------------------------------
+      // LOAD HTML
+      // ----------------------------------------------------------
+
+      await page.setContent(html, {
+        waitUntil: 'load',
+      });
+
+      this.logger.log('Invoice HTML loaded successfully');
+
+      // ----------------------------------------------------------
+      // GENERATE PDF
+      // ----------------------------------------------------------
 
       await page.pdf({
         path: outputPath,
         format: 'A4',
         printBackground: true,
-        margin: { top: '0', right: '0', bottom: '0', left: '0' },
+        margin: {
+          top: '0',
+          right: '0',
+          bottom: '0',
+          left: '0',
+        },
       });
+
+      this.logger.log(
+        `PDF generated successfully: ${outputPath}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        'Playwright PDF generation failed',
+        error instanceof Error ? error.stack : String(error),
+      );
+
+      throw error;
     } finally {
-      await browser.close();
+      // ----------------------------------------------------------
+      // CLOSE BROWSER
+      // ----------------------------------------------------------
+
+      if (browser) {
+        try {
+          await browser.close();
+
+          this.logger.log(
+            'Playwright Chromium browser closed',
+          );
+        } catch (closeError) {
+          this.logger.warn(
+            `Failed to close Playwright browser: ${
+              closeError instanceof Error
+                ? closeError.message
+                : String(closeError)
+            }`,
+          );
+        }
+      }
     }
   }
 
@@ -102,13 +190,25 @@ export class InvoicesService {
 
   async generateInvoice(dto: GenerateInvoiceDto) {
     try {
-      // --------------------------------------------------------
-      // 1. FIND USER
-      // --------------------------------------------------------
+      // ========================================================
+      // 1. VALIDATE USER ID
+      // ========================================================
+
+      if (!dto.userId) {
+        throw new BadRequestException(
+          'User ID is required',
+        );
+      }
 
       if (!Types.ObjectId.isValid(dto.userId)) {
-        throw new NotFoundException('Invalid user ID');
+        throw new BadRequestException(
+          `Invalid user ID: ${dto.userId}`,
+        );
       }
+
+      // ========================================================
+      // 2. FIND USER
+      // ========================================================
 
       const user = await this.userModel
         .findById(dto.userId)
@@ -116,120 +216,314 @@ export class InvoicesService {
         .lean();
 
       if (!user) {
-        throw new NotFoundException('User not found');
+        throw new NotFoundException(
+          `User not found with ID: ${dto.userId}`,
+        );
       }
 
       const clientName =
-        `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Client';
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+        'Client';
 
-      // --------------------------------------------------------
-      // 2. CALCULATE AMOUNTS
-      // --------------------------------------------------------
+      // ========================================================
+      // 3. VALIDATE ITEMS
+      // ========================================================
+
+      if (!dto.items || !Array.isArray(dto.items)) {
+        throw new BadRequestException(
+          'Invoice items are required',
+        );
+      }
+
+      if (dto.items.length === 0) {
+        throw new BadRequestException(
+          'At least one invoice item is required',
+        );
+      }
+
+      // ========================================================
+      // 4. CURRENCY
+      // ========================================================
 
       const currency = dto.currency || 'INR';
-      const taxPercent = dto.taxPercent || 0;
 
-      const items = dto.items.map((item) => ({
-        description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        amount: Math.round(item.quantity * item.unitPrice * 100) / 100,
-      }));
+      // ========================================================
+      // 5. TAX
+      // ========================================================
 
-      const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-      const tax = Math.round((subtotal * taxPercent) / 100 * 100) / 100;
-      const total = Math.round((subtotal + tax) * 100) / 100;
+      const taxPercent =
+        dto.taxPercent !== undefined
+          ? Number(dto.taxPercent)
+          : 0;
 
-      // --------------------------------------------------------
-      // 3. GENERATE INVOICE NUMBER
-      // --------------------------------------------------------
+      if (!Number.isFinite(taxPercent) || taxPercent < 0) {
+        throw new BadRequestException(
+          'Invalid tax percentage',
+        );
+      }
 
-      const invoiceNumber = await this.generateInvoiceNumber();
+      // ========================================================
+      // 6. CALCULATE ITEMS
+      // ========================================================
+
+      const items = dto.items.map((item) => {
+        const quantity = Number(item.quantity);
+
+        const unitPrice = Number(item.unitPrice);
+
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+          throw new BadRequestException(
+            `Invalid quantity for item: ${item.description}`,
+          );
+        }
+
+        if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+          throw new BadRequestException(
+            `Invalid unit price for item: ${item.description}`,
+          );
+        }
+
+        const amount =
+          Math.round(quantity * unitPrice * 100) / 100;
+
+        return {
+          description: item.description,
+          quantity,
+          unitPrice,
+          amount,
+        };
+      });
+
+      // ========================================================
+      // 7. CALCULATE SUBTOTAL
+      // ========================================================
+
+      const subtotal =
+        Math.round(
+          items.reduce(
+            (sum, item) => sum + item.amount,
+            0,
+          ) * 100,
+        ) / 100;
+
+      // ========================================================
+      // 8. CALCULATE TAX
+      // ========================================================
+
+      const tax =
+        Math.round(
+          ((subtotal * taxPercent) / 100) * 100,
+        ) / 100;
+
+      // ========================================================
+      // 9. CALCULATE TOTAL
+      // ========================================================
+
+      const total =
+        Math.round((subtotal + tax) * 100) / 100;
+
+      // ========================================================
+      // 10. GENERATE INVOICE NUMBER
+      // ========================================================
+
+      const invoiceNumber =
+        await this.generateInvoiceNumber();
+
+      // ========================================================
+      // 11. DATES
+      // ========================================================
 
       const issuedDate = new Date();
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 7); // Due in 7 days
 
-      // --------------------------------------------------------
-      // 4. GENERATE PDF
-      // --------------------------------------------------------
+      const dueDate = new Date();
+
+      dueDate.setDate(dueDate.getDate() + 7);
+
+      // ========================================================
+      // 12. GENERATE HTML
+      // ========================================================
 
       const html = generateInvoiceHtml({
         invoiceNumber,
+
         issuedDate: this.formatDate(issuedDate),
+
         dueDate: this.formatDate(dueDate),
+
         clientName,
-        clientEmail: user.email,
-        clientPhone: user.phone,
+
+        clientEmail: user.email || '',
+
+        clientPhone: user.phone || '',
+
         items,
+
         subtotal,
+
         tax,
+
         total,
+
         currency,
+
         status: InvoiceStatus.ISSUED,
       });
+
+      if (!html) {
+        throw new Error(
+          'Invoice HTML generation returned empty content',
+        );
+      }
+
+      // ========================================================
+      // 13. ENSURE DIRECTORY EXISTS
+      // ========================================================
+
+      await fs.promises.mkdir(this.invoiceDir, {
+        recursive: true,
+      });
+
+      // ========================================================
+      // 14. PDF FILE PATH
+      // ========================================================
 
       const fileName = `${invoiceNumber}.pdf`;
-      const filePath = path.join(this.invoiceDir, fileName);
 
-      await this.generatePdf(html, filePath);
+      const filePath = path.join(
+        this.invoiceDir,
+        fileName,
+      );
 
-      this.logger.log(`Invoice PDF generated: ${fileName}`);
+      // ========================================================
+      // 15. GENERATE PDF
+      // ========================================================
 
-      // --------------------------------------------------------
-      // 5. SAVE TO DB
-      // --------------------------------------------------------
-
-      const invoice = await this.invoiceModel.create({
-        userId: new Types.ObjectId(dto.userId),
-        bookingId: dto.bookingId
-          ? new Types.ObjectId(dto.bookingId)
-          : undefined,
-        subscriptionId: dto.subscriptionId
-          ? new Types.ObjectId(dto.subscriptionId)
-          : undefined,
-        invoiceNumber,
-        items,
-        subtotal,
-        tax,
-        total,
-        currency,
-        status: InvoiceStatus.ISSUED,
-        issuedDate,
-        dueDate,
+      await this.generatePdf(
+        html,
         filePath,
+      );
+
+      // ========================================================
+      // 16. VERIFY PDF EXISTS
+      // ========================================================
+
+      if (!fs.existsSync(filePath)) {
+        throw new Error(
+          'PDF file was not created',
+        );
+      }
+
+      // ========================================================
+      // 17. SAVE INVOICE TO DATABASE
+      // ========================================================
+
+      const invoiceData = {
+        userId: new Types.ObjectId(dto.userId),
+
+        bookingId:
+          dto.bookingId &&
+          Types.ObjectId.isValid(dto.bookingId)
+            ? new Types.ObjectId(dto.bookingId)
+            : undefined,
+
+        subscriptionId:
+          dto.subscriptionId &&
+          Types.ObjectId.isValid(dto.subscriptionId)
+            ? new Types.ObjectId(dto.subscriptionId)
+            : undefined,
+
+        invoiceNumber,
+
+        items,
+
+        subtotal,
+
+        tax,
+
+        total,
+
+        currency,
+
+        status: InvoiceStatus.ISSUED,
+
+        issuedDate,
+
+        dueDate,
+
+        filePath,
+
         isActive: true,
-      });
+      };
 
-      this.logger.log(`Invoice saved: ${invoice._id}`);
+      const invoice =
+        await this.invoiceModel.create(
+          invoiceData,
+        );
 
-      // --------------------------------------------------------
-      // 6. RETURN
-      // --------------------------------------------------------
+      this.logger.log(
+        `Invoice created successfully: ${invoice.invoiceNumber}`,
+      );
+
+      // ========================================================
+      // 18. SUCCESS RESPONSE
+      // ========================================================
 
       return {
         success: true,
+
         message: 'Invoice generated successfully',
+
         invoice: {
           id: invoice._id,
-          invoiceNumber: invoice.invoiceNumber,
+
+          invoiceNumber:
+            invoice.invoiceNumber,
+
           total: invoice.total,
+
           currency: invoice.currency,
+
           status: invoice.status,
+
           issuedDate: invoice.issuedDate,
+
+          dueDate: invoice.dueDate,
+
+          filePath: invoice.filePath,
         },
       };
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      // ========================================================
+      // LOG ERROR
+      // ========================================================
+
+      this.logger.error(
+        'INVOICE GENERATION ERROR',
+        error instanceof Error
+          ? error.stack
+          : String(error),
+      );
+
+      // ========================================================
+      // PRESERVE HTTP EXCEPTIONS
+      // ========================================================
+
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
         throw error;
       }
 
-      this.logger.error(
-        'Failed to generate invoice',
-        error instanceof Error ? error.stack : String(error),
-      );
+      // ========================================================
+      // INTERNAL ERROR
+      // ========================================================
 
-      throw new InternalServerErrorException('Failed to generate invoice');
+      throw new InternalServerErrorException(
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate invoice',
+      );
     }
   }
 
@@ -238,31 +532,61 @@ export class InvoicesService {
   // GET /invoices
   // ============================================================
 
-  async findAll(page = 1, limit = 10) {
-    page = Math.max(Number(page) || 1, 1);
-    limit = Math.min(Math.max(Number(limit) || 10, 1), 100);
+  async findAll(
+    page = 1,
+    limit = 10,
+  ) {
+    page = Math.max(
+      Number(page) || 1,
+      1,
+    );
+
+    limit = Math.min(
+      Math.max(
+        Number(limit) || 10,
+        1,
+      ),
+      100,
+    );
 
     const skip = (page - 1) * limit;
 
-    const [invoices, total] = await Promise.all([
+    const [
+      invoices,
+      total,
+    ] = await Promise.all([
       this.invoiceModel
-        .find({ isActive: true })
-        .populate('userId', 'firstName lastName email')
-        .sort({ createdAt: -1 })
+        .find({
+          isActive: true,
+        })
+        .populate(
+          'userId',
+          'firstName lastName email phone',
+        )
+        .sort({
+          createdAt: -1,
+        })
         .skip(skip)
         .limit(limit)
         .lean(),
-      this.invoiceModel.countDocuments({ isActive: true }),
+
+      this.invoiceModel.countDocuments({
+        isActive: true,
+      }),
     ]);
 
     return {
       success: true,
+
       invoices,
+
       pagination: {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(
+          total / limit,
+        ),
       },
     };
   }
@@ -272,21 +596,36 @@ export class InvoicesService {
   // GET /invoices/:id
   // ============================================================
 
-  async findOne(invoiceId: string) {
-    if (!Types.ObjectId.isValid(invoiceId)) {
-      throw new NotFoundException('Invalid invoice ID');
+  async findOne(
+    invoiceId: string,
+  ) {
+    if (
+      !Types.ObjectId.isValid(invoiceId)
+    ) {
+      throw new NotFoundException(
+        'Invalid invoice ID',
+      );
     }
 
-    const invoice = await this.invoiceModel
-      .findById(invoiceId)
-      .populate('userId', 'firstName lastName email phone')
-      .lean();
+    const invoice =
+      await this.invoiceModel
+        .findById(invoiceId)
+        .populate(
+          'userId',
+          'firstName lastName email phone',
+        )
+        .lean();
 
     if (!invoice) {
-      throw new NotFoundException('Invoice not found');
+      throw new NotFoundException(
+        'Invoice not found',
+      );
     }
 
-    return { success: true, invoice };
+    return {
+      success: true,
+      invoice,
+    };
   }
 
   // ============================================================
@@ -294,17 +633,38 @@ export class InvoicesService {
   // GET /invoices/my
   // ============================================================
 
-  async findMyInvoices(userId: string) {
-    const invoices = await this.invoiceModel
-      .find({ userId: new Types.ObjectId(userId), isActive: true })
-      .sort({ createdAt: -1 })
-      .lean();
+  async findMyInvoices(
+    userId: string,
+  ) {
+    if (
+      !Types.ObjectId.isValid(userId)
+    ) {
+      throw new BadRequestException(
+        'Invalid user ID',
+      );
+    }
 
-    return { success: true, invoices };
+    const invoices =
+      await this.invoiceModel
+        .find({
+          userId:
+            new Types.ObjectId(userId),
+
+          isActive: true,
+        })
+        .sort({
+          createdAt: -1,
+        })
+        .lean();
+
+    return {
+      success: true,
+      invoices,
+    };
   }
 
   // ============================================================
-  // USER/ADMIN: DOWNLOAD INVOICE
+  // DOWNLOAD INVOICE
   // GET /invoices/download/:id
   // ============================================================
 
@@ -312,30 +672,103 @@ export class InvoicesService {
     invoiceId: string,
     userId: string,
     isAdmin: boolean,
-  ): Promise<{ filePath: string; fileName: string }> {
-    if (!Types.ObjectId.isValid(invoiceId)) {
-      throw new NotFoundException('Invalid invoice ID');
+  ): Promise<{
+    filePath: string;
+    fileName: string;
+  }> {
+    // ----------------------------------------------------------
+    // VALIDATE INVOICE ID
+    // ----------------------------------------------------------
+
+    if (
+      !Types.ObjectId.isValid(invoiceId)
+    ) {
+      throw new NotFoundException(
+        'Invalid invoice ID',
+      );
     }
 
-    const filter: any = { _id: new Types.ObjectId(invoiceId), isActive: true };
+    // ----------------------------------------------------------
+    // VALIDATE USER ID
+    // ----------------------------------------------------------
 
-    // Non-admin can only download their own
+    if (
+      !Types.ObjectId.isValid(userId)
+    ) {
+      throw new BadRequestException(
+        'Invalid user ID',
+      );
+    }
+
+    // ----------------------------------------------------------
+    // CREATE FILTER
+    // ----------------------------------------------------------
+
+    const filter: {
+      _id: Types.ObjectId;
+      isActive: boolean;
+      userId?: Types.ObjectId;
+    } = {
+      _id:
+        new Types.ObjectId(invoiceId),
+
+      isActive: true,
+    };
+
+    // ----------------------------------------------------------
+    // NON-ADMIN CAN ONLY DOWNLOAD OWN INVOICE
+    // ----------------------------------------------------------
+
     if (!isAdmin) {
-      filter.userId = new Types.ObjectId(userId);
+      filter.userId =
+        new Types.ObjectId(userId);
     }
 
-    const invoice = await this.invoiceModel.findOne(filter);
+    // ----------------------------------------------------------
+    // FIND INVOICE
+    // ----------------------------------------------------------
+
+    const invoice =
+      await this.invoiceModel.findOne(
+        filter,
+      );
 
     if (!invoice) {
-      throw new NotFoundException('Invoice not found');
+      throw new NotFoundException(
+        'Invoice not found',
+      );
     }
 
-    if (!invoice.filePath || !fs.existsSync(invoice.filePath)) {
-      throw new NotFoundException('Invoice file not found on server');
+    // ----------------------------------------------------------
+    // CHECK FILE
+    // ----------------------------------------------------------
+
+    if (
+      !invoice.filePath ||
+      !fs.existsSync(
+        invoice.filePath,
+      )
+    ) {
+      throw new NotFoundException(
+        'Invoice file not found on server',
+      );
     }
 
-    const fileName = `Invoice_${invoice.invoiceNumber}.pdf`;
+    // ----------------------------------------------------------
+    // FILE NAME
+    // ----------------------------------------------------------
 
-    return { filePath: invoice.filePath, fileName };
+    const fileName =
+      `Invoice_${invoice.invoiceNumber}.pdf`;
+
+    // ----------------------------------------------------------
+    // RETURN FILE
+    // ----------------------------------------------------------
+
+    return {
+      filePath: invoice.filePath,
+
+      fileName,
+    };
   }
 }

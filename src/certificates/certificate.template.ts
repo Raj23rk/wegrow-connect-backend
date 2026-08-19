@@ -13,9 +13,7 @@ export interface CertificateTemplateData {
   issuedDate: string;
 }
 
-export function generateCertificateHtml(
-  data: CertificateTemplateData,
-): string {
+export function generateCertificateHtml(data: CertificateTemplateData): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>

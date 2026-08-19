@@ -53,10 +53,7 @@ export class InvoicesController {
   @ApiOperation({ summary: 'Admin: Get all invoices' })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
-  findAll(
-    @Query('page') page: number,
-    @Query('limit') limit: number,
-  ) {
+  findAll(@Query('page') page: number, @Query('limit') limit: number) {
     return this.invoicesService.findAll(page, limit);
   }
 
@@ -97,10 +94,7 @@ export class InvoicesController {
     );
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${fileName}"`,
-    );
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
 
     res.sendFile(filePath, { root: '/' }, (err) => {
       if (err) {

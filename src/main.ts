@@ -34,12 +34,7 @@ async function bootstrap() {
       'https://wegrow-connect-frontend-vhry.vercel.app',
     ],
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'Accept',
-      'Origin',
-    ],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin'],
     credentials: true,
   });
 
@@ -91,9 +86,7 @@ async function bootstrap() {
 
   await app.listen(port, '0.0.0.0');
 
-  console.log(
-    `Application is running on: http://0.0.0.0:${port}/api/v1`,
-  );
+  console.log(`Application is running on: http://0.0.0.0:${port}/api/v1`);
 }
 
 bootstrap();

@@ -79,7 +79,9 @@ export class SubscriptionsService {
         error instanceof Error ? error.stack : String(error),
       );
 
-      throw new InternalServerErrorException('Failed to create subscription plan');
+      throw new InternalServerErrorException(
+        'Failed to create subscription plan',
+      );
     }
   }
 
@@ -199,7 +201,9 @@ export class SubscriptionsService {
         currency: plan.currency || 'INR',
       });
 
-      this.logger.log(`Subscription record created (PENDING): ${subscription._id}`);
+      this.logger.log(
+        `Subscription record created (PENDING): ${subscription._id}`,
+      );
 
       // --------------------------------------------------------
       // 4. RETURN ORDER DETAILS FOR FRONTEND
@@ -254,7 +258,9 @@ export class SubscriptionsService {
         .digest('hex');
 
       if (generatedSignature !== dto.razorpaySignature) {
-        throw new BadRequestException('Invalid payment signature. Payment verification failed.');
+        throw new BadRequestException(
+          'Invalid payment signature. Payment verification failed.',
+        );
       }
 
       // --------------------------------------------------------
@@ -380,14 +386,10 @@ export class SubscriptionsService {
     }
 
     const now = new Date();
-    const isExpired =
-      user.subscriptionExpiry && user.subscriptionExpiry < now;
+    const isExpired = user.subscriptionExpiry && user.subscriptionExpiry < now;
 
     // Auto-expire if expired
-    if (
-      isExpired &&
-      user.subscriptionStatus === SubscriptionStatus.ACTIVE
-    ) {
+    if (isExpired && user.subscriptionStatus === SubscriptionStatus.ACTIVE) {
       await this.userModel.findByIdAndUpdate(userId, {
         subscriptionStatus: SubscriptionStatus.INACTIVE,
       });

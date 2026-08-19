@@ -12,10 +12,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import puppeteer from 'puppeteer';
 
-import {
-  Certificate,
-  CertificateDocument,
-} from './schemas/certificate.schema';
+import { Certificate, CertificateDocument } from './schemas/certificate.schema';
 
 import {
   Booking,
@@ -27,9 +24,7 @@ import { Event, EventDocument } from '../events/schemas/event.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { NotificationsService } from '../notifications/notifications.service';
 
-import {
-  generateCertificateHtml,
-} from './certificate.template';
+import { generateCertificateHtml } from './certificate.template';
 
 @Injectable()
 export class CertificatesService {
@@ -180,7 +175,8 @@ export class CertificatesService {
           if (!user) continue;
 
           const userName =
-            `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Participant';
+            `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+            'Participant';
 
           // Check if certificate already issued for this booking
           const existing = await this.certificateModel.findOne({
@@ -285,7 +281,8 @@ export class CertificatesService {
 
           failed.push({
             bookingId: booking._id,
-            error: innerErr instanceof Error ? innerErr.message : String(innerErr),
+            error:
+              innerErr instanceof Error ? innerErr.message : String(innerErr),
           });
         }
       }
@@ -304,7 +301,8 @@ export class CertificatesService {
         },
         total: bookings.length,
         generated: generated.filter((g) => g.status === 'generated').length,
-        alreadyExisted: generated.filter((g) => g.status === 'already_exists').length,
+        alreadyExisted: generated.filter((g) => g.status === 'already_exists')
+          .length,
         failed: failed.length,
         certificates: generated,
         errors: failed,
@@ -413,7 +411,10 @@ export class CertificatesService {
       throw new NotFoundException('Invalid certificate ID');
     }
 
-    const filter: any = { _id: new Types.ObjectId(certificateId), isActive: true };
+    const filter: any = {
+      _id: new Types.ObjectId(certificateId),
+      isActive: true,
+    };
 
     // Non-admin can only download their own
     if (!isAdmin) {

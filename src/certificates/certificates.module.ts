@@ -1,15 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import {
-  Certificate,
-  CertificateSchema,
-} from './schemas/certificate.schema';
+import { Certificate, CertificateSchema } from './schemas/certificate.schema';
 
-import {
-  Booking,
-  BookingSchema,
-} from '../bookings/schemas/booking.schema';
+import { Booking, BookingSchema } from '../bookings/schemas/booking.schema';
 
 import { Event, EventSchema } from '../events/schemas/event.schema';
 import { User, UserSchema } from '../users/schemas/user.schema';

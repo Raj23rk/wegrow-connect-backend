@@ -115,10 +115,7 @@ export class CertificatesController {
       );
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${fileName}"`,
-    );
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
 
     res.sendFile(filePath, { root: '/' }, (err) => {
       if (err) {
