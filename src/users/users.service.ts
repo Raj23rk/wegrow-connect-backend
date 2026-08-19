@@ -223,7 +223,7 @@ export class UsersService {
     // FRONTEND RESET URL
     // ========================================================
 
-    const resetUrl = `http://localhost:5173/home/login/forgotpassword/setpassword?token=${resetToken}`;
+    const resetUrl = `https://wegrow-connect-frontend.vercel.app/home/login/forgotpassword/setpassword?token=${resetToken}`;
 
     // ========================================================
     // SEND EMAIL
