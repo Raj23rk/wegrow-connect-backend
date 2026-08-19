@@ -2388,4 +2388,117 @@ export class NotificationsService {
       },
     };
   }
+
+  // ============================================================
+  // CERTIFICATE ISSUED NOTIFICATION
+  // ============================================================
+
+  async createCertificateNotification(
+    userId: string,
+    eventId: string,
+    eventTitle: string,
+    recipientName: string,
+  ) {
+    return this.createNotification({
+      userId,
+
+      title: 'Certificate Issued 🎓',
+
+      message: `Hi ${recipientName}, your certificate for "${eventTitle}" is ready! Visit your dashboard to download it.`,
+
+      type: NotificationType.CERTIFICATE_ISSUED,
+
+      eventId,
+    });
+  }
+
+  // ============================================================
+  // SEND CERTIFICATE EMAIL
+  // ============================================================
+
+  async sendCertificateEmail(
+    email: string,
+    name: string,
+    eventTitle: string,
+    certificateNumber: string,
+    issuedDate: string,
+  ): Promise<boolean> {
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Your Certificate is Ready</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: #f5f5f5; font-family: Arial, sans-serif; }
+    .wrapper { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 10px; overflow: hidden; }
+    .header { background: #205894; color: #ffffff; padding: 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 26px; }
+    .header p { margin: 8px 0 0; font-size: 14px; opacity: 0.85; }
+    .orange-bar { height: 5px; background: #f5a51b; }
+    .body { padding: 32px 36px; }
+    .body h2 { color: #205894; margin: 0 0 16px; font-size: 20px; }
+    .body p { color: #444; font-size: 15px; line-height: 1.7; margin: 0 0 14px; }
+    .cert-box { background: #f0f4ff; border: 1px solid #c7d7f5; border-left: 5px solid #205894; padding: 20px 24px; border-radius: 4px; margin: 20px 0; }
+    .cert-box p { margin: 5px 0; font-size: 14px; color: #333; }
+    .cert-box strong { color: #205894; }
+    .btn { display: inline-block; background: #205894; color: #ffffff; padding: 13px 28px; text-decoration: none; border-radius: 6px; font-size: 15px; margin: 16px 0; }
+    .footer { background: #f8fafc; padding: 18px 36px; text-align: center; font-size: 12px; color: #888; border-top: 1px solid #e5e7eb; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>WeGrow Skill Campus</h1>
+      <p>Your Certificate is Ready 🎓</p>
+    </div>
+    <div class="orange-bar"></div>
+    <div class="body">
+      <h2>Congratulations, ${name}!</h2>
+      <p>We are delighted to inform you that your participation certificate has been issued. You can now download it from your dashboard.</p>
+      <div class="cert-box">
+        <p><strong>Event:</strong> ${eventTitle}</p>
+        <p><strong>Certificate No:</strong> ${certificateNumber}</p>
+        <p><strong>Issued On:</strong> ${issuedDate}</p>
+      </div>
+      <p>Log in to your WeGrow Connect dashboard and navigate to <strong>My Certificates</strong> to download your certificate.</p>
+      <p>Regards,<br/><strong>WeGrow Skill Campus Team</strong></p>
+    </div>
+    <div class="footer">© ${new Date().getFullYear()} WeGrow Skill Campus. All rights reserved.</div>
+  </div>
+</body>
+</html>`;
+
+    return this.sendEmail(
+      email,
+      `Your Certificate for "${eventTitle}" is Ready 🎓`,
+      html,
+    );
+  }
+
+  // ============================================================
+  // SUBSCRIPTION ACTIVATED NOTIFICATION
+  // ============================================================
+
+  async createSubscriptionActivatedNotification(
+    userId: string,
+    planName: string,
+    endDate: Date,
+  ) {
+    const formattedEnd = endDate.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+
+    return this.createNotification({
+      userId,
+
+      title: 'Subscription Activated ✅',
+
+      message: `Your "${planName}" subscription is now active and valid until ${formattedEnd}.`,
+
+      type: NotificationType.SUBSCRIPTION_ACTIVATED,
+    });
+  }
 }
+

@@ -11,6 +11,9 @@ import { EventsModule } from './events/events.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ContactModule } from './contact/contact.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { CertificatesModule } from './certificates/certificates.module';
+import { InvoicesModule } from './invoices/invoices.module';
 
 @Module({
   imports: [
@@ -50,7 +53,18 @@ import { ContactModule } from './contact/contact.module';
     BookingsModule,
 
     NotificationsModule,
+
     ContactModule,
+
+    // ============================================================
+    // NEW MODULES
+    // ============================================================
+
+    SubscriptionsModule,
+
+    CertificatesModule,
+
+    InvoicesModule,
   ],
 
   controllers: [AppController],
@@ -58,3 +72,4 @@ import { ContactModule } from './contact/contact.module';
   providers: [AppService],
 })
 export class AppModule {}
+
