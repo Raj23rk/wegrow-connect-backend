@@ -4,6 +4,15 @@ import { HydratedDocument } from 'mongoose';
 export type SubscriptionPlanDocument = HydratedDocument<SubscriptionPlan>;
 
 // ============================================================
+// PLAN TYPE ENUM
+// ============================================================
+
+export enum PlanType {
+  STUDENT = 'STUDENT',
+  BUSINESS = 'BUSINESS',
+}
+
+// ============================================================
 // SUBSCRIPTION PLAN SCHEMA
 // ============================================================
 
@@ -15,6 +24,15 @@ export class SubscriptionPlan {
 
   @Prop({ required: true, trim: true })
   name!: string;
+
+  @Prop({
+    type: String,
+    enum: PlanType,
+    required: true,
+    default: PlanType.STUDENT,
+    index: true,
+  })
+  type!: PlanType;
 
   @Prop({ trim: true })
   description?: string;
@@ -43,7 +61,7 @@ export class SubscriptionPlan {
   // STATUS
   // ============================================================
 
-  @Prop({ default: true })
+  @Prop({ default: true, index: true })
   isActive!: boolean;
 }
 

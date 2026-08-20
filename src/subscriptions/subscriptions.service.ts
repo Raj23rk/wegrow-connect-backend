@@ -14,6 +14,7 @@ import Razorpay from 'razorpay';
 import {
   SubscriptionPlan,
   SubscriptionPlanDocument,
+  PlanType,
 } from './schemas/subscription-plan.schema';
 
 import {
@@ -62,6 +63,7 @@ export class SubscriptionsService {
     try {
       const plan = await this.planModel.create({
         name: dto.name,
+        type: dto.type || PlanType.STUDENT,
         description: dto.description,
         features: dto.features || [],
         price: dto.price,
@@ -70,7 +72,7 @@ export class SubscriptionsService {
         isActive: dto.isActive !== undefined ? dto.isActive : true,
       });
 
-      this.logger.log(`Subscription plan created: ${plan._id}`);
+      this.logger.log(`Subscription plan created: ${plan._id} (${plan.type})`);
 
       return { success: true, plan };
     } catch (error) {
@@ -103,16 +105,38 @@ export class SubscriptionsService {
   }
 
   // ============================================================
-  // GET ALL PLANS (PUBLIC)
+  // GET ALL PLANS (PUBLIC / FILTERED BY TYPE)
   // ============================================================
 
-  async getAllPlans() {
+  async getAllPlans(type?: string) {
+    const filter: any = { isActive: true };
+
+    if (type && type.trim()) {
+      filter.type = type.trim().toUpperCase();
+    }
+
     const plans = await this.planModel
-      .find({ isActive: true })
+      .find(filter)
       .sort({ price: 1 })
       .lean();
 
     return { success: true, plans };
+  }
+
+  // ============================================================
+  // GET STUDENT PLANS
+  // ============================================================
+
+  async getStudentPlans() {
+    return this.getAllPlans(PlanType.STUDENT);
+  }
+
+  // ============================================================
+  // GET BUSINESS PLANS
+  // ============================================================
+
+  async getBusinessPlans() {
+    return this.getAllPlans(PlanType.BUSINESS);
   }
 
   // ============================================================

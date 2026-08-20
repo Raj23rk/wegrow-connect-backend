@@ -5,20 +5,30 @@ import {
   IsArray,
   Min,
   IsBoolean,
+  IsEnum,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PlanType } from '../schemas/subscription-plan.schema';
 
 export class CreatePlanDto {
-  @ApiProperty({ example: 'Monthly Plan' })
+  @ApiProperty({ example: 'Student Monthly Plan' })
   @IsString()
   name!: string;
 
-  @ApiPropertyOptional({ example: 'Access all features for 30 days' })
+  @ApiProperty({
+    enum: PlanType,
+    example: PlanType.STUDENT,
+    description: 'Target plan type: STUDENT or BUSINESS',
+  })
+  @IsEnum(PlanType)
+  type!: PlanType;
+
+  @ApiPropertyOptional({ example: 'Access all student features for 30 days' })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ example: ['Unlimited events', 'Certificate access'] })
+  @ApiPropertyOptional({ example: ['Unlimited workshops', 'Certificate access'] })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
