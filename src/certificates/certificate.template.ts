@@ -1,370 +1,831 @@
 // ============================================================
 // CERTIFICATE HTML TEMPLATE
 //
-// Generates a professional event completion certificate.
-// Used by CertificatesService to render HTML → PDF via puppeteer.
+// Generates the exact HTML template requested by the user.
+// Can be rendered on frontend or exported on backend.
 // ============================================================
 
 export interface CertificateTemplateData {
-  certificateNumber: string;
+  certificateNumber?: string;
   recipientName: string;
   eventTitle: string;
-  eventDate: string;
-  issuedDate: string;
+  description?: string;
+  grade?: string;
+  startYear?: string;
+  endYear?: string;
+  eventDate?: string;
+  issuedDate?: string;
+  logoUrl?: string;
 }
 
 export function generateCertificateHtml(data: CertificateTemplateData): string {
+  const recipientName = data.recipientName || 'Participant';
+  const eventTitle = data.eventTitle || 'Event / Course';
+  const description =
+    data.description ||
+    'Has demonstrated strong proficiency in responsive design, UI design, and front-end development through full event participation.';
+  const grade = data.grade || 'A+';
+  const startYear = data.startYear || '2026';
+  const endYear = data.endYear || '2026';
+  const logoUrl = data.logoUrl || 'https://via.placeholder.com/260x80?text=B+School+Logo';
+
   return `<!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Certificate - ${data.eventTitle}</title>
-  <style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    /* ============================================================
-       RESET & BASE
-       ============================================================ */
+    <title>Certificate of Completion - ${recipientName}</title>
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    <!-- Bootstrap 5 -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <!-- Google Font -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <style>
+/* =========================================
+   BASIC
+========================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 30px;
+
+    background: #eeeeee;
+
+    font-family: "Montserrat", Arial, sans-serif;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    min-height: 100vh;
+}
+
+
+/* =========================================
+   CERTIFICATE
+========================================= */
+
+.certificate {
+    position: relative;
+
+    width: 1450px;
+    height: 1025px;
+
+    background: white;
+
+    overflow: hidden;
+
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+}
+
+
+/* =========================================
+   TOP BLUE
+========================================= */
+
+.top-blue {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 370px;
+    height: 270px;
+
+    background: #155da5;
+
+    clip-path: polygon(
+        0 0,
+        100% 0,
+        100% 22%,
+        0 100%
+    );
+}
+
+
+/* =========================================
+   TOP ORANGE
+========================================= */
+
+.top-orange {
+    position: absolute;
+
+    top: 0;
+    left: 235px;
+
+    width: 650px;
+    height: 75px;
+
+    background: #f6a500;
+
+    clip-path: polygon(
+        0 0,
+        100% 0,
+        25% 100%
+    );
+}
+
+
+/* =========================================
+   LEFT ORANGE
+========================================= */
+
+.left-orange {
+    position: absolute;
+
+    top: 240px;
+    left: 0;
+
+    width: 100px;
+    height: 215px;
+
+    background: #f6a500;
+
+    clip-path: polygon(
+        0 0,
+        100% 100%,
+        0 100%
+    );
+}
+
+
+/* =========================================
+   YOUR LOGO
+========================================= */
+
+.my-logo {
+    position: absolute;
+
+    top: 35px;
+    right: 55px;
+
+    width: 260px;
+
+    z-index: 30;
+}
+
+.my-logo img {
+    width: 100%;
+    height: auto;
+
+    display: block;
+}
+
+
+/* =========================================
+   MEDAL
+========================================= */
+
+.medal {
+    position: absolute;
+
+    top: 85px;
+    left: 70px;
+
+    width: 180px;
+    height: 300px;
+
+    z-index: 20;
+}
+
+
+/* =========================================
+   MEDAL CIRCLE
+========================================= */
+
+.medal-circle {
+    width: 155px;
+    height: 155px;
+
+    border-radius: 50%;
+
+    background: #ffdc4b;
+
+    border: 15px solid #f4b41b;
+
+    outline: 7px solid #ffd969;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    box-shadow:
+        0 0 0 5px #e9a915;
+}
+
+
+/* =========================================
+   MEDAL INNER
+========================================= */
+
+.medal-inner {
+    width: 105px;
+    height: 105px;
+
+    border-radius: 50%;
+
+    border: 5px solid white;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    color: white;
+
+    font-size: 55px;
+}
+
+
+/* =========================================
+   MEDAL RIBBONS
+========================================= */
+
+.ribbon {
+    position: absolute;
+
+    top: 130px;
+
+    width: 60px;
+    height: 165px;
+
+    background: #ffca28;
+
+    clip-path: polygon(
+        0 0,
+        100% 0,
+        100% 100%,
+        50% 75%,
+        0 100%
+    );
+}
+
+.ribbon-left {
+    left: 12px;
+
+    transform: rotate(15deg);
+}
+
+.ribbon-right {
+    right: 18px;
+
+    transform: rotate(-15deg);
+}
+
+
+/* =========================================
+   WATERMARK
+========================================= */
+
+.watermark {
+    position: absolute;
+
+    top: 400px;
+    left: 400px;
+
+    width: 650px;
+
+    text-align: center;
+
+    font-size: 100px;
+
+    font-weight: 900;
+
+    color: #155da5;
+
+    opacity: 0.07;
+
+    z-index: 1;
+}
+
+
+/* =========================================
+   MAIN CONTENT
+========================================= */
+
+.certificate-content {
+    position: absolute;
+
+    top: 135px;
+
+    left: 340px;
+
+    right: 140px;
+
+    text-align: center;
+
+    z-index: 10;
+}
+
+
+/* =========================================
+   CERTIFICATE TITLE
+========================================= */
+
+.certificate-title {
+    margin: 0;
+
+    font-size: 82px;
+
+    font-weight: 900;
+
+    letter-spacing: 9px;
+
+    color: #252525;
+}
+
+
+/* =========================================
+   COMPLETION TITLE
+========================================= */
+
+.completion-title {
+    margin-top: 22px;
+
+    font-size: 42px;
+
+    font-weight: 800;
+
+    letter-spacing: 2px;
+
+    color: #382f2f;
+}
+
+
+/* =========================================
+   CERTIFY
+========================================= */
+
+.certify-title {
+    margin-top: 50px;
+
+    font-size: 27px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    color: #3b3333;
+}
+
+
+/* =========================================
+   STUDENT NAME
+========================================= */
+
+.student-name {
+    width: 740px;
+
+    height: 55px;
+
+    margin: 25px auto 18px;
+
+    border-bottom: 2px solid #333;
+
+    font-size: 29px;
+
+    font-weight: 700;
+
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+/* =========================================
+   COURSE HEADING
+========================================= */
+
+.course-heading {
+    margin: 0;
+
+    font-size: 22px;
+
+    font-weight: 800;
+
+    color: #3d3434;
+}
+
+
+/* =========================================
+   COURSE BOX
+========================================= */
+
+.course-box {
+    width: 560px;
+
+    margin: 14px auto;
+
+    padding: 13px;
+
+    border: 2px solid #333;
+
+    border-radius: 20px;
+
+    font-size: 24px;
+
+    font-weight: 700;
+
+    color: #333;
+}
+
+
+/* =========================================
+   PERIOD
+========================================= */
+
+.period-heading {
+    margin: 10px 0 5px;
+
+    font-size: 22px;
+
+    font-weight: 800;
+
+    color: #3d3434;
+}
+
+
+/* =========================================
+   DATES
+========================================= */
+
+.dates {
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    gap: 12px;
+
+    font-size: 27px;
+
+    font-weight: 900;
+
+    color: #155da5;
+}
+
+.date {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.date-line {
+    display: block;
+
+    width: 110px;
+
+    height: 1px;
+
+    background: #777;
+}
+
+.dash {
+    font-size: 32px;
+}
+
+
+/* =========================================
+   DESCRIPTION
+========================================= */
+
+.description {
+    width: 1000px;
+
+    max-width: 100%;
+
+    margin: 12px auto 0;
+
+    font-size: 17px;
+
+    line-height: 1.45;
+
+    font-weight: 600;
+
+    color: #443b3b;
+}
+
+
+/* =========================================
+   GRADE
+========================================= */
+
+.grade {
+    margin-top: 8px;
+
+    font-size: 26px;
+
+    font-weight: 900;
+
+    color: #155da5;
+}
+
+
+/* =========================================
+   SIGNATURES
+========================================= */
+
+.signature-area {
+    position: absolute;
+
+    left: 280px;
+    right: 280px;
+
+    bottom: 105px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    z-index: 20;
+}
+
+.signature-box {
+    width: 300px;
+
+    text-align: center;
+}
+
+.signature-space {
+    height: 50px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 40px;
+
+    color: #277d3e;
+}
+
+.signature-line {
+    width: 300px;
+
+    border-top: 2px solid #333;
+}
+
+.signature-box p {
+    margin-top: 8px;
+
+    font-size: 20px;
+
+    font-weight: 700;
+
+    color: #3b3333;
+}
+
+
+/* =========================================
+   BOTTOM ORANGE
+========================================= */
+
+.bottom-orange {
+    position: absolute;
+
+    bottom: 0;
+    left: 0;
+
+    width: 100%;
+    height: 90px;
+
+    background: #f6a500;
+
+    clip-path: polygon(
+        0 80%,
+        100% 0,
+        100% 100%,
+        0 100%
+    );
+}
+
+
+/* =========================================
+   BOTTOM BLUE
+========================================= */
+
+.bottom-blue {
+    position: absolute;
+
+    bottom: 0;
+    right: 0;
+
+    width: 920px;
+    height: 110px;
+
+    background: #155da5;
+
+    clip-path: polygon(
+        28% 100%,
+        100% 0,
+        100% 100%
+    );
+}
+
+
+/* =========================================
+   PRINT
+========================================= */
+
+@media print {
+
+    body {
+        margin: 0;
+        padding: 0;
+
+        background: white;
     }
-
-    html, body {
-      width: 1123px;
-      height: 794px;
-      font-family: 'Georgia', 'Times New Roman', serif;
-      background: #ffffff;
-      overflow: hidden;
-    }
-
-    /* ============================================================
-       CERTIFICATE WRAPPER
-       ============================================================ */
 
     .certificate {
-      width: 1123px;
-      height: 794px;
-      position: relative;
-      background: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+        width: 1450px;
+        height: 1025px;
+
+        box-shadow: none;
     }
 
-    /* ============================================================
-       OUTER BORDER
-       ============================================================ */
-
-    .outer-border {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
-      bottom: 14px;
-      border: 6px solid #205894;
+    @page {
+        size: landscape;
+        margin: 0;
     }
-
-    .inner-border {
-      position: absolute;
-      top: 24px;
-      left: 24px;
-      right: 24px;
-      bottom: 24px;
-      border: 2px solid #f5a51b;
-    }
-
-    /* ============================================================
-       CORNER ORNAMENTS
-       ============================================================ */
-
-    .corner {
-      position: absolute;
-      width: 48px;
-      height: 48px;
-      border-color: #f5a51b;
-      border-style: solid;
-    }
-
-    .corner-tl { top: 10px; left: 10px; border-width: 4px 0 0 4px; }
-    .corner-tr { top: 10px; right: 10px; border-width: 4px 4px 0 0; }
-    .corner-bl { bottom: 10px; left: 10px; border-width: 0 0 4px 4px; }
-    .corner-br { bottom: 10px; right: 10px; border-width: 0 4px 4px 0; }
-
-    /* ============================================================
-       HEADER STRIPE
-       ============================================================ */
-
-    .header-stripe {
-      background: #205894;
-      width: 100%;
-      padding: 14px 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: absolute;
-      top: 0;
-    }
-
-    .org-name {
-      color: #ffffff;
-      font-size: 22px;
-      font-weight: bold;
-      letter-spacing: 2px;
-      font-family: Arial, sans-serif;
-    }
-
-    .cert-no {
-      color: #f5a51b;
-      font-size: 12px;
-      font-family: Arial, sans-serif;
-      letter-spacing: 1px;
-    }
-
-    /* ============================================================
-       BODY
-       ============================================================ */
-
-    .body {
-      margin-top: 80px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 0 80px;
-      text-align: center;
-    }
-
-    .cert-label {
-      font-size: 13px;
-      letter-spacing: 8px;
-      color: #205894;
-      text-transform: uppercase;
-      font-family: Arial, sans-serif;
-      margin-bottom: 6px;
-    }
-
-    .cert-title {
-      font-size: 52px;
-      color: #205894;
-      font-weight: bold;
-      letter-spacing: 4px;
-      line-height: 1;
-      margin-bottom: 8px;
-    }
-
-    .cert-subtitle {
-      font-size: 13px;
-      letter-spacing: 6px;
-      color: #888;
-      text-transform: uppercase;
-      font-family: Arial, sans-serif;
-      margin-bottom: 22px;
-    }
-
-    .divider {
-      width: 200px;
-      height: 2px;
-      background: linear-gradient(to right, transparent, #f5a51b, transparent);
-      margin-bottom: 22px;
-    }
-
-    .presented-to {
-      font-size: 14px;
-      color: #555;
-      letter-spacing: 3px;
-      font-family: Arial, sans-serif;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-
-    .recipient-name {
-      font-size: 46px;
-      color: #1a1a1a;
-      font-style: italic;
-      font-weight: bold;
-      margin-bottom: 16px;
-      position: relative;
-    }
-
-    .recipient-name::after {
-      content: '';
-      display: block;
-      width: 80%;
-      margin: 8px auto 0;
-      height: 1px;
-      background: #205894;
-    }
-
-    .completion-text {
-      font-size: 15px;
-      color: #444;
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      max-width: 660px;
-      margin-bottom: 10px;
-    }
-
-    .event-name {
-      font-size: 22px;
-      color: #205894;
-      font-weight: bold;
-      font-family: Arial, sans-serif;
-      margin-bottom: 6px;
-    }
-
-    .event-date-text {
-      font-size: 13px;
-      color: #666;
-      font-family: Arial, sans-serif;
-      margin-bottom: 28px;
-    }
-
-    /* ============================================================
-       FOOTER
-       ============================================================ */
-
-    .footer {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      padding: 14px 80px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-    }
-
-    .sig-block {
-      text-align: center;
-    }
-
-    .sig-line {
-      width: 160px;
-      height: 1px;
-      background: #205894;
-      margin-bottom: 6px;
-    }
-
-    .sig-label {
-      font-size: 11px;
-      color: #555;
-      font-family: Arial, sans-serif;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .seal {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      border: 4px solid #205894;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: #f5f9ff;
-    }
-
-    .seal-text {
-      font-size: 9px;
-      color: #205894;
-      font-family: Arial, sans-serif;
-      font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      text-align: center;
-      line-height: 1.4;
-    }
-
-    .issued-date {
-      font-size: 11px;
-      color: #888;
-      font-family: Arial, sans-serif;
-      margin-top: 4px;
-    }
-
-    /* ============================================================
-       BOTTOM STRIPE
-       ============================================================ */
-
-    .bottom-stripe {
-      position: absolute;
-      bottom: 0;
-      height: 8px;
-      width: 100%;
-      background: linear-gradient(to right, #205894, #f5a51b, #205894);
-    }
-
-  </style>
+}
+</style>
 </head>
+
 <body>
 
-<div class="certificate">
+    <div class="certificate">
 
-  <!-- CORNER ORNAMENTS -->
-  <div class="corner corner-tl"></div>
-  <div class="corner corner-tr"></div>
-  <div class="corner corner-bl"></div>
-  <div class="corner corner-br"></div>
+        <!-- ================= TOP DESIGN ================= -->
 
-  <!-- OUTER + INNER BORDERS -->
-  <div class="outer-border"></div>
-  <div class="inner-border"></div>
+        <div class="top-blue"></div>
+        <div class="top-orange"></div>
+        <div class="left-orange"></div>
 
-  <!-- HEADER STRIPE -->
-  <div class="header-stripe">
-    <span class="org-name">WeGrow Skill Campus</span>
-    <span class="cert-no">CERTIFICATE NO: ${data.certificateNumber}</span>
-  </div>
 
-  <!-- BODY -->
-  <div class="body">
-    <p class="cert-label">Proudly Presents</p>
-    <h1 class="cert-title">Certificate</h1>
-    <p class="cert-subtitle">of Participation</p>
+        <!-- ================= YOUR LOGO ================= -->
 
-    <div class="divider"></div>
+        <div class="my-logo">
+            <img
+                src="${logoUrl}"
+                alt="B School Logo">
+        </div>
 
-    <p class="presented-to">This is to certify that</p>
 
-    <h2 class="recipient-name">${data.recipientName}</h2>
+        <!-- ================= MEDAL ================= -->
 
-    <p class="completion-text">
-      has successfully participated and completed in the event
-    </p>
+        <div class="medal">
 
-    <p class="event-name">${data.eventTitle}</p>
-    <p class="event-date-text">held on ${data.eventDate}</p>
-  </div>
+            <div class="medal-circle">
+                <div class="medal-inner">
+                    ★
+                </div>
+            </div>
 
-  <!-- FOOTER -->
-  <div class="footer">
+            <div class="ribbon ribbon-left"></div>
+            <div class="ribbon ribbon-right"></div>
 
-    <div class="sig-block">
-      <div class="sig-line"></div>
-      <p class="sig-label">Programme Director</p>
-      <p class="issued-date">WeGrow Skill Campus</p>
+        </div>
+
+
+        <!-- ================= WATERMARK ================= -->
+
+        <div class="watermark">
+            B SCHOOL
+        </div>
+
+
+        <!-- ================= MAIN CONTENT ================= -->
+
+        <div class="certificate-content">
+
+            <h1 class="certificate-title">
+                CERTIFICATE
+            </h1>
+
+            <h2 class="completion-title">
+                OF COMPLETION
+            </h2>
+
+            <h3 class="certify-title">
+                THIS IS TO CERTIFY THAT
+            </h3>
+
+
+            <!-- Student Name -->
+
+            <div class="student-name">
+                ${recipientName}
+            </div>
+
+
+            <!-- Course -->
+
+            <p class="course-heading">
+                HAS SUCCESSFULLY COMPLETED THE COURSE
+            </p>
+
+            <div class="course-box">
+                ${eventTitle}
+            </div>
+
+
+            <!-- Period -->
+
+            <p class="period-heading">
+                DURING THE PERIOD
+            </p>
+
+
+            <!-- Dates -->
+
+            <div class="dates">
+
+                <div class="date">
+                    <span class="date-line"></span>
+                    <span>${startYear}</span>
+                </div>
+
+                <span class="dash">–</span>
+
+                <div class="date">
+                    <span>${endYear}</span>
+                    <span class="date-line"></span>
+                </div>
+
+            </div>
+
+
+            <!-- Description -->
+
+            <p class="description">
+                ${description}
+            </p>
+
+
+            <!-- Grade -->
+
+            <div class="grade">
+                WITH GRADE ${grade}
+            </div>
+
+        </div>
+
+
+        <!-- ================= SIGNATURES ================= -->
+
+        <div class="signature-area">
+
+            <div class="signature-box">
+
+                <div class="signature-space"></div>
+
+                <div class="signature-line"></div>
+
+                <p>
+                    Founder
+                </p>
+
+            </div>
+
+
+            <div class="signature-box">
+
+                <div class="signature-space"></div>
+
+                <div class="signature-line"></div>
+
+                <p>
+                    Branch Manager
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= BOTTOM DESIGN ================= -->
+
+        <div class="bottom-orange"></div>
+
+        <div class="bottom-blue"></div>
+
     </div>
-
-    <div class="seal">
-      <p class="seal-text">WeGrow<br/>Skill<br/>Campus</p>
-    </div>
-
-    <div class="sig-block">
-      <div class="sig-line"></div>
-      <p class="sig-label">Issued On</p>
-      <p class="issued-date">${data.issuedDate}</p>
-    </div>
-
-  </div>
-
-  <!-- BOTTOM STRIPE -->
-  <div class="bottom-stripe"></div>
-
-</div>
 
 </body>
 </html>`;

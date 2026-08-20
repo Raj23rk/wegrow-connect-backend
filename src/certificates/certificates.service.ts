@@ -1,6 +1,7 @@
 import {
   Injectable,
   NotFoundException,
+  BadRequestException,
   InternalServerErrorException,
   Logger,
   ForbiddenException,
@@ -8,11 +9,11 @@ import {
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import * as path from 'path';
-import * as fs from 'fs';
-import puppeteer from 'puppeteer';
 
-import { Certificate, CertificateDocument } from './schemas/certificate.schema';
+import {
+  Certificate,
+  CertificateDocument,
+} from './schemas/certificate.schema';
 
 import {
   Booking,
@@ -24,13 +25,15 @@ import { Event, EventDocument } from '../events/schemas/event.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { NotificationsService } from '../notifications/notifications.service';
 
-import { generateCertificateHtml } from './certificate.template';
+import {
+  generateCertificateHtml,
+  CertificateTemplateData,
+} from './certificate.template';
+import { CreateCertificateDto } from './dto/create-certificate.dto';
 
 @Injectable()
 export class CertificatesService {
   private readonly logger = new Logger(CertificatesService.name);
-
-  private readonly certDir: string;
 
   constructor(
     @InjectModel(Certificate.name)
@@ -46,32 +49,17 @@ export class CertificatesService {
     private readonly userModel: Model<UserDocument>,
 
     private readonly notificationsService: NotificationsService,
-  ) {
-    // --------------------------------------------------------
-    // ENSURE CERTIFICATE DIRECTORY EXISTS
-    // --------------------------------------------------------
-
-    this.certDir = path.resolve(
-      process.env.CERTIFICATES_PATH || './uploads/certificates',
-    );
-
-    if (!fs.existsSync(this.certDir)) {
-      fs.mkdirSync(this.certDir, { recursive: true });
-      this.logger.log(`Created certificate directory: ${this.certDir}`);
-    }
-  }
+  ) {}
 
   // ============================================================
   // GENERATE UNIQUE CERTIFICATE NUMBER
+  // Format: WEGROW-YYYY-XXXXX
   // ============================================================
 
   private async generateCertNumber(): Promise<string> {
     const year = new Date().getFullYear();
-
     const count = await this.certificateModel.countDocuments();
-
     const serial = String(count + 1).padStart(5, '0');
-
     return `WEGROW-${year}-${serial}`;
   }
 
@@ -88,29 +76,115 @@ export class CertificatesService {
   }
 
   // ============================================================
-  // GENERATE PDF FROM HTML
+  // ADMIN: CREATE SINGLE CERTIFICATE FOR A USER
   // ============================================================
 
-  private async generatePdf(html: string, outputPath: string): Promise<void> {
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-
+  async createSingleCertificate(dto: CreateCertificateDto) {
     try {
-      const page = await browser.newPage();
+      if (!dto.userId || !Types.ObjectId.isValid(dto.userId)) {
+        throw new BadRequestException('Invalid user ID');
+      }
 
-      await page.setContent(html, { waitUntil: 'domcontentloaded' });
+      if (!dto.eventId || !Types.ObjectId.isValid(dto.eventId)) {
+        throw new BadRequestException('Invalid event ID');
+      }
 
-      await page.pdf({
-        path: outputPath,
-        width: '1123px',
-        height: '794px',
-        printBackground: true,
-        margin: { top: '0', right: '0', bottom: '0', left: '0' },
-      });
-    } finally {
-      await browser.close();
+      const user = await this.userModel.findById(dto.userId).lean();
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const event = await this.eventModel.findById(dto.eventId).lean();
+      if (!event) {
+        throw new NotFoundException('Event not found');
+      }
+
+      const recipientName =
+        dto.recipientName ||
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+        'Participant';
+
+      const eventTitle = dto.eventTitle || event.title;
+      const certNumber = await this.generateCertNumber();
+
+      const eventDate = dto.eventDate ? new Date(dto.eventDate) : event.date || new Date();
+      const issuedDate = dto.issuedDate ? new Date(dto.issuedDate) : new Date();
+
+      const certificateData: any = {
+        userId: new Types.ObjectId(dto.userId),
+        eventId: new Types.ObjectId(dto.eventId),
+        bookingId:
+          dto.bookingId && Types.ObjectId.isValid(dto.bookingId)
+            ? new Types.ObjectId(dto.bookingId)
+            : undefined,
+        certificateNumber: certNumber,
+        recipientName,
+        eventTitle,
+        description:
+          dto.description ||
+          'Has demonstrated strong proficiency in responsive design, UI design, and front-end development through full event participation.',
+        grade: dto.grade || 'A+',
+        startYear: dto.startYear || String(new Date(eventDate).getFullYear()),
+        endYear: dto.endYear || String(new Date(eventDate).getFullYear()),
+        eventDate,
+        issuedDate,
+        isDownloaded: false,
+        isActive: true,
+      };
+
+      const certificate = await this.certificateModel.create(certificateData);
+
+      // Send notification
+      try {
+        await this.notificationsService.createCertificateNotification(
+          dto.userId,
+          dto.eventId,
+          eventTitle,
+          recipientName,
+        );
+      } catch (err) {
+        this.logger.error(
+          `Failed to create notification for user ${dto.userId}`,
+          err instanceof Error ? err.stack : String(err),
+        );
+      }
+
+      // Send email if user has email
+      if (user.email) {
+        this.notificationsService
+          .sendCertificateEmail(
+            user.email,
+            recipientName,
+            eventTitle,
+            certNumber,
+            this.formatDate(issuedDate),
+          )
+          .catch((err) => {
+            this.logger.error(
+              `Failed to send certificate email to ${user.email}`,
+              err instanceof Error ? err.stack : String(err),
+            );
+          });
+      }
+
+      const populated = await this.certificateModel
+        .findById((certificate as any)._id)
+        .populate('userId', 'firstName lastName email phone name role')
+        .populate('eventId', 'title description image location date price type')
+        .populate('bookingId', 'status isActive createdAt')
+        .lean();
+
+      return populated;
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        error instanceof Error ? error.message : 'Failed to create certificate',
+      );
     }
   }
 
@@ -121,37 +195,28 @@ export class CertificatesService {
 
   async generateCertificatesForEvent(eventId: string) {
     try {
-      // --------------------------------------------------------
-      // 1. FIND EVENT
-      // --------------------------------------------------------
-
       if (!Types.ObjectId.isValid(eventId)) {
-        throw new NotFoundException('Invalid event ID');
+        throw new BadRequestException('Invalid event ID');
       }
 
       const event = await this.eventModel.findById(eventId);
-
       if (!event) {
         throw new NotFoundException('Event not found');
       }
 
-      // --------------------------------------------------------
-      // 2. FIND ALL CONFIRMED BOOKINGS FOR THIS EVENT
-      // --------------------------------------------------------
-
+      // Find all confirmed or active bookings for this event
       const bookings = await this.bookingModel
         .find({
           event: new Types.ObjectId(eventId),
-          status: BookingStatus.CONFIRMED,
           isActive: true,
         })
-        .populate('user', 'firstName lastName email')
+        .populate('user', 'firstName lastName email phone name')
         .lean();
 
       if (bookings.length === 0) {
         return {
           success: true,
-          message: 'No confirmed attendees found for this event',
+          message: 'No attendees found for this event',
           generated: 0,
           certificates: [],
         };
@@ -161,31 +226,30 @@ export class CertificatesService {
         `Generating certificates for ${bookings.length} attendees of event: ${event.title}`,
       );
 
-      // --------------------------------------------------------
-      // 3. GENERATE CERTIFICATE FOR EACH ATTENDEE
-      // --------------------------------------------------------
-
       const generated: any[] = [];
       const failed: any[] = [];
 
       for (const booking of bookings) {
         try {
           const user = booking.user as any;
-
           if (!user) continue;
 
           const userName =
+            user.name ||
             `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
             'Participant';
 
-          // Check if certificate already issued for this booking
+          // Check if certificate already exists for this booking/user for event
           const existing = await this.certificateModel.findOne({
-            bookingId: booking._id,
+            userId: user._id,
+            eventId: new Types.ObjectId(eventId),
+            isActive: true,
           });
 
           if (existing) {
             generated.push({
               certificateId: existing._id,
+              certificateNumber: existing.certificateNumber,
               userId: user._id,
               name: userName,
               status: 'already_exists',
@@ -193,32 +257,9 @@ export class CertificatesService {
             continue;
           }
 
-          // Generate unique certificate number
           const certNumber = await this.generateCertNumber();
+          const yearStr = String(new Date(event.date || Date.now()).getFullYear());
 
-          // Dates
-          const eventDate = this.formatDate(event.date);
-          const issuedDate = this.formatDate(new Date());
-
-          // Generate HTML
-          const html = generateCertificateHtml({
-            certificateNumber: certNumber,
-            recipientName: userName,
-            eventTitle: event.title,
-            eventDate,
-            issuedDate,
-          });
-
-          // File path
-          const fileName = `${certNumber}.pdf`;
-          const filePath = path.join(this.certDir, fileName);
-
-          // Generate PDF
-          await this.generatePdf(html, filePath);
-
-          this.logger.log(`Certificate PDF generated: ${fileName}`);
-
-          // Save to DB
           const certificate = await this.certificateModel.create({
             userId: new Types.ObjectId(user._id.toString()),
             eventId: new Types.ObjectId(eventId),
@@ -226,14 +267,18 @@ export class CertificatesService {
             certificateNumber: certNumber,
             recipientName: userName,
             eventTitle: event.title,
-            eventDate: event.date,
+            description:
+              'Has demonstrated strong proficiency in responsive design, UI design, and front-end development through full event participation.',
+            grade: 'A+',
+            startYear: yearStr,
+            endYear: yearStr,
+            eventDate: event.date || new Date(),
             issuedDate: new Date(),
-            filePath: filePath,
             isDownloaded: false,
             isActive: true,
           });
 
-          // Send in-app notification
+          // Send notification
           try {
             await this.notificationsService.createCertificateNotification(
               user._id.toString(),
@@ -243,12 +288,12 @@ export class CertificatesService {
             );
           } catch (err) {
             this.logger.error(
-              `Failed to send certificate notification to user ${user._id}`,
+              `Failed to send notification for ${user._id}`,
               err instanceof Error ? err.stack : String(err),
             );
           }
 
-          // Send email notification
+          // Send email
           if (user.email) {
             this.notificationsService
               .sendCertificateEmail(
@@ -256,11 +301,11 @@ export class CertificatesService {
                 userName,
                 event.title,
                 certNumber,
-                issuedDate,
+                this.formatDate(new Date()),
               )
               .catch((err) => {
                 this.logger.error(
-                  `Failed to send certificate email to ${user.email}`,
+                  `Failed to send email to ${user.email}`,
                   err instanceof Error ? err.stack : String(err),
                 );
               });
@@ -274,11 +319,6 @@ export class CertificatesService {
             status: 'generated',
           });
         } catch (innerErr) {
-          this.logger.error(
-            `Failed to generate certificate for booking ${booking._id}`,
-            innerErr instanceof Error ? innerErr.stack : String(innerErr),
-          );
-
           failed.push({
             bookingId: booking._id,
             error:
@@ -286,10 +326,6 @@ export class CertificatesService {
           });
         }
       }
-
-      // --------------------------------------------------------
-      // 4. RETURN SUMMARY
-      // --------------------------------------------------------
 
       return {
         success: true,
@@ -308,25 +344,25 @@ export class CertificatesService {
         errors: failed,
       };
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
-
       this.logger.error(
         'Failed to generate certificates',
         error instanceof Error ? error.stack : String(error),
       );
-
       throw new InternalServerErrorException('Failed to generate certificates');
     }
   }
 
   // ============================================================
-  // ADMIN: ALL CERTIFICATES
-  // GET /certificates
+  // ADMIN: FIND ALL CERTIFICATES (PAGINATED WITH SEARCH)
   // ============================================================
 
-  async findAll(page = 1, limit = 10, eventId?: string) {
+  async findAll(page = 1, limit = 10, search?: string, eventId?: string) {
     page = Math.max(Number(page) || 1, 1);
     limit = Math.min(Math.max(Number(limit) || 10, 1), 100);
 
@@ -336,113 +372,221 @@ export class CertificatesService {
       filter.eventId = new Types.ObjectId(eventId);
     }
 
-    const skip = (page - 1) * limit;
+    let certificates = await this.certificateModel
+      .find(filter)
+      .populate('userId', 'firstName lastName email phone name role')
+      .populate('eventId', 'title description image location date price type')
+      .populate('bookingId', 'status isActive createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
 
-    const [certificates, total] = await Promise.all([
-      this.certificateModel
-        .find(filter)
-        .populate('userId', 'firstName lastName email')
-        .populate('eventId', 'title date')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      this.certificateModel.countDocuments(filter),
-    ]);
+    // Format aliases and names
+    certificates = certificates.map((cert: any) => {
+      if (cert.userId) {
+        const firstName = cert.userId.firstName || '';
+        const lastName = cert.userId.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        cert.userId.name = cert.userId.name || fullName || cert.recipientName || 'User';
+        cert.user = cert.userId;
+      }
+      if (cert.eventId) {
+        cert.event = cert.eventId;
+      }
+      if (cert.bookingId) {
+        cert.booking = cert.bookingId;
+      }
+
+      // Attach generated HTML string for frontend rendering convenience
+      cert.html = generateCertificateHtml({
+        certificateNumber: cert.certificateNumber,
+        recipientName: cert.recipientName,
+        eventTitle: cert.eventTitle,
+        description: cert.description,
+        grade: cert.grade,
+        startYear: cert.startYear,
+        endYear: cert.endYear,
+        eventDate: this.formatDate(cert.eventDate),
+        issuedDate: this.formatDate(cert.issuedDate),
+      });
+
+      return cert;
+    });
+
+    if (search && search.trim()) {
+      const searchText = search.trim().toLowerCase();
+      certificates = certificates.filter((cert: any) => {
+        const recipient = cert.recipientName?.toLowerCase() || '';
+        const userName = cert.user?.name?.toLowerCase() || '';
+        const email = cert.user?.email?.toLowerCase() || '';
+        const certNum = cert.certificateNumber?.toLowerCase() || '';
+        const eventTitle = cert.eventTitle?.toLowerCase() || '';
+
+        return (
+          recipient.includes(searchText) ||
+          userName.includes(searchText) ||
+          email.includes(searchText) ||
+          certNum.includes(searchText) ||
+          eventTitle.includes(searchText)
+        );
+      });
+    }
+
+    const total = certificates.length;
+    const skip = (page - 1) * limit;
+    const paginatedCertificates = certificates.slice(skip, skip + limit);
 
     return {
       success: true,
-      certificates,
+      certificates: paginatedCertificates,
       pagination: {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: total === 0 ? 0 : Math.ceil(total / limit),
       },
     };
   }
 
   // ============================================================
-  // ADMIN: CERTIFICATES BY EVENT
-  // GET /certificates/event/:eventId
+  // USER (STUDENT / BUSINESS): MY CERTIFICATES
   // ============================================================
 
-  async findByEvent(eventId: string) {
-    if (!Types.ObjectId.isValid(eventId)) {
-      throw new NotFoundException('Invalid event ID');
+  async findMyCertificates(
+    userId: string,
+    page = 1,
+    limit = 10,
+    search?: string,
+  ) {
+    if (!userId || !Types.ObjectId.isValid(userId)) {
+      throw new BadRequestException('Invalid user ID');
     }
 
-    const certificates = await this.certificateModel
-      .find({ eventId: new Types.ObjectId(eventId), isActive: true })
-      .populate('userId', 'firstName lastName email')
+    page = Math.max(Number(page) || 1, 1);
+    limit = Math.min(Math.max(Number(limit) || 10, 1), 100);
+
+    const filter: any = {
+      userId: new Types.ObjectId(userId),
+      isActive: true,
+    };
+
+    let certificates = await this.certificateModel
+      .find(filter)
+      .populate('userId', 'firstName lastName email phone name role')
+      .populate('eventId', 'title description image location date price type')
+      .populate('bookingId', 'status isActive createdAt')
       .sort({ createdAt: -1 })
       .lean();
 
-    return { success: true, certificates };
+    certificates = certificates.map((cert: any) => {
+      if (cert.userId) {
+        const firstName = cert.userId.firstName || '';
+        const lastName = cert.userId.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        cert.userId.name = cert.userId.name || fullName || cert.recipientName || 'User';
+        cert.user = cert.userId;
+      }
+      if (cert.eventId) {
+        cert.event = cert.eventId;
+      }
+      if (cert.bookingId) {
+        cert.booking = cert.bookingId;
+      }
+
+      // Generate exact HTML template for viewing/downloading on frontend
+      cert.html = generateCertificateHtml({
+        certificateNumber: cert.certificateNumber,
+        recipientName: cert.recipientName,
+        eventTitle: cert.eventTitle,
+        description: cert.description,
+        grade: cert.grade,
+        startYear: cert.startYear,
+        endYear: cert.endYear,
+        eventDate: this.formatDate(cert.eventDate),
+        issuedDate: this.formatDate(cert.issuedDate),
+      });
+
+      return cert;
+    });
+
+    if (search && search.trim()) {
+      const searchText = search.trim().toLowerCase();
+      certificates = certificates.filter((cert: any) => {
+        const certNum = cert.certificateNumber?.toLowerCase() || '';
+        const eventTitle = cert.eventTitle?.toLowerCase() || '';
+        return (
+          certNum.includes(searchText) || eventTitle.includes(searchText)
+        );
+      });
+    }
+
+    const total = certificates.length;
+    const skip = (page - 1) * limit;
+    const paginatedCertificates = certificates.slice(skip, skip + limit);
+
+    return {
+      success: true,
+      certificates: paginatedCertificates,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: total === 0 ? 0 : Math.ceil(total / limit),
+      },
+    };
   }
 
   // ============================================================
-  // USER: MY CERTIFICATES
-  // GET /certificates/my
+  // FIND SINGLE CERTIFICATE BY ID
   // ============================================================
 
-  async findMyCertificates(userId: string) {
-    const certificates = await this.certificateModel
-      .find({ userId: new Types.ObjectId(userId), isActive: true })
-      .populate('eventId', 'title date location image')
-      .sort({ createdAt: -1 })
-      .lean();
-
-    return { success: true, certificates };
-  }
-
-  // ============================================================
-  // USER: DOWNLOAD CERTIFICATE
-  // GET /certificates/download/:id
-  // Returns the file path for streaming
-  // ============================================================
-
-  async downloadCertificate(
-    certificateId: string,
-    userId: string,
-    isAdmin: boolean,
-  ): Promise<{ filePath: string; fileName: string; certNumber: string }> {
+  async findOne(certificateId: string, userId?: string, isAdmin?: boolean) {
     if (!Types.ObjectId.isValid(certificateId)) {
       throw new NotFoundException('Invalid certificate ID');
     }
 
-    const filter: any = {
-      _id: new Types.ObjectId(certificateId),
-      isActive: true,
-    };
+    const cert: any = await this.certificateModel
+      .findById(certificateId)
+      .populate('userId', 'firstName lastName email phone name role')
+      .populate('eventId', 'title description image location date price type')
+      .populate('bookingId', 'status isActive createdAt')
+      .lean();
 
-    // Non-admin can only download their own
-    if (!isAdmin) {
-      filter.userId = new Types.ObjectId(userId);
-    }
-
-    const certificate = await this.certificateModel.findOne(filter);
-
-    if (!certificate) {
+    if (!cert || !cert.isActive) {
       throw new NotFoundException('Certificate not found');
     }
 
-    if (!certificate.filePath || !fs.existsSync(certificate.filePath)) {
-      throw new NotFoundException('Certificate file not found on server');
+    if (!isAdmin && userId && cert.userId._id.toString() !== userId) {
+      throw new ForbiddenException('Access denied to this certificate');
     }
 
-    // Mark as downloaded
-    if (!certificate.isDownloaded) {
-      certificate.isDownloaded = true;
-      await certificate.save();
+    if (cert.userId) {
+      const firstName = cert.userId.firstName || '';
+      const lastName = cert.userId.lastName || '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      cert.userId.name = cert.userId.name || fullName || cert.recipientName || 'User';
+      cert.user = cert.userId;
     }
 
-    const fileName = `Certificate_${certificate.certificateNumber}.pdf`;
+    if (cert.eventId) {
+      cert.event = cert.eventId;
+    }
 
-    return {
-      filePath: certificate.filePath,
-      fileName,
-      certNumber: certificate.certificateNumber,
-    };
+    if (cert.bookingId) {
+      cert.booking = cert.bookingId;
+    }
+
+    cert.html = generateCertificateHtml({
+      certificateNumber: cert.certificateNumber,
+      recipientName: cert.recipientName,
+      eventTitle: cert.eventTitle,
+      description: cert.description,
+      grade: cert.grade,
+      startYear: cert.startYear,
+      endYear: cert.endYear,
+      eventDate: this.formatDate(cert.eventDate),
+      issuedDate: this.formatDate(cert.issuedDate),
+    });
+
+    return cert;
   }
 }

@@ -19,14 +19,14 @@ export class Certificate {
   @Prop({ type: Types.ObjectId, ref: 'Event', required: true, index: true })
   eventId!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Booking', required: true })
-  bookingId!: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Booking', default: null, index: true })
+  bookingId?: Types.ObjectId;
 
   // ============================================================
   // CERTIFICATE DETAILS
   // ============================================================
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, index: true })
   certificateNumber!: string;
 
   @Prop({ required: true, trim: true })
@@ -35,22 +35,30 @@ export class Certificate {
   @Prop({ required: true, trim: true })
   eventTitle!: string;
 
-  @Prop({ required: true })
+  @Prop()
+  description?: string;
+
+  @Prop({ default: 'A+' })
+  grade?: string;
+
+  @Prop({ default: '2026' })
+  startYear?: string;
+
+  @Prop({ default: '2026' })
+  endYear?: string;
+
+  @Prop({ required: true, default: Date.now })
   eventDate!: Date;
 
-  @Prop({ required: true })
+  @Prop({ required: true, default: Date.now })
   issuedDate!: Date;
 
   // ============================================================
-  // FILE
+  // FILE & STATUS
   // ============================================================
 
   @Prop()
   filePath?: string;
-
-  // ============================================================
-  // STATUS
-  // ============================================================
 
   @Prop({ default: false })
   isDownloaded!: boolean;

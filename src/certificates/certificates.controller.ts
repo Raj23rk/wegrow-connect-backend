@@ -2,25 +2,26 @@ import {
   Controller,
   Get,
   Post,
+  Body,
   Param,
   Query,
   UseGuards,
-  Request,
-  Res,
+  Req,
 } from '@nestjs/common';
 
 import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
+  ApiResponse,
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
 
-import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../guards/admin.guard';
 import { CertificatesService } from './certificates.service';
+import { CreateCertificateDto } from './dto/create-certificate.dto';
 
 @ApiTags('Certificates')
 @Controller('certificates')
@@ -28,8 +29,8 @@ export class CertificatesController {
   constructor(private readonly certificatesService: CertificatesService) {}
 
   // ============================================================
-  // ADMIN: GENERATE CERTIFICATES FOR AN EVENT
-  // POST /certificates/generate/:eventId
+  // ADMIN: GENERATE CERTIFICATES FOR ALL EVENT ATTENDEES
+  // POST /api/v1/certificates/generate/:eventId
   // ============================================================
 
   @Post('generate/:eventId')
@@ -40,87 +41,214 @@ export class CertificatesController {
       'Admin: Generate certificates for all confirmed attendees of an event',
   })
   @ApiParam({ name: 'eventId', description: 'MongoDB Event ID' })
-  generateCertificates(@Param('eventId') eventId: string) {
-    return this.certificatesService.generateCertificatesForEvent(eventId);
+  async generateCertificates(@Param('eventId') eventId: string) {
+    const data =
+      await this.certificatesService.generateCertificatesForEvent(eventId);
+    return {
+      success: true,
+      message: 'Certificates generated successfully',
+      data,
+    };
   }
 
   // ============================================================
-  // ADMIN: ALL CERTIFICATES
-  // GET /certificates
+  // ADMIN: CREATE SINGLE CERTIFICATE
+  // POST /api/v1/certificates/create-certificate
+  // POST /api/v1/certificates
+  // ============================================================
+
+  @Post('create-certificate')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin: Create single certificate' })
+  @ApiResponse({
+    status: 201,
+    description: 'Certificate created successfully.',
+  })
+  async createSingleCertificate(@Body() dto: CreateCertificateDto) {
+    const data = await this.certificatesService.createSingleCertificate(dto);
+    return {
+      success: true,
+      message: 'Certificate created successfully',
+      data,
+    };
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin: Create single certificate (Alias)' })
+  async createSingleCertificateAlias(@Body() dto: CreateCertificateDto) {
+    const data = await this.certificatesService.createSingleCertificate(dto);
+    return {
+      success: true,
+      message: 'Certificate created successfully',
+      data,
+    };
+  }
+
+  // ============================================================
+  // ADMIN: GET ALL CERTIFICATES (PAGINATED WITH SEARCH)
+  // GET /api/v1/certificates/all-certificates
+  // GET /api/v1/certificates/all
+  // ============================================================
+
+  @Get('all-certificates')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin: Get all certificates' })
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, example: 10 })
+  @ApiQuery({ name: 'search', required: false, example: 'Python' })
+  @ApiQuery({ name: 'eventId', required: false })
+  async findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search?: string,
+    @Query('eventId') eventId?: string,
+  ) {
+    const data = await this.certificatesService.findAll(
+      Number(page),
+      Number(limit),
+      search,
+      eventId,
+    );
+
+    return {
+      success: true,
+      message: 'Certificates fetched successfully',
+      data,
+    };
+  }
+
+  @Get('all')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin: Get all certificates (Alias)' })
+  async findAllAlias(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search?: string,
+    @Query('eventId') eventId?: string,
+  ) {
+    const data = await this.certificatesService.findAll(
+      Number(page),
+      Number(limit),
+      search,
+      eventId,
+    );
+
+    return {
+      success: true,
+      message: 'Certificates fetched successfully',
+      data,
+    };
+  }
+
+  // ============================================================
+  // USER (STUDENT / BUSINESS): GET MY CERTIFICATES
+  // GET /api/v1/certificates/my-certificates
+  // GET /api/v1/certificates/my
+  // ============================================================
+
+  @Get('my-certificates')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get my certificates (Student / Business)' })
+  async myCertificates(
+    @Req() req: any,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search?: string,
+  ) {
+    const data = await this.certificatesService.findMyCertificates(
+      req.user.userId,
+      Number(page),
+      Number(limit),
+      search,
+    );
+
+    return {
+      success: true,
+      message: 'Certificates fetched successfully',
+      data,
+    };
+  }
+
+  @Get('my')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get my certificates (Student / Business - Alias)' })
+  async myCertificatesAlias(
+    @Req() req: any,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search?: string,
+  ) {
+    const data = await this.certificatesService.findMyCertificates(
+      req.user.userId,
+      Number(page),
+      Number(limit),
+      search,
+    );
+
+    return {
+      success: true,
+      message: 'Certificates fetched successfully',
+      data,
+    };
+  }
+
+  // ============================================================
+  // BASE GET ALL (ADMIN DEFAULT)
+  // GET /api/v1/certificates
   // ============================================================
 
   @Get()
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Admin: Get all certificates (paginated)' })
-  @ApiQuery({ name: 'page', required: false })
-  @ApiQuery({ name: 'limit', required: false })
-  @ApiQuery({ name: 'eventId', required: false })
-  findAll(
-    @Query('page') page: number,
-    @Query('limit') limit: number,
+  @ApiOperation({ summary: 'Admin: Get all certificates (Default)' })
+  async findAllBase(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search?: string,
     @Query('eventId') eventId?: string,
   ) {
-    return this.certificatesService.findAll(page, limit, eventId);
+    const data = await this.certificatesService.findAll(
+      Number(page),
+      Number(limit),
+      search,
+      eventId,
+    );
+
+    return {
+      success: true,
+      message: 'Certificates fetched successfully',
+      data,
+    };
   }
 
   // ============================================================
-  // ADMIN: CERTIFICATES BY EVENT
-  // GET /certificates/event/:eventId
+  // SINGLE CERTIFICATE DETAILS BY ID
+  // GET /api/v1/certificates/:id
   // ============================================================
 
-  @Get('event/:eventId')
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Admin: Get certificates for a specific event' })
-  findByEvent(@Param('eventId') eventId: string) {
-    return this.certificatesService.findByEvent(eventId);
-  }
-
-  // ============================================================
-  // USER: MY CERTIFICATES
-  // GET /certificates/my
-  // ============================================================
-
-  @Get('my')
+  @Get(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'User: Get my certificates' })
-  findMyCertificates(@Request() req: any) {
-    return this.certificatesService.findMyCertificates(req.user.userId);
-  }
+  @ApiOperation({ summary: 'Get certificate details by ID' })
+  async findOne(@Param('id') id: string, @Req() req: any) {
+    const isAdmin = req.user?.role === 'ADMIN';
+    const data = await this.certificatesService.findOne(
+      id,
+      req.user?.userId,
+      isAdmin,
+    );
 
-  // ============================================================
-  // USER/ADMIN: DOWNLOAD CERTIFICATE PDF
-  // GET /certificates/download/:id
-  // ============================================================
-
-  @Get('download/:id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'User: Download certificate PDF' })
-  @ApiParam({ name: 'id', description: 'Certificate ID' })
-  async downloadCertificate(
-    @Param('id') id: string,
-    @Request() req: any,
-    @Res() res: Response,
-  ) {
-    const isAdmin = req.user.role === 'ADMIN';
-
-    const { filePath, fileName } =
-      await this.certificatesService.downloadCertificate(
-        id,
-        req.user.userId,
-        isAdmin,
-      );
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-
-    res.sendFile(filePath, { root: '/' }, (err) => {
-      if (err) {
-        res.status(500).json({ message: 'Failed to send certificate file' });
-      }
-    });
+    return {
+      success: true,
+      message: 'Certificate fetched successfully',
+      data,
+    };
   }
 }
