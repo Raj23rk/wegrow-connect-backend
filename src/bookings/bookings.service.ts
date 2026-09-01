@@ -59,8 +59,9 @@ export class BookingsService {
         user: userId,
         event: dto.event,
         status: BookingStatus.PENDING,
+        attended: false,
         isActive: true,
-      });
+      }) as any;
 
       this.logger.log(`Booking created successfully: ${booking._id}`);
 

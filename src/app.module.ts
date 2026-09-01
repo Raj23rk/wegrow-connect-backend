@@ -14,6 +14,12 @@ import { ContactModule } from './contact/contact.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { InvoicesModule } from './invoices/invoices.module';
+import { CampaignsModule } from './campaigns/campaigns.module';
+import { StudentsModule } from './students/students.module';
+import { TasksModule } from './tasks/tasks.module';
+import { TaskSessionsModule } from './task-sessions/task-sessions.module';
+import { SubmissionsModule } from './submissions/submissions.module';
+import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
 
 @Module({
   imports: [
@@ -56,15 +62,27 @@ import { InvoicesModule } from './invoices/invoices.module';
 
     ContactModule,
 
-    // ============================================================
-    // NEW MODULES
-    // ============================================================
-
     SubscriptionsModule,
 
     CertificatesModule,
 
     InvoicesModule,
+
+    // ============================================================
+    // STUDENT TASK & REGISTRATION PLATFORM MODULES
+    // ============================================================
+
+    CampaignsModule,
+
+    StudentsModule,
+
+    TasksModule,
+
+    TaskSessionsModule,
+
+    SubmissionsModule,
+
+    AdminDashboardModule,
   ],
 
   controllers: [AppController],
@@ -72,3 +90,4 @@ import { InvoicesModule } from './invoices/invoices.module';
   providers: [AppService],
 })
 export class AppModule {}
+

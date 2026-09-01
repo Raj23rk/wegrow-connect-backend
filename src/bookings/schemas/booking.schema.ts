@@ -34,6 +34,11 @@ export class Booking {
   status!: BookingStatus;
 
   @Prop({
+    default: false,
+  })
+  attended!: boolean;
+
+  @Prop({
     default: true,
   })
   isActive!: boolean;
