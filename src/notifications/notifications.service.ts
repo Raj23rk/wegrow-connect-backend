@@ -2453,4 +2453,222 @@ export class NotificationsService {
       type: NotificationType.SUBSCRIPTION_ACTIVATED,
     });
   }
+
+  // ============================================================
+  // WOMEN ENTREPRENEURSHIP CONFIRMATION EMAIL
+  // ============================================================
+
+  async sendWomenEntrepreneurConfirmationEmail(data: {
+    email: string;
+    fullName: string;
+    phone: string;
+    businessStage: string;
+    category: string;
+  }): Promise<boolean> {
+    if (!data.email) return false;
+
+    const stageMap: Record<string, string> = {
+      planning: 'Idea / Planning Stage (ஆரம்பிக்க யோசிக்கிறேன்)',
+      just_started: 'Just Started (1-12 months)',
+      running: 'Running Business (1-3 years)',
+      established: 'Established Business (3+ years)',
+    };
+
+    const categoryMap: Record<string, string> = {
+      retail_boutique: 'Boutique / Tailoring / Apparel',
+      food_baking: 'Food / Baking / Catering',
+      beauty_wellness: 'Beauty / Salon / Wellness',
+      manufacturing_crafts: 'Handicrafts / Manufacturing',
+      digital_services: 'Coaching / Digital Services',
+      other: 'Other Domain',
+    };
+
+    const businessStageText =
+      stageMap[data.businessStage] || data.businessStage;
+    const categoryText = categoryMap[data.category] || data.category;
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seat Reserved - Women's Entrepreneurship Community</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1B2140;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f6f9; padding: 30px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #16225E; padding: 35px 30px; text-align: center;">
+              <h1 style="color: #F0791E; font-size: 26px; margin: 0; font-weight: 800; uppercase;">WeGrow B School</h1>
+              <p style="color: #ffffff; font-size: 16px; margin: 8px 0 0 0; font-weight: 500;">Women's Entrepreneurship Community</p>
+              <p style="color: #E7E1D4; font-size: 13px; margin: 4px 0 0 0;">மகளிர் தொழில் முனைவோர் சமூகம் — நெட்வொர்க் ஃபோரம் இல்ல லேர்னிங் கம்யூனிட்டி</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding: 35px 30px;">
+              <h2 style="color: #16225E; font-size: 20px; margin-top: 0;">Dear ${data.fullName},</h2>
+              <p style="font-size: 15px; line-height: 1.6; color: #334155;">
+                🎉 Your seat reservation for the <strong>Women's Entrepreneurship Community Orientation</strong> has been successfully confirmed!
+              </p>
+              <p style="font-size: 14px; line-height: 1.6; color: #475569; background-color: #FBF6EE; border-left: 4px solid #F0791E; padding: 15px; border-radius: 6px;">
+                An exclusive orientation session for women starting out or already running a business in Sivakasi & Tamil Nadu. Meet mentors, connect with fellow founders, and explore structured growth roadmaps with WeGrow B School.
+              </p>
+
+              <h3 style="color: #16225E; font-size: 16px; margin-top: 25px; border-bottom: 2px solid #E7E1D4; padding-bottom: 8px;">Registration Details</h3>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="8" style="font-size: 14px; color: #334155;">
+                <tr>
+                  <td width="40%" style="font-weight: bold; color: #16225E;">Full Name:</td>
+                  <td>${data.fullName}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: bold; color: #16225E;">WhatsApp Number:</td>
+                  <td>${data.phone}</td>
+                </tr>
+                ${data.email ? `<tr><td style="font-weight: bold; color: #16225E;">Email Address:</td><td>${data.email}</td></tr>` : ''}
+                <tr>
+                  <td style="font-weight: bold; color: #16225E;">Business Stage:</td>
+                  <td>${businessStageText}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: bold; color: #16225E;">Business Domain:</td>
+                  <td>${categoryText}</td>
+                </tr>
+              </table>
+
+              <div style="margin-top: 30px; padding: 20px; background-color: #F8FAFC; border-radius: 12px; text-align: center;">
+                <p style="font-size: 14px; margin: 0; color: #16225E; font-weight: bold;">Need Assistance or Venue Directions?</p>
+                <p style="font-size: 13px; margin: 5px 0 0 0; color: #64748B;">Our team will send venue location and event reminders directly via WhatsApp.</p>
+              </div>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F8FAFC; padding: 20px 30px; text-align: center; border-top: 1px solid #E2E8F0;">
+              <p style="font-size: 12px; color: #64748B; margin: 0;">🔒 We respect your privacy. You received this email because you registered for WeGrow B School Women's Entrepreneurship Community.</p>
+              <p style="font-size: 12px; color: #94A3B8; margin: 6px 0 0 0;">&copy; ${new Date().getFullYear()} WeGrow B School. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    return this.sendEmail(
+      data.email,
+      "Seat Reserved: Women's Entrepreneurship Community Orientation | WeGrow B School",
+      html,
+    );
+  }
+
+  // ============================================================
+  // STUDENT FOUNDERS CONFIRMATION EMAIL
+  // ============================================================
+
+  async sendStudentFounderConfirmationEmail(data: {
+    email: string;
+    fullName: string;
+    phone: string;
+    collegeName: string;
+    yearOfStudy: string;
+    course: string;
+    courseStartYear: number;
+    courseEndYear: number;
+  }): Promise<boolean> {
+    if (!data.email) return false;
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Confirmed - Student Founders Community</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1B2140;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f6f9; padding: 30px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #16225E; padding: 35px 30px; text-align: center;">
+              <h1 style="color: #F0791E; font-size: 26px; margin: 0; font-weight: 800; uppercase;">WeGrow B School</h1>
+              <p style="color: #ffffff; font-size: 16px; margin: 8px 0 0 0; font-weight: 500;">Student Founders Community</p>
+              <p style="color: #E7E1D4; font-size: 13px; margin: 4px 0 0 0;">College படிக்கும் போதே உங்க Business-ஐ Start பண்ணி Grow பண்ணணுமா?</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding: 35px 30px;">
+              <h2 style="color: #16225E; font-size: 20px; margin-top: 0;">Dear ${data.fullName},</h2>
+              <p style="font-size: 15px; line-height: 1.6; color: #334155;">
+                🚀 Your registration for the <strong>Student Founders Community</strong> has been successfully confirmed!
+              </p>
+              <p style="font-size: 14px; line-height: 1.6; color: #475569; background-color: #FBF6EE; border-left: 4px solid #F0791E; padding: 15px; border-radius: 6px;">
+                An exclusive orientation for college students who want to start, learn, and grow their own ventures — guided by experienced entrepreneurs and a peer community building alongside you.
+              </p>
+
+              <h3 style="color: #16225E; font-size: 16px; margin-top: 25px; border-bottom: 2px solid #E7E1D4; padding-bottom: 8px;">Registration Summary</h3>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="8" style="font-size: 14px; color: #334155;">
+                <tr>
+                  <td width="40%" style="font-weight: bold; color: #16225E;">Full Name:</td>
+                  <td>${data.fullName}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: bold; color: #16225E;">WhatsApp Number:</td>
+                  <td>${data.phone}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: bold; color: #16225E;">Email Address:</td>
+                  <td>${data.email}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: bold; color: #16225E;">College Name:</td>
+                  <td>${data.collegeName}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: bold; color: #16225E;">Course / Degree:</td>
+                  <td>${data.course}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: bold; color: #16225E;">Year of Study:</td>
+                  <td>${data.yearOfStudy}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: bold; color: #16225E;">Batch Duration:</td>
+                  <td>${data.courseStartYear} - ${data.courseEndYear}</td>
+                </tr>
+              </table>
+
+              <div style="margin-top: 30px; padding: 20px; background-color: #F8FAFC; border-radius: 12px; text-align: center;">
+                <p style="font-size: 14px; margin: 0; color: #16225E; font-weight: bold;">Next Steps & Venue Reminders</p>
+                <p style="font-size: 13px; margin: 5px 0 0 0; color: #64748B;">Event updates, session schedules, and venue directions will be sent directly to your WhatsApp number.</p>
+              </div>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F8FAFC; padding: 20px 30px; text-align: center; border-top: 1px solid #E2E8F0;">
+              <p style="font-size: 12px; color: #64748B; margin: 0;">🔒 We respect your privacy. You received this email because you registered for WeGrow B School Student Founders Community.</p>
+              <p style="font-size: 12px; color: #94A3B8; margin: 6px 0 0 0;">&copy; ${new Date().getFullYear()} WeGrow B School. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    return this.sendEmail(
+      data.email,
+      'Registration Confirmed: Student Founders Community | WeGrow B School',
+      html,
+    );
+  }
 }

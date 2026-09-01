@@ -20,6 +20,8 @@ import { TasksModule } from './tasks/tasks.module';
 import { TaskSessionsModule } from './task-sessions/task-sessions.module';
 import { SubmissionsModule } from './submissions/submissions.module';
 import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
+import { WomenEntrepreneursModule } from './women-entrepreneurs/women-entrepreneurs.module';
+import { StudentFoundersModule } from './student-founders/student-founders.module';
 
 @Module({
   imports: [
@@ -83,6 +85,14 @@ import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
     SubmissionsModule,
 
     AdminDashboardModule,
+
+    // ============================================================
+    // COMMUNITY REGISTRATION FORM MODULES
+    // ============================================================
+
+    WomenEntrepreneursModule,
+
+    StudentFoundersModule,
   ],
 
   controllers: [AppController],
