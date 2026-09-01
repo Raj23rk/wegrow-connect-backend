@@ -2487,81 +2487,303 @@ export class NotificationsService {
       stageMap[data.businessStage] || data.businessStage;
     const categoryText = categoryMap[data.category] || data.category;
 
-    const html = `<!DOCTYPE html>
+    const formattedDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
+    const html = `
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seat Reserved - Women's Entrepreneurship Community</title>
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
+  <title>Women's Entrepreneurship Community</title>
+  <style>
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      min-width: 100% !important;
+      background-color: #ffffff !important;
+      color: #1f2937 !important;
+    }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    table {
+      border-spacing: 0;
+      border-collapse: collapse;
+    }
+    img {
+      border: 0;
+      display: block;
+      max-width: 100%;
+    }
+    a {
+      text-decoration: none;
+    }
+    .email-wrapper {
+      width: 100%;
+      background-color: #ffffff !important;
+      padding: 20px 0;
+    }
+    .invitation {
+      width: 680px;
+      max-width: 680px;
+      margin: 0 auto;
+      background-color: #ffffff !important;
+      border: 1px solid #e5e7eb;
+    }
+    .header-section {
+      padding: 25px 30px;
+      background-color: #ffffff !important;
+    }
+    .header-table {
+      width: 100%;
+    }
+    .logo-cell {
+      width: 130px;
+      vertical-align: middle;
+      text-align: center;
+    }
+    .logo {
+      width: 100px;
+      max-width: 100px;
+      height: auto;
+      margin: 0 auto;
+    }
+    .header-content {
+      vertical-align: middle;
+      padding-left: 20px;
+    }
+    .header-content h1 {
+      margin: 0 0 10px;
+      color: #205894 !important;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+    .tagline {
+      margin: 0;
+      color: #555555 !important;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .tagline em {
+      color: #6280a5 !important;
+      font-style: normal;
+    }
+    .top-line {
+      height: 4px;
+      background-color: #f5a51b !important;
+      margin: 0 30px;
+    }
+    .title-table {
+      width: 100%;
+      margin-top: 25px;
+    }
+    .title-blue {
+      width: 72%;
+      padding: 12px 18px;
+      background-color: #205894 !important;
+      color: #ffffff !important;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .title-orange {
+      width: 28%;
+      padding: 12px 10px;
+      background-color: #f5a51b !important;
+      color: #ffffff !important;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .date-reference {
+      padding: 25px 30px 10px;
+      text-align: right;
+      background-color: #ffffff !important;
+    }
+    .date-reference p {
+      margin: 4px 0;
+      color: #444444 !important;
+      font-size: 13px;
+    }
+    .content {
+      padding: 15px 30px 30px;
+      background-color: #ffffff !important;
+    }
+    .content h2 {
+      margin: 0 0 15px;
+      color: #205894 !important;
+      font-size: 22px;
+    }
+    .content p {
+      color: #333333 !important;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .event-card {
+      margin: 25px 0;
+      padding: 22px;
+      background-color: #f8fafc !important;
+      border: 1px solid #e2e8f0;
+      border-left: 5px solid #f5a51b;
+    }
+    .event-title {
+      margin: 0 0 18px !important;
+      color: #205894 !important;
+      font-size: 21px !important;
+    }
+    .description {
+      color: #333333 !important;
+    }
+    .description p {
+      margin-top: 5px;
+      color: #555555 !important;
+    }
+    .event-detail {
+      margin: 12px 0 !important;
+      color: #333333 !important;
+    }
+    .event-detail strong {
+      color: #205894 !important;
+    }
+    .button-wrapper {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .event-button {
+      display: inline-block;
+      padding: 13px 28px;
+      background-color: #205894 !important;
+      color: #ffffff !important;
+      border-radius: 5px;
+      font-size: 15px;
+      font-weight: bold;
+    }
+    .closing {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .closing h5 {
+      margin: 0 0 10px;
+      color: #f27f2d !important;
+      font-size: 15px;
+    }
+    .signature-phone {
+      color: #6280a5 !important;
+      font-size: 13px !important;
+    }
+    .closing-logo {
+      width: 70px;
+      margin: 12px 0;
+    }
+    .footer-table {
+      width: 100%;
+    }
+    .footer-blue {
+      width: 72%;
+      padding: 12px 15px;
+      background-color: #205894 !important;
+      color: #ffffff !important;
+      font-size: 13px;
+    }
+    .footer-orange {
+      width: 28%;
+      padding: 12px 8px;
+      background-color: #f5a51b !important;
+      color: #ffffff !important;
+      font-size: 13px;
+      text-align: center;
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1B2140;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f6f9; padding: 30px 10px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
-          <!-- Header -->
+<body>
+  <div class="email-wrapper">
+    <div class="invitation">
+      <div class="header-section">
+        <table class="header-table">
           <tr>
-            <td style="background-color: #16225E; padding: 35px 30px; text-align: center;">
-              <h1 style="color: #F0791E; font-size: 26px; margin: 0; font-weight: 800; uppercase;">WeGrow B School</h1>
-              <p style="color: #ffffff; font-size: 16px; margin: 8px 0 0 0; font-weight: 500;">Women's Entrepreneurship Community</p>
-              <p style="color: #E7E1D4; font-size: 13px; margin: 4px 0 0 0;">மகளிர் தொழில் முனைவோர் சமூகம் — நெட்வொர்க் ஃபோரம் இல்ல லேர்னிங் கம்யூனிட்டி</p>
+            <td class="logo-cell">
+              <img class="logo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFILKUiMNzpiMOPb17jB7tmvP8QM3bhYhCxOr6NtPecw&s" alt="WeGrow Skill Campus Logo">
             </td>
-          </tr>
-          <!-- Body -->
-          <tr>
-            <td style="padding: 35px 30px;">
-              <h2 style="color: #16225E; font-size: 20px; margin-top: 0;">Dear ${data.fullName},</h2>
-              <p style="font-size: 15px; line-height: 1.6; color: #334155;">
-                🎉 Your seat reservation for the <strong>Women's Entrepreneurship Community Orientation</strong> has been successfully confirmed!
-              </p>
-              <p style="font-size: 14px; line-height: 1.6; color: #475569; background-color: #FBF6EE; border-left: 4px solid #F0791E; padding: 15px; border-radius: 6px;">
-                An exclusive orientation session for women starting out or already running a business in Sivakasi & Tamil Nadu. Meet mentors, connect with fellow founders, and explore structured growth roadmaps with WeGrow B School.
-              </p>
-
-              <h3 style="color: #16225E; font-size: 16px; margin-top: 25px; border-bottom: 2px solid #E7E1D4; padding-bottom: 8px;">Registration Details</h3>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="8" style="font-size: 14px; color: #334155;">
-                <tr>
-                  <td width="40%" style="font-weight: bold; color: #16225E;">Full Name:</td>
-                  <td>${data.fullName}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: bold; color: #16225E;">WhatsApp Number:</td>
-                  <td>${data.phone}</td>
-                </tr>
-                ${data.email ? `<tr><td style="font-weight: bold; color: #16225E;">Email Address:</td><td>${data.email}</td></tr>` : ''}
-                <tr>
-                  <td style="font-weight: bold; color: #16225E;">Business Stage:</td>
-                  <td>${businessStageText}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: bold; color: #16225E;">Business Domain:</td>
-                  <td>${categoryText}</td>
-                </tr>
-              </table>
-
-              <div style="margin-top: 30px; padding: 20px; background-color: #F8FAFC; border-radius: 12px; text-align: center;">
-                <p style="font-size: 14px; margin: 0; color: #16225E; font-weight: bold;">Need Assistance or Venue Directions?</p>
-                <p style="font-size: 13px; margin: 5px 0 0 0; color: #64748B;">Our team will send venue location and event reminders directly via WhatsApp.</p>
-              </div>
-            </td>
-          </tr>
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #F8FAFC; padding: 20px 30px; text-align: center; border-top: 1px solid #E2E8F0;">
-              <p style="font-size: 12px; color: #64748B; margin: 0;">🔒 We respect your privacy. You received this email because you registered for WeGrow B School Women's Entrepreneurship Community.</p>
-              <p style="font-size: 12px; color: #94A3B8; margin: 6px 0 0 0;">&copy; ${new Date().getFullYear()} WeGrow B School. All rights reserved.</p>
+            <td class="header-content">
+              <h1>WeGrow Skill Campus</h1>
+              <p class="tagline"><em>Empowering Skills. Transforming Futures.</em></p>
             </td>
           </tr>
         </table>
-      </td>
-    </tr>
-  </table>
+      </div>
+      <div class="top-line"></div>
+      <table class="title-table">
+        <tr>
+          <td class="title-blue">
+            Seat Reserved - Women's Entrepreneurship Community
+          </td>
+          <td class="title-orange">
+            2026
+          </td>
+        </tr>
+      </table>
+      <div class="date-reference">
+        <p><strong>Registration Date:</strong> ${formattedDate}</p>
+        <p><strong>WeGrow Skill Campus</strong></p>
+      </div>
+      <div class="content">
+        <h2>Hello ${data.fullName},</h2>
+        <p>
+          Your seat reservation for the <strong>Women's Entrepreneurship Community</strong> orientation session has been confirmed!
+        </p>
+        <div class="event-card">
+          <h2 class="event-title">
+            மகளிர் தொழில் முனைவோர் சமூகம்
+          </h2>
+          <div class="description">
+            <p>
+              An exclusive orientation session for women starting out or already running a business in Sivakasi & Tamil Nadu. Meet mentors, connect with fellow founders, and explore structured growth roadmaps with WeGrow B School.
+            </p>
+          </div>
+          <p class="event-detail"><strong>Full Name:</strong> ${data.fullName}</p>
+          <p class="event-detail"><strong>WhatsApp Number:</strong> ${data.phone}</p>
+          ${data.email ? `<p class="event-detail"><strong>Email Address:</strong> ${data.email}</p>` : ''}
+          <p class="event-detail"><strong>Current Stage of Business:</strong> ${businessStageText}</p>
+          <p class="event-detail"><strong>Business Domain / Interest:</strong> ${categoryText}</p>
+        </div>
+        <div class="button-wrapper">
+          <a href="https://www.wegrowcampus.in" class="event-button">Visit WeGrow Campus</a>
+        </div>
+        <p><strong>We look forward to seeing you at the orientation!</strong></p>
+        <div class="closing">
+          <h5>Regards,</h5>
+          <img class="closing-logo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFILKUiMNzpiMOPb17jB7tmvP8QM3bhYhCxOr6NtPecw&s" alt="WeGrow Skill Campus Logo">
+          <p class="signature-phone">
+            <a href="https://www.wegrowcampus.in/" style="color:#205894;">www.wegrowcampus.in</a><br>
+            enquiry@wegrowcampus.in
+          </p>
+        </div>
+      </div>
+      <table class="footer-table">
+        <tr>
+          <td class="footer-blue"><strong>WeGrow Skill Campus</strong></td>
+          <td class="footer-orange"><strong>Empowering Skills.<br>Transforming Futures.</strong></td>
+        </tr>
+      </table>
+    </div>
+  </div>
 </body>
-</html>`;
+</html>
+`;
 
     return this.sendEmail(
       data.email,
-      "Seat Reserved: Women's Entrepreneurship Community Orientation | WeGrow B School",
+      "🎟️ Seat Reserved - Women's Entrepreneurship Community | WeGrow Skill Campus",
       html,
     );
   }
@@ -2582,92 +2804,305 @@ export class NotificationsService {
   }): Promise<boolean> {
     if (!data.email) return false;
 
-    const html = `<!DOCTYPE html>
+    const formattedDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
+    const html = `
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registration Confirmed - Student Founders Community</title>
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
+  <title>Student Founders Community</title>
+  <style>
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      min-width: 100% !important;
+      background-color: #ffffff !important;
+      color: #1f2937 !important;
+    }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    table {
+      border-spacing: 0;
+      border-collapse: collapse;
+    }
+    img {
+      border: 0;
+      display: block;
+      max-width: 100%;
+    }
+    a {
+      text-decoration: none;
+    }
+    .email-wrapper {
+      width: 100%;
+      background-color: #ffffff !important;
+      padding: 20px 0;
+    }
+    .invitation {
+      width: 680px;
+      max-width: 680px;
+      margin: 0 auto;
+      background-color: #ffffff !important;
+      border: 1px solid #e5e7eb;
+    }
+    .header-section {
+      padding: 25px 30px;
+      background-color: #ffffff !important;
+    }
+    .header-table {
+      width: 100%;
+    }
+    .logo-cell {
+      width: 130px;
+      vertical-align: middle;
+      text-align: center;
+    }
+    .logo {
+      width: 100px;
+      max-width: 100px;
+      height: auto;
+      margin: 0 auto;
+    }
+    .header-content {
+      vertical-align: middle;
+      padding-left: 20px;
+    }
+    .header-content h1 {
+      margin: 0 0 10px;
+      color: #205894 !important;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+    .tagline {
+      margin: 0;
+      color: #555555 !important;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .tagline em {
+      color: #6280a5 !important;
+      font-style: normal;
+    }
+    .top-line {
+      height: 4px;
+      background-color: #f5a51b !important;
+      margin: 0 30px;
+    }
+    .title-table {
+      width: 100%;
+      margin-top: 25px;
+    }
+    .title-blue {
+      width: 72%;
+      padding: 12px 18px;
+      background-color: #205894 !important;
+      color: #ffffff !important;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .title-orange {
+      width: 28%;
+      padding: 12px 10px;
+      background-color: #f5a51b !important;
+      color: #ffffff !important;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .date-reference {
+      padding: 25px 30px 10px;
+      text-align: right;
+      background-color: #ffffff !important;
+    }
+    .date-reference p {
+      margin: 4px 0;
+      color: #444444 !important;
+      font-size: 13px;
+    }
+    .content {
+      padding: 15px 30px 30px;
+      background-color: #ffffff !important;
+    }
+    .content h2 {
+      margin: 0 0 15px;
+      color: #205894 !important;
+      font-size: 22px;
+    }
+    .content p {
+      color: #333333 !important;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .event-card {
+      margin: 25px 0;
+      padding: 22px;
+      background-color: #f8fafc !important;
+      border: 1px solid #e2e8f0;
+      border-left: 5px solid #f5a51b;
+    }
+    .event-title {
+      margin: 0 0 18px !important;
+      color: #205894 !important;
+      font-size: 21px !important;
+    }
+    .description {
+      color: #333333 !important;
+    }
+    .description p {
+      margin-top: 5px;
+      color: #555555 !important;
+    }
+    .event-detail {
+      margin: 12px 0 !important;
+      color: #333333 !important;
+    }
+    .event-detail strong {
+      color: #205894 !important;
+    }
+    .button-wrapper {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .event-button {
+      display: inline-block;
+      padding: 13px 28px;
+      background-color: #205894 !important;
+      color: #ffffff !important;
+      border-radius: 5px;
+      font-size: 15px;
+      font-weight: bold;
+    }
+    .closing {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .closing h5 {
+      margin: 0 0 10px;
+      color: #f27f2d !important;
+      font-size: 15px;
+    }
+    .signature-phone {
+      color: #6280a5 !important;
+      font-size: 13px !important;
+    }
+    .closing-logo {
+      width: 70px;
+      margin: 12px 0;
+    }
+    .footer-table {
+      width: 100%;
+    }
+    .footer-blue {
+      width: 72%;
+      padding: 12px 15px;
+      background-color: #205894 !important;
+      color: #ffffff !important;
+      font-size: 13px;
+    }
+    .footer-orange {
+      width: 28%;
+      padding: 12px 8px;
+      background-color: #f5a51b !important;
+      color: #ffffff !important;
+      font-size: 13px;
+      text-align: center;
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1B2140;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f6f9; padding: 30px 10px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
-          <!-- Header -->
+<body>
+  <div class="email-wrapper">
+    <div class="invitation">
+      <div class="header-section">
+        <table class="header-table">
           <tr>
-            <td style="background-color: #16225E; padding: 35px 30px; text-align: center;">
-              <h1 style="color: #F0791E; font-size: 26px; margin: 0; font-weight: 800; uppercase;">WeGrow B School</h1>
-              <p style="color: #ffffff; font-size: 16px; margin: 8px 0 0 0; font-weight: 500;">Student Founders Community</p>
-              <p style="color: #E7E1D4; font-size: 13px; margin: 4px 0 0 0;">College படிக்கும் போதே உங்க Business-ஐ Start பண்ணி Grow பண்ணணுமா?</p>
+            <td class="logo-cell">
+              <img class="logo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFILKUiMNzpiMOPb17jB7tmvP8QM3bhYhCxOr6NtPecw&s" alt="WeGrow Skill Campus Logo">
             </td>
-          </tr>
-          <!-- Body -->
-          <tr>
-            <td style="padding: 35px 30px;">
-              <h2 style="color: #16225E; font-size: 20px; margin-top: 0;">Dear ${data.fullName},</h2>
-              <p style="font-size: 15px; line-height: 1.6; color: #334155;">
-                🚀 Your registration for the <strong>Student Founders Community</strong> has been successfully confirmed!
-              </p>
-              <p style="font-size: 14px; line-height: 1.6; color: #475569; background-color: #FBF6EE; border-left: 4px solid #F0791E; padding: 15px; border-radius: 6px;">
-                An exclusive orientation for college students who want to start, learn, and grow their own ventures — guided by experienced entrepreneurs and a peer community building alongside you.
-              </p>
-
-              <h3 style="color: #16225E; font-size: 16px; margin-top: 25px; border-bottom: 2px solid #E7E1D4; padding-bottom: 8px;">Registration Summary</h3>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="8" style="font-size: 14px; color: #334155;">
-                <tr>
-                  <td width="40%" style="font-weight: bold; color: #16225E;">Full Name:</td>
-                  <td>${data.fullName}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: bold; color: #16225E;">WhatsApp Number:</td>
-                  <td>${data.phone}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: bold; color: #16225E;">Email Address:</td>
-                  <td>${data.email}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: bold; color: #16225E;">College Name:</td>
-                  <td>${data.collegeName}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: bold; color: #16225E;">Course / Degree:</td>
-                  <td>${data.course}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: bold; color: #16225E;">Year of Study:</td>
-                  <td>${data.yearOfStudy}</td>
-                </tr>
-                <tr>
-                  <td style="font-weight: bold; color: #16225E;">Batch Duration:</td>
-                  <td>${data.courseStartYear} - ${data.courseEndYear}</td>
-                </tr>
-              </table>
-
-              <div style="margin-top: 30px; padding: 20px; background-color: #F8FAFC; border-radius: 12px; text-align: center;">
-                <p style="font-size: 14px; margin: 0; color: #16225E; font-weight: bold;">Next Steps & Venue Reminders</p>
-                <p style="font-size: 13px; margin: 5px 0 0 0; color: #64748B;">Event updates, session schedules, and venue directions will be sent directly to your WhatsApp number.</p>
-              </div>
-            </td>
-          </tr>
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #F8FAFC; padding: 20px 30px; text-align: center; border-top: 1px solid #E2E8F0;">
-              <p style="font-size: 12px; color: #64748B; margin: 0;">🔒 We respect your privacy. You received this email because you registered for WeGrow B School Student Founders Community.</p>
-              <p style="font-size: 12px; color: #94A3B8; margin: 6px 0 0 0;">&copy; ${new Date().getFullYear()} WeGrow B School. All rights reserved.</p>
+            <td class="header-content">
+              <h1>WeGrow Skill Campus</h1>
+              <p class="tagline"><em>Empowering Skills. Transforming Futures.</em></p>
             </td>
           </tr>
         </table>
-      </td>
-    </tr>
-  </table>
+      </div>
+      <div class="top-line"></div>
+      <table class="title-table">
+        <tr>
+          <td class="title-blue">
+            Registration Confirmed - Student Founders Community
+          </td>
+          <td class="title-orange">
+            2026
+          </td>
+        </tr>
+      </table>
+      <div class="date-reference">
+        <p><strong>Registration Date:</strong> ${formattedDate}</p>
+        <p><strong>WeGrow Skill Campus</strong></p>
+      </div>
+      <div class="content">
+        <h2>Hello ${data.fullName},</h2>
+        <p>
+          Your registration for the <strong>Student Founders Community</strong> has been successfully confirmed!
+        </p>
+        <div class="event-card">
+          <h2 class="event-title">
+            Student Founders Community
+          </h2>
+          <div class="description">
+            <p>
+              An exclusive orientation for college students who want to start, learn, and grow their own ventures — guided by experienced entrepreneurs and a peer community building alongside you.
+            </p>
+          </div>
+          <p class="event-detail"><strong>Full Name:</strong> ${data.fullName}</p>
+          <p class="event-detail"><strong>WhatsApp Number:</strong> ${data.phone}</p>
+          <p class="event-detail"><strong>Email Address:</strong> ${data.email}</p>
+          <p class="event-detail"><strong>College Name:</strong> ${data.collegeName}</p>
+          <p class="event-detail"><strong>Course / Degree:</strong> ${data.course}</p>
+          <p class="event-detail"><strong>Year of Study:</strong> ${data.yearOfStudy}</p>
+          <p class="event-detail"><strong>Batch Duration:</strong> ${data.courseStartYear} - ${data.courseEndYear}</p>
+        </div>
+        <div class="button-wrapper">
+          <a href="https://www.wegrowcampus.in" class="event-button">Visit WeGrow Campus</a>
+        </div>
+        <p><strong>We look forward to seeing you at the orientation!</strong></p>
+        <div class="closing">
+          <h5>Regards,</h5>
+          <img class="closing-logo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFILKUiMNzpiMOPb17jB7tmvP8QM3bhYhCxOr6NtPecw&s" alt="WeGrow Skill Campus Logo">
+          <p class="signature-phone">
+            <a href="https://www.wegrowcampus.in/" style="color:#205894;">www.wegrowcampus.in</a><br>
+            enquiry@wegrowcampus.in
+          </p>
+        </div>
+      </div>
+      <table class="footer-table">
+        <tr>
+          <td class="footer-blue"><strong>WeGrow Skill Campus</strong></td>
+          <td class="footer-orange"><strong>Empowering Skills.<br>Transforming Futures.</strong></td>
+        </tr>
+      </table>
+    </div>
+  </div>
 </body>
-</html>`;
+</html>
+`;
 
     return this.sendEmail(
       data.email,
-      'Registration Confirmed: Student Founders Community | WeGrow B School',
+      '🎟️ Registration Confirmed - Student Founders Community | WeGrow Skill Campus',
       html,
     );
   }
