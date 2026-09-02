@@ -9,6 +9,7 @@ import { Model } from 'mongoose';
 import {
   WomenEntrepreneur,
   WomenEntrepreneurDocument,
+  RegistrationStatus,
 } from './schemas/women-entrepreneur.schema';
 import { CreateWomenEntrepreneurDto } from './dto/create-women-entrepreneur.dto';
 import { QueryWomenEntrepreneurDto } from './dto/query-women-entrepreneur.dto';
@@ -119,10 +120,42 @@ export class WomenEntrepreneursService {
     const skip = (page - 1) * limit;
     const sort: any = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
 
-    const [data, total] = await Promise.all([
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [
+      data,
+      total,
+      totalFounders,
+      confirmedCount,
+      attendedCount,
+      cancelledCount,
+      newRegsCount,
+    ] = await Promise.all([
       this.womenModel.find(filter).sort(sort).skip(skip).limit(limit).exec(),
       this.womenModel.countDocuments(filter),
+      this.womenModel.countDocuments(),
+      this.womenModel.countDocuments({
+        status: RegistrationStatus.CONFIRMED,
+      }),
+      this.womenModel.countDocuments({
+        status: RegistrationStatus.ATTENDED,
+      }),
+      this.womenModel.countDocuments({
+        status: RegistrationStatus.CANCELLED,
+      }),
+      this.womenModel.countDocuments({ createdAt: { $gte: todayStart } }),
     ]);
+
+    const summary = {
+      totalFounders,
+      total,
+      confirmed: confirmedCount,
+      attended: attendedCount,
+      attend: attendedCount,
+      cancelled: cancelledCount,
+      newRegs: newRegsCount,
+    };
 
     return {
       success: true,
@@ -133,6 +166,9 @@ export class WomenEntrepreneursService {
         limit,
         totalPages: total === 0 ? 0 : Math.ceil(total / limit),
       },
+      summary,
+      counts: summary,
+      stats: summary,
     };
   }
 
@@ -164,8 +200,30 @@ export class WomenEntrepreneursService {
   }
 
   async getStats() {
-    const [total, stages, categories, statuses] = await Promise.all([
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [
+      total,
+      confirmedCount,
+      attendedCount,
+      cancelledCount,
+      newRegsCount,
+      stages,
+      categories,
+      statuses,
+    ] = await Promise.all([
       this.womenModel.countDocuments(),
+      this.womenModel.countDocuments({
+        status: RegistrationStatus.CONFIRMED,
+      }),
+      this.womenModel.countDocuments({
+        status: RegistrationStatus.ATTENDED,
+      }),
+      this.womenModel.countDocuments({
+        status: RegistrationStatus.CANCELLED,
+      }),
+      this.womenModel.countDocuments({ createdAt: { $gte: todayStart } }),
       this.womenModel.aggregate([
         { $group: { _id: '$businessStage', count: { $sum: 1 } } },
       ]),
@@ -179,6 +237,12 @@ export class WomenEntrepreneursService {
 
     return {
       total,
+      totalFounders: total,
+      confirmed: confirmedCount,
+      attended: attendedCount,
+      attend: attendedCount,
+      cancelled: cancelledCount,
+      newRegs: newRegsCount,
       byBusinessStage: stages.reduce((acc, curr) => {
         acc[curr._id] = curr.count;
         return acc;

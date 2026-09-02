@@ -9,6 +9,7 @@ import { Model } from 'mongoose';
 import {
   StudentFounder,
   StudentFounderDocument,
+  FounderRegistrationStatus,
 } from './schemas/student-founder.schema';
 import { CreateStudentFounderDto } from './dto/create-student-founder.dto';
 import { QueryStudentFounderDto } from './dto/query-student-founder.dto';
@@ -154,10 +155,42 @@ export class StudentFoundersService {
     const skip = (page - 1) * limit;
     const sort: any = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
 
-    const [data, total] = await Promise.all([
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [
+      data,
+      total,
+      totalFounders,
+      confirmedCount,
+      attendedCount,
+      cancelledCount,
+      newRegsCount,
+    ] = await Promise.all([
       this.founderModel.find(filter).sort(sort).skip(skip).limit(limit).exec(),
       this.founderModel.countDocuments(filter),
+      this.founderModel.countDocuments(),
+      this.founderModel.countDocuments({
+        status: FounderRegistrationStatus.CONFIRMED,
+      }),
+      this.founderModel.countDocuments({
+        status: FounderRegistrationStatus.ATTENDED,
+      }),
+      this.founderModel.countDocuments({
+        status: FounderRegistrationStatus.CANCELLED,
+      }),
+      this.founderModel.countDocuments({ createdAt: { $gte: todayStart } }),
     ]);
+
+    const summary = {
+      totalFounders,
+      total,
+      confirmed: confirmedCount,
+      attended: attendedCount,
+      attend: attendedCount,
+      cancelled: cancelledCount,
+      newRegs: newRegsCount,
+    };
 
     return {
       success: true,
@@ -168,6 +201,9 @@ export class StudentFoundersService {
         limit,
         totalPages: total === 0 ? 0 : Math.ceil(total / limit),
       },
+      summary,
+      counts: summary,
+      stats: summary,
     };
   }
 
@@ -199,8 +235,31 @@ export class StudentFoundersService {
   }
 
   async getStats() {
-    const [total, years, colleges, statuses, niches] = await Promise.all([
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [
+      total,
+      confirmedCount,
+      attendedCount,
+      cancelledCount,
+      newRegsCount,
+      years,
+      colleges,
+      statuses,
+      niches,
+    ] = await Promise.all([
       this.founderModel.countDocuments(),
+      this.founderModel.countDocuments({
+        status: FounderRegistrationStatus.CONFIRMED,
+      }),
+      this.founderModel.countDocuments({
+        status: FounderRegistrationStatus.ATTENDED,
+      }),
+      this.founderModel.countDocuments({
+        status: FounderRegistrationStatus.CANCELLED,
+      }),
+      this.founderModel.countDocuments({ createdAt: { $gte: todayStart } }),
       this.founderModel.aggregate([
         { $group: { _id: '$yearOfStudy', count: { $sum: 1 } } },
       ]),
@@ -221,6 +280,12 @@ export class StudentFoundersService {
 
     return {
       total,
+      totalFounders: total,
+      confirmed: confirmedCount,
+      attended: attendedCount,
+      attend: attendedCount,
+      cancelled: cancelledCount,
+      newRegs: newRegsCount,
       byYearOfStudy: years.reduce((acc, curr) => {
         acc[curr._id] = curr.count;
         return acc;

@@ -9,6 +9,7 @@ import { Model } from 'mongoose';
 import {
   BusinessFounder,
   BusinessFounderDocument,
+  FounderRegistrationStatus,
 } from './schemas/business-founder.schema';
 import { CreateBusinessFounderDto } from './dto/create-business-founder.dto';
 import { QueryBusinessFounderDto } from './dto/query-business-founder.dto';
@@ -80,6 +81,9 @@ export class BusinessFoundersService {
           industry: saved.industry,
           yearsInBusiness: saved.yearsInBusiness,
           biggestPriority: saved.biggestPriority,
+          growthBlocker: saved.growthBlocker,
+          hasTeam: saved.hasTeam,
+          futureVision: saved.futureVision,
         })
         .then((sent) => {
           if (sent) {
@@ -156,10 +160,42 @@ export class BusinessFoundersService {
     const skip = (page - 1) * limit;
     const sort: any = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
 
-    const [data, total] = await Promise.all([
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [
+      data,
+      total,
+      totalFounders,
+      confirmedCount,
+      attendedCount,
+      cancelledCount,
+      newRegsCount,
+    ] = await Promise.all([
       this.founderModel.find(filter).sort(sort).skip(skip).limit(limit).exec(),
       this.founderModel.countDocuments(filter),
+      this.founderModel.countDocuments(),
+      this.founderModel.countDocuments({
+        status: FounderRegistrationStatus.CONFIRMED,
+      }),
+      this.founderModel.countDocuments({
+        status: FounderRegistrationStatus.ATTENDED,
+      }),
+      this.founderModel.countDocuments({
+        status: FounderRegistrationStatus.CANCELLED,
+      }),
+      this.founderModel.countDocuments({ createdAt: { $gte: todayStart } }),
     ]);
+
+    const summary = {
+      totalFounders,
+      total,
+      confirmed: confirmedCount,
+      attended: attendedCount,
+      attend: attendedCount,
+      cancelled: cancelledCount,
+      newRegs: newRegsCount,
+    };
 
     return {
       success: true,
@@ -170,6 +206,9 @@ export class BusinessFoundersService {
         limit,
         totalPages: total === 0 ? 0 : Math.ceil(total / limit),
       },
+      summary,
+      counts: summary,
+      stats: summary,
     };
   }
 
@@ -201,41 +240,71 @@ export class BusinessFoundersService {
   }
 
   async getStats() {
-    const [total, industries, years, priorities, blockers, teams, statuses] =
-      await Promise.all([
-        this.founderModel.countDocuments(),
-        this.founderModel.aggregate([
-          { $match: { industry: { $exists: true, $ne: '' } } },
-          { $group: { _id: '$industry', count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-        ]),
-        this.founderModel.aggregate([
-          { $match: { yearsInBusiness: { $exists: true, $ne: '' } } },
-          { $group: { _id: '$yearsInBusiness', count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-        ]),
-        this.founderModel.aggregate([
-          { $match: { biggestPriority: { $exists: true, $ne: '' } } },
-          { $group: { _id: '$biggestPriority', count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-        ]),
-        this.founderModel.aggregate([
-          { $match: { growthBlocker: { $exists: true, $ne: '' } } },
-          { $group: { _id: '$growthBlocker', count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-        ]),
-        this.founderModel.aggregate([
-          { $match: { hasTeam: { $exists: true, $ne: '' } } },
-          { $group: { _id: '$hasTeam', count: { $sum: 1 } } },
-          { $sort: { count: -1 } },
-        ]),
-        this.founderModel.aggregate([
-          { $group: { _id: '$status', count: { $sum: 1 } } },
-        ]),
-      ]);
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [
+      total,
+      confirmedCount,
+      attendedCount,
+      cancelledCount,
+      newRegsCount,
+      industries,
+      years,
+      priorities,
+      blockers,
+      teams,
+      statuses,
+    ] = await Promise.all([
+      this.founderModel.countDocuments(),
+      this.founderModel.countDocuments({
+        status: FounderRegistrationStatus.CONFIRMED,
+      }),
+      this.founderModel.countDocuments({
+        status: FounderRegistrationStatus.ATTENDED,
+      }),
+      this.founderModel.countDocuments({
+        status: FounderRegistrationStatus.CANCELLED,
+      }),
+      this.founderModel.countDocuments({ createdAt: { $gte: todayStart } }),
+      this.founderModel.aggregate([
+        { $match: { industry: { $exists: true, $ne: '' } } },
+        { $group: { _id: '$industry', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      this.founderModel.aggregate([
+        { $match: { yearsInBusiness: { $exists: true, $ne: '' } } },
+        { $group: { _id: '$yearsInBusiness', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      this.founderModel.aggregate([
+        { $match: { biggestPriority: { $exists: true, $ne: '' } } },
+        { $group: { _id: '$biggestPriority', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      this.founderModel.aggregate([
+        { $match: { growthBlocker: { $exists: true, $ne: '' } } },
+        { $group: { _id: '$growthBlocker', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      this.founderModel.aggregate([
+        { $match: { hasTeam: { $exists: true, $ne: '' } } },
+        { $group: { _id: '$hasTeam', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      this.founderModel.aggregate([
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]),
+    ]);
 
     return {
       total,
+      totalFounders: total,
+      confirmed: confirmedCount,
+      attended: attendedCount,
+      attend: attendedCount,
+      cancelled: cancelledCount,
+      newRegs: newRegsCount,
       byIndustry: industries.map((i) => ({ industry: i._id, count: i.count })),
       byYearsInBusiness: years.map((y) => ({
         yearsInBusiness: y._id,

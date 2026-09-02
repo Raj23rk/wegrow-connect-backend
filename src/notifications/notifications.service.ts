@@ -805,8 +805,8 @@ export class NotificationsService {
 
               <img
                 class="logo"
-                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFILKUiMNzpiMOPb17jB7tmvP8QM3bhYhCxOr6NtPecw&s"
-                alt="WeGrow Skill Campus Logo"
+                src="https://www.wegrowbschool.in/wegrow-logo.png"
+                alt="WeGrow B School Logo"
               >
 
             </td>
@@ -814,7 +814,7 @@ export class NotificationsService {
             <td class="header-content">
 
               <h1>
-                WeGrow Skill Campus
+                WeGrow B School
               </h1>
 
               <p class="tagline">
@@ -859,7 +859,7 @@ export class NotificationsService {
         </p>
 
         <p>
-          <strong>WeGrow Skill Campus</strong>
+          <strong>WeGrow B School</strong>
         </p>
 
       </div>
@@ -873,7 +873,7 @@ export class NotificationsService {
         <p>
           We are excited to announce a new event
           available at
-          <strong>WeGrow Skill Campus</strong>.
+          <strong>WeGrow B School</strong>.
         </p>
 
         <div class="event-card">
@@ -969,8 +969,8 @@ export class NotificationsService {
 
           <img
             class="closing-logo"
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFILKUiMNzpiMOPb17jB7tmvP8QM3bhYhCxOr6NtPecw&s"
-            alt="WeGrow Skill Campus Logo"
+            src="https://www.wegrowbschool.in/wegrow-logo.png"
+            alt="WeGrow B School Logo"
           >
 
           <p class="signature-phone">
@@ -999,7 +999,7 @@ export class NotificationsService {
           <td class="footer-blue">
 
             <strong>
-              WeGrow Skill Campus
+              WeGrow B School
             </strong>
 
           </td>
@@ -1042,7 +1042,7 @@ export class NotificationsService {
       const from = this.getMailFrom();
 
       const { data, error } = await this.resend.emails.send({
-        from: `WeGrow Skill Campus <${from}>`,
+        from: `WeGrow B School <${from}>`,
         to: [to],
         subject,
         html,
@@ -1161,7 +1161,7 @@ export class NotificationsService {
     <div class="header">
 
       <h2>
-        WeGrow Skill Campus
+        WeGrow B School
       </h2>
 
       <p>
@@ -1225,7 +1225,7 @@ export class NotificationsService {
     <div class="footer">
 
       © ${new Date().getFullYear()}
-      WeGrow Skill Campus.
+      WeGrow B School.
       All rights reserved.
 
     </div>
@@ -1245,7 +1245,7 @@ export class NotificationsService {
       const from = this.getMailFrom();
 
       const { data, error } = await this.resend.emails.send({
-        from: `WeGrow Skill Campus <${from}>`,
+        from: `WeGrow B School <${from}>`,
         to: [email],
         subject: 'Reset Your WeGrow Password',
         html,
@@ -1835,8 +1835,8 @@ export class NotificationsService {
 
               <img
                 class="logo"
-                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFILKUiMNzpiMOPb17jB7tmvP8QM3bhYhCxOr6NtPecw&s"
-                alt="WeGrow Skill Campus Logo"
+                src="https://www.wegrowbschool.in/wegrow-logo.png"
+                alt="WeGrow B School Logo"
               >
 
             </td>
@@ -1844,7 +1844,7 @@ export class NotificationsService {
             <td class="header-content">
 
               <h1>
-                WeGrow Skill Campus
+                WeGrow B School
               </h1>
 
               <p class="tagline">
@@ -1896,7 +1896,7 @@ export class NotificationsService {
         <p>
 
           <strong>
-            WeGrow Skill Campus
+            WeGrow B School
           </strong>
 
         </p>
@@ -1914,7 +1914,7 @@ export class NotificationsService {
         <p>
 
           We're excited to have you join us at
-          <strong>WeGrow Skill Campus</strong>.
+          <strong>WeGrow B School</strong>.
 
           Your booking request has been successfully received,
           and you're one step closer to an amazing learning
@@ -2057,7 +2057,7 @@ export class NotificationsService {
           <p>
 
             Get ready to learn, connect, and grow with
-            <strong>WeGrow Skill Campus</strong>!
+            <strong>WeGrow B School</strong>!
 
           </p>
 
@@ -2070,13 +2070,13 @@ export class NotificationsService {
           </h5>
 
           <h4>
-            WeGrow Skill Campus Team
+            WeGrow B School Team
           </h4>
 
           <img
             class="closing-logo"
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFILKUiMNzpiMOPb17jB7tmvP8QM3bhYhCxOr6NtPecw&s"
-            alt="WeGrow Skill Campus Logo"
+            src="https://www.wegrowbschool.in/wegrow-logo.png"
+            alt="WeGrow B School Logo"
           >
 
           <p class="signature-phone">
@@ -2107,7 +2107,7 @@ export class NotificationsService {
           <td class="footer-blue">
 
             <strong>
-              WeGrow Skill Campus
+              WeGrow B School
             </strong>
 
           </td>
@@ -2401,7 +2401,7 @@ export class NotificationsService {
 <body>
   <div class="wrapper">
     <div class="header">
-      <h1>WeGrow Skill Campus</h1>
+      <h1>WeGrow B School</h1>
       <p>Your Certificate is Ready 🎓</p>
     </div>
     <div class="orange-bar"></div>
@@ -2414,9 +2414,9 @@ export class NotificationsService {
         <p><strong>Issued On:</strong> ${issuedDate}</p>
       </div>
       <p>Log in to your WeGrow Connect dashboard and navigate to <strong>My Certificates</strong> to download your certificate.</p>
-      <p>Regards,<br/><strong>WeGrow Skill Campus Team</strong></p>
+      <p>Regards,<br/><strong>WeGrow B School Team</strong></p>
     </div>
-    <div class="footer">© ${new Date().getFullYear()} WeGrow Skill Campus. All rights reserved.</div>
+    <div class="footer">© ${new Date().getFullYear()} WeGrow B School. All rights reserved.</div>
   </div>
 </body>
 </html>`;
@@ -2712,10 +2712,10 @@ export class NotificationsService {
         <table class="header-table">
           <tr>
             <td class="logo-cell">
-              <img class="logo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFILKUiMNzpiMOPb17jB7tmvP8QM3bhYhCxOr6NtPecw&s" alt="WeGrow Skill Campus Logo">
+              <img class="logo" src="https://www.wegrowbschool.in/wegrow-logo.png" alt="WeGrow B School Logo">
             </td>
             <td class="header-content">
-              <h1>WeGrow Skill Campus</h1>
+              <h1>WeGrow B School</h1>
               <p class="tagline"><em>Empowering Skills. Transforming Futures.</em></p>
             </td>
           </tr>
@@ -2734,7 +2734,7 @@ export class NotificationsService {
       </table>
       <div class="date-reference">
         <p><strong>Registration Date:</strong> ${formattedDate}</p>
-        <p><strong>WeGrow Skill Campus</strong></p>
+        <p><strong>WeGrow B School</strong></p>
       </div>
       <div class="content">
         <h2>Hello ${data.fullName},</h2>
@@ -2757,12 +2757,12 @@ export class NotificationsService {
           <p class="event-detail"><strong>Business Domain / Interest:</strong> ${categoryText}</p>
         </div>
         <div class="button-wrapper">
-          <a href="https://www.wegrowcampus.in" class="event-button">Visit WeGrow Campus</a>
+          <a href="https://www.wegrowcampus.in" class="event-button">Visit WeGrow B School</a>
         </div>
         <p><strong>We look forward to seeing you at the orientation!</strong></p>
         <div class="closing">
           <h5>Regards,</h5>
-          <img class="closing-logo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFILKUiMNzpiMOPb17jB7tmvP8QM3bhYhCxOr6NtPecw&s" alt="WeGrow Skill Campus Logo">
+          <img class="closing-logo" src="https://www.wegrowbschool.in/wegrow-logo.png" alt="WeGrow B School Logo">
           <p class="signature-phone">
             <a href="https://www.wegrowcampus.in/" style="color:#205894;">www.wegrowcampus.in</a><br>
             enquiry@wegrowcampus.in
@@ -2771,7 +2771,7 @@ export class NotificationsService {
       </div>
       <table class="footer-table">
         <tr>
-          <td class="footer-blue"><strong>WeGrow Skill Campus</strong></td>
+          <td class="footer-blue"><strong>WeGrow B School</strong></td>
           <td class="footer-orange"><strong>Empowering Skills.<br>Transforming Futures.</strong></td>
         </tr>
       </table>
@@ -2783,7 +2783,7 @@ export class NotificationsService {
 
     return this.sendEmail(
       data.email,
-      "🎟️ Seat Reserved - Women's Entrepreneurship Community | WeGrow Skill Campus",
+      "🎟️ Seat Reserved - Women's Entrepreneurship Community | WeGrow B School",
       html,
     );
   }
@@ -3029,10 +3029,10 @@ export class NotificationsService {
         <table class="header-table">
           <tr>
             <td class="logo-cell">
-              <img class="logo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFILKUiMNzpiMOPb17jB7tmvP8QM3bhYhCxOr6NtPecw&s" alt="WeGrow Skill Campus Logo">
+              <img class="logo" src="https://www.wegrowbschool.in/wegrow-logo.png" alt="WeGrow B School Logo">
             </td>
             <td class="header-content">
-              <h1>WeGrow Skill Campus</h1>
+              <h1>WeGrow B School</h1>
               <p class="tagline"><em>Empowering Skills. Transforming Futures.</em></p>
             </td>
           </tr>
@@ -3051,7 +3051,7 @@ export class NotificationsService {
       </table>
       <div class="date-reference">
         <p><strong>Registration Date:</strong> ${formattedDate}</p>
-        <p><strong>WeGrow Skill Campus</strong></p>
+        <p><strong>WeGrow B School</strong></p>
       </div>
       <div class="content">
         <h2>Hello ${data.fullName},</h2>
@@ -3076,12 +3076,12 @@ export class NotificationsService {
           <p class="event-detail"><strong>Batch Duration:</strong> ${data.courseStartYear} - ${data.courseEndYear}</p>
         </div>
         <div class="button-wrapper">
-          <a href="https://www.wegrowcampus.in" class="event-button">Visit WeGrow Campus</a>
+          <a href="https://www.wegrowcampus.in" class="event-button">Visit WeGrow B School</a>
         </div>
         <p><strong>We look forward to seeing you at the orientation!</strong></p>
         <div class="closing">
           <h5>Regards,</h5>
-          <img class="closing-logo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFILKUiMNzpiMOPb17jB7tmvP8QM3bhYhCxOr6NtPecw&s" alt="WeGrow Skill Campus Logo">
+          <img class="closing-logo" src="https://www.wegrowbschool.in/wegrow-logo.png" alt="WeGrow B School Logo">
           <p class="signature-phone">
             <a href="https://www.wegrowcampus.in/" style="color:#205894;">www.wegrowcampus.in</a><br>
             enquiry@wegrowcampus.in
@@ -3090,7 +3090,7 @@ export class NotificationsService {
       </div>
       <table class="footer-table">
         <tr>
-          <td class="footer-blue"><strong>WeGrow Skill Campus</strong></td>
+          <td class="footer-blue"><strong>WeGrow B School</strong></td>
           <td class="footer-orange"><strong>Empowering Skills.<br>Transforming Futures.</strong></td>
         </tr>
       </table>
@@ -3102,7 +3102,7 @@ export class NotificationsService {
 
     return this.sendEmail(
       data.email,
-      '🎟️ Registration Confirmed - Student Founders Community | WeGrow Skill Campus',
+      '🎟️ Registration Confirmed - Student Founders Community | WeGrow B School',
       html,
     );
   }
@@ -3119,8 +3119,37 @@ export class NotificationsService {
     industry?: string;
     yearsInBusiness?: string;
     biggestPriority?: string;
+    growthBlocker?: string;
+    hasTeam?: string;
+    futureVision?: string;
   }): Promise<boolean> {
     if (!data.email) return false;
+
+    const industryMap: Record<string, string> = {
+      manufacturing: 'Manufacturing',
+      printing_packaging: 'Printing & Packaging',
+      fireworks_matches: 'Fireworks & Matches',
+      retail_wholesale: 'Retail & Wholesale',
+      textiles_garments: 'Textiles & Garments',
+      services_agency: 'Services & Agencies',
+      food_hospitality: 'Food & Hospitality',
+      tech_digital: 'Tech & Digital',
+      other: 'Other Business',
+    };
+
+    const yearsMap: Record<string, string> = {
+      less_than_1_year: '< 1 Year',
+      '1_to_3_years': '1 – 3 Years',
+      '3_to_5_years': '3 – 5 Years',
+      '5_plus_years': '5+ Years',
+    };
+
+    const industryText =
+      (data.industry && industryMap[data.industry]) || data.industry || 'Business';
+    const yearsText =
+      (data.yearsInBusiness && yearsMap[data.yearsInBusiness]) ||
+      data.yearsInBusiness ||
+      '';
 
     const formattedDate = new Date().toLocaleDateString('en-IN', {
       day: '2-digit',
@@ -3134,72 +3163,286 @@ export class NotificationsService {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
   <title>Business Founders Community</title>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #f9fafb; margin: 0; padding: 20px; color: #1f2937; }
-    .card { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; }
-    .header { background: #16225E; color: #ffffff; padding: 24px; text-align: center; }
-    .header h1 { margin: 0; font-size: 20px; font-weight: bold; }
-    .header p { margin: 8px 0 0 0; font-size: 13px; color: #cbd5e1; }
-    .content { padding: 24px; }
-    .badge { display: inline-block; background: #FFF7ED; color: #C2410C; font-weight: bold; font-size: 12px; padding: 4px 12px; border-radius: 9999px; border: 1px solid #FFEDD5; margin-bottom: 16px; }
-    .details { background: #FBF6EE; border: 1px solid #E7E1D4; border-radius: 8px; padding: 16px; margin: 16px 0; }
-    .details-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
-    .details-label { color: #64748b; font-weight: 600; }
-    .details-value { color: #1e293b; font-weight: 700; text-align: right; }
-    .footer { text-align: center; padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e5e7eb; font-size: 12px; color: #94a3b8; }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      min-width: 100% !important;
+      background-color: #ffffff !important;
+      color: #1f2937 !important;
+    }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    table {
+      border-spacing: 0;
+      border-collapse: collapse;
+    }
+    img {
+      border: 0;
+      display: block;
+      max-width: 100%;
+    }
+    a {
+      text-decoration: none;
+    }
+    .email-wrapper {
+      width: 100%;
+      background-color: #ffffff !important;
+      padding: 20px 0;
+    }
+    .invitation {
+      width: 680px;
+      max-width: 680px;
+      margin: 0 auto;
+      background-color: #ffffff !important;
+      border: 1px solid #e5e7eb;
+    }
+    .header-section {
+      padding: 25px 30px;
+      background-color: #ffffff !important;
+    }
+    .header-table {
+      width: 100%;
+    }
+    .logo-cell {
+      width: 130px;
+      vertical-align: middle;
+      text-align: center;
+    }
+    .logo {
+      width: 100px;
+      max-width: 100px;
+      height: auto;
+      margin: 0 auto;
+    }
+    .header-content {
+      vertical-align: middle;
+      padding-left: 20px;
+    }
+    .header-content h1 {
+      margin: 0 0 10px;
+      color: #205894 !important;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+    .tagline {
+      margin: 0;
+      color: #555555 !important;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .tagline em {
+      color: #6280a5 !important;
+      font-style: normal;
+    }
+    .top-line {
+      height: 4px;
+      background-color: #f5a51b !important;
+      margin: 0 30px;
+    }
+    .title-table {
+      width: 100%;
+      margin-top: 25px;
+    }
+    .title-blue {
+      width: 72%;
+      padding: 12px 18px;
+      background-color: #205894 !important;
+      color: #ffffff !important;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .title-orange {
+      width: 28%;
+      padding: 12px 10px;
+      background-color: #f5a51b !important;
+      color: #ffffff !important;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .date-reference {
+      padding: 25px 30px 10px;
+      text-align: right;
+      background-color: #ffffff !important;
+    }
+    .date-reference p {
+      margin: 4px 0;
+      color: #444444 !important;
+      font-size: 13px;
+    }
+    .content {
+      padding: 15px 30px 30px;
+      background-color: #ffffff !important;
+    }
+    .content h2 {
+      margin: 0 0 15px;
+      color: #205894 !important;
+      font-size: 22px;
+    }
+    .content p {
+      color: #333333 !important;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .event-card {
+      margin: 25px 0;
+      padding: 22px;
+      background-color: #f8fafc !important;
+      border: 1px solid #e2e8f0;
+      border-left: 5px solid #f5a51b;
+    }
+    .event-title {
+      margin: 0 0 18px !important;
+      color: #205894 !important;
+      font-size: 21px !important;
+    }
+    .description {
+      color: #333333 !important;
+    }
+    .description p {
+      margin-top: 5px;
+      color: #555555 !important;
+    }
+    .event-detail {
+      margin: 12px 0 !important;
+      color: #333333 !important;
+    }
+    .event-detail strong {
+      color: #205894 !important;
+    }
+    .button-wrapper {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .event-button {
+      display: inline-block;
+      padding: 13px 28px;
+      background-color: #205894 !important;
+      color: #ffffff !important;
+      border-radius: 5px;
+      font-size: 15px;
+      font-weight: bold;
+    }
+    .closing {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .closing h5 {
+      margin: 0 0 10px;
+      color: #f27f2d !important;
+      font-size: 15px;
+    }
+    .signature-phone {
+      color: #6280a5 !important;
+      font-size: 13px !important;
+    }
+    .closing-logo {
+      width: 70px;
+      margin: 12px 0;
+    }
+    .footer-table {
+      width: 100%;
+    }
+    .footer-blue {
+      width: 72%;
+      padding: 12px 15px;
+      background-color: #205894 !important;
+      color: #ffffff !important;
+      font-size: 13px;
+    }
+    .footer-orange {
+      width: 28%;
+      padding: 12px 8px;
+      background-color: #f5a51b !important;
+      color: #ffffff !important;
+      font-size: 13px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="header">
-      <h1>WeGrow Business Founders Community</h1>
-      <p>Advance Registration Confirmed</p>
-    </div>
-    <div class="content">
-      <span class="badge">Registration Confirmed</span>
-      <p>Dear <strong>${data.fullName}</strong>,</p>
-      <p>Thank you for registering for the <strong>WeGrow Business Founders Community</strong>. Your seat is confirmed for the upcoming founder orientation & mentorship session.</p>
-      
-      <div class="details">
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+  <div class="email-wrapper">
+    <div class="invitation">
+      <div class="header-section">
+        <table class="header-table">
           <tr>
-            <td style="padding: 6px 0; color: #64748b; font-weight: bold;">Full Name:</td>
-            <td style="padding: 6px 0; color: #1e293b; font-weight: bold; text-align: right;">${data.fullName}</td>
-          </tr>
-          <tr>
-            <td style="padding: 6px 0; color: #64748b; font-weight: bold;">WhatsApp Number:</td>
-            <td style="padding: 6px 0; color: #1e293b; font-weight: bold; text-align: right;">${data.phone}</td>
-          </tr>
-          ${data.businessName ? `
-          <tr>
-            <td style="padding: 6px 0; color: #64748b; font-weight: bold;">Business Name:</td>
-            <td style="padding: 6px 0; color: #1e293b; font-weight: bold; text-align: right;">${data.businessName}</td>
-          </tr>` : ''}
-          ${data.industry ? `
-          <tr>
-            <td style="padding: 6px 0; color: #64748b; font-weight: bold;">Sector / Industry:</td>
-            <td style="padding: 6px 0; color: #1e293b; font-weight: bold; text-align: right;">${data.industry}</td>
-          </tr>` : ''}
-          ${data.biggestPriority ? `
-          <tr>
-            <td style="padding: 6px 0; color: #64748b; font-weight: bold;">Primary Focus:</td>
-            <td style="padding: 6px 0; color: #1e293b; font-weight: bold; text-align: right;">${data.biggestPriority}</td>
-          </tr>` : ''}
-          <tr>
-            <td style="padding: 6px 0; color: #64748b; font-weight: bold;">Registration Date:</td>
-            <td style="padding: 6px 0; color: #1e293b; font-weight: bold; text-align: right;">${formattedDate}</td>
+            <td class="logo-cell">
+              <img class="logo" src="https://www.wegrowbschool.in/wegrow-logo.png" alt="WeGrow B School Logo">
+            </td>
+            <td class="header-content">
+              <h1>WeGrow B School</h1>
+              <p class="tagline"><em>Empowering Skills. Transforming Futures.</em></p>
+            </td>
           </tr>
         </table>
       </div>
-
-      <p style="font-size: 13px; line-height: 1.6; color: #475569;">
-        Our team will reach out with the event itinerary and orientation schedule on your WhatsApp number.
-      </p>
-    </div>
-    <div class="footer">
-      <p style="margin: 0;">WeGrow Skill Campus &copy; ${new Date().getFullYear()}</p>
-      <p style="margin: 4px 0 0 0;"><a href="https://www.wegrowcampus.in" style="color: #F0791E; text-decoration: none;">www.wegrowcampus.in</a> | enquiry@wegrowcampus.in</p>
+      <div class="top-line"></div>
+      <table class="title-table">
+        <tr>
+          <td class="title-blue">
+            Seat Reserved - Business Founders Community
+          </td>
+          <td class="title-orange">
+            2026
+          </td>
+        </tr>
+      </table>
+      <div class="date-reference">
+        <p><strong>Registration Date:</strong> ${formattedDate}</p>
+        <p><strong>WeGrow B School</strong></p>
+      </div>
+      <div class="content">
+        <h2>Hello ${data.fullName},</h2>
+        <p>
+          Your seat reservation for the <strong>Business Founders Community</strong> orientation & mentorship session has been confirmed!
+        </p>
+        <div class="event-card">
+          <h2 class="event-title">
+            தொழில் முனைவோர் சமூகம் (Business Founders Orientation)
+          </h2>
+          <div class="description">
+            <p>
+              An exclusive session for business owners, manufacturers, and traders to connect with growth mentors, address scaling bottlenecks, and transition from daily operations to strategic ownership with WeGrow B School.
+            </p>
+          </div>
+          <p class="event-detail"><strong>Full Name:</strong> ${data.fullName}</p>
+          <p class="event-detail"><strong>WhatsApp Number:</strong> ${data.phone}</p>
+          ${data.email ? `<p class="event-detail"><strong>Email Address:</strong> ${data.email}</p>` : ''}
+          ${data.businessName ? `<p class="event-detail"><strong>Business / Enterprise Name:</strong> ${data.businessName}</p>` : ''}
+          <p class="event-detail"><strong>Sector / Industry:</strong> ${industryText}</p>
+          ${yearsText ? `<p class="event-detail"><strong>Years in Business:</strong> ${yearsText}</p>` : ''}
+          ${data.biggestPriority ? `<p class="event-detail"><strong>Primary Business Priority:</strong> ${data.biggestPriority}</p>` : ''}
+          ${data.growthBlocker ? `<p class="event-detail"><strong>Growth Challenge / Blocker:</strong> ${data.growthBlocker}</p>` : ''}
+          ${data.futureVision ? `<p class="event-detail"><strong>Future 2-3 Year Vision:</strong> ${data.futureVision}</p>` : ''}
+        </div>
+        <div class="button-wrapper">
+          <a href="https://www.wegrowcampus.in" class="event-button">Visit WeGrow B School</a>
+        </div>
+        <p><strong>We look forward to seeing you at the orientation!</strong></p>
+        <div class="closing">
+          <h5>Regards,</h5>
+          <img class="closing-logo" src="https://www.wegrowbschool.in/wegrow-logo.png" alt="WeGrow B School Logo">
+          <p class="signature-phone">
+            <a href="https://www.wegrowcampus.in/" style="color:#205894;">www.wegrowcampus.in</a><br>
+            enquiry@wegrowcampus.in
+          </p>
+        </div>
+      </div>
+      <table class="footer-table">
+        <tr>
+          <td class="footer-blue"><strong>WeGrow B School</strong></td>
+          <td class="footer-orange"><strong>Empowering Skills.<br>Transforming Futures.</strong></td>
+        </tr>
+      </table>
     </div>
   </div>
 </body>
@@ -3208,7 +3451,7 @@ export class NotificationsService {
 
     return this.sendEmail(
       data.email,
-      '🎟️ Registration Confirmed - Business Founders Community | WeGrow Skill Campus',
+      '🎟️ Seat Reserved - Business Founders Community | WeGrow B School',
       html,
     );
   }

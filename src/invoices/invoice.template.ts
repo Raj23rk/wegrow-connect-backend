@@ -306,7 +306,7 @@ export function generateInvoiceHtml(data: InvoiceTemplateData): string {
   <div class="header">
 
     <div>
-      <div class="brand-name">WeGrow Skill Campus</div>
+      <div class="brand-name">WeGrow B School</div>
       <div class="brand-tagline">Empowering Growth Through Learning</div>
     </div>
 
@@ -340,7 +340,7 @@ export function generateInvoiceHtml(data: InvoiceTemplateData): string {
 
     <div class="meta-block">
       <h3>From</h3>
-      <p><strong>WeGrow Skill Campus</strong></p>
+      <p><strong>WeGrow B School</strong></p>
       <p>WeGrow Connect Platform</p>
       <p>kumarrk23dev@gmail.com</p>
     </div>
@@ -394,7 +394,7 @@ export function generateInvoiceHtml(data: InvoiceTemplateData): string {
     <h4>Payment Notes</h4>
     <p>
       Thank you for your payment. This invoice serves as an official receipt
-      for your transaction with WeGrow Skill Campus.
+      for your transaction with WeGrow B School.
       For any queries, contact us at kumarrk23dev@gmail.com.
     </p>
   </div>
