@@ -3106,4 +3106,110 @@ export class NotificationsService {
       html,
     );
   }
+
+  // ============================================================
+  // BUSINESS FOUNDERS CONFIRMATION EMAIL
+  // ============================================================
+
+  async sendBusinessFounderConfirmationEmail(data: {
+    email: string;
+    fullName: string;
+    phone: string;
+    businessName?: string;
+    industry?: string;
+    yearsInBusiness?: string;
+    biggestPriority?: string;
+  }): Promise<boolean> {
+    if (!data.email) return false;
+
+    const formattedDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business Founders Community</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f9fafb; margin: 0; padding: 20px; color: #1f2937; }
+    .card { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; }
+    .header { background: #16225E; color: #ffffff; padding: 24px; text-align: center; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: bold; }
+    .header p { margin: 8px 0 0 0; font-size: 13px; color: #cbd5e1; }
+    .content { padding: 24px; }
+    .badge { display: inline-block; background: #FFF7ED; color: #C2410C; font-weight: bold; font-size: 12px; padding: 4px 12px; border-radius: 9999px; border: 1px solid #FFEDD5; margin-bottom: 16px; }
+    .details { background: #FBF6EE; border: 1px solid #E7E1D4; border-radius: 8px; padding: 16px; margin: 16px 0; }
+    .details-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+    .details-label { color: #64748b; font-weight: 600; }
+    .details-value { color: #1e293b; font-weight: 700; text-align: right; }
+    .footer { text-align: center; padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e5e7eb; font-size: 12px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>WeGrow Business Founders Community</h1>
+      <p>Advance Registration Confirmed</p>
+    </div>
+    <div class="content">
+      <span class="badge">Registration Confirmed</span>
+      <p>Dear <strong>${data.fullName}</strong>,</p>
+      <p>Thank you for registering for the <strong>WeGrow Business Founders Community</strong>. Your seat is confirmed for the upcoming founder orientation & mentorship session.</p>
+      
+      <div class="details">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: bold;">Full Name:</td>
+            <td style="padding: 6px 0; color: #1e293b; font-weight: bold; text-align: right;">${data.fullName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: bold;">WhatsApp Number:</td>
+            <td style="padding: 6px 0; color: #1e293b; font-weight: bold; text-align: right;">${data.phone}</td>
+          </tr>
+          ${data.businessName ? `
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: bold;">Business Name:</td>
+            <td style="padding: 6px 0; color: #1e293b; font-weight: bold; text-align: right;">${data.businessName}</td>
+          </tr>` : ''}
+          ${data.industry ? `
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: bold;">Sector / Industry:</td>
+            <td style="padding: 6px 0; color: #1e293b; font-weight: bold; text-align: right;">${data.industry}</td>
+          </tr>` : ''}
+          ${data.biggestPriority ? `
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: bold;">Primary Focus:</td>
+            <td style="padding: 6px 0; color: #1e293b; font-weight: bold; text-align: right;">${data.biggestPriority}</td>
+          </tr>` : ''}
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: bold;">Registration Date:</td>
+            <td style="padding: 6px 0; color: #1e293b; font-weight: bold; text-align: right;">${formattedDate}</td>
+          </tr>
+        </table>
+      </div>
+
+      <p style="font-size: 13px; line-height: 1.6; color: #475569;">
+        Our team will reach out with the event itinerary and orientation schedule on your WhatsApp number.
+      </p>
+    </div>
+    <div class="footer">
+      <p style="margin: 0;">WeGrow Skill Campus &copy; ${new Date().getFullYear()}</p>
+      <p style="margin: 4px 0 0 0;"><a href="https://www.wegrowcampus.in" style="color: #F0791E; text-decoration: none;">www.wegrowcampus.in</a> | enquiry@wegrowcampus.in</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+    return this.sendEmail(
+      data.email,
+      '🎟️ Registration Confirmed - Business Founders Community | WeGrow Skill Campus',
+      html,
+    );
+  }
 }

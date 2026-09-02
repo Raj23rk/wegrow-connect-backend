@@ -48,6 +48,24 @@ export class StudentFounder {
   @Prop({ required: true, type: Number })
   courseEndYear!: number;
 
+  @Prop({ default: '', trim: true })
+  readiness?: string;
+
+  @Prop({ default: '', trim: true })
+  hasIdea?: string;
+
+  @Prop({ default: '', trim: true })
+  seriousness?: string;
+
+  @Prop({ default: '', trim: true })
+  lookingForFunding?: string;
+
+  @Prop({ default: '', trim: true })
+  readyToLearn?: string;
+
+  @Prop({ default: '', trim: true })
+  industryNiche?: string;
+
   @Prop({
     type: String,
     enum: FounderRegistrationStatus,
@@ -68,4 +86,5 @@ StudentFounderSchema.index({ phone: 1 });
 StudentFounderSchema.index({ email: 1 });
 StudentFounderSchema.index({ collegeName: 1 });
 StudentFounderSchema.index({ yearOfStudy: 1 });
+StudentFounderSchema.index({ industryNiche: 1 });
 StudentFounderSchema.index({ createdAt: -1 });

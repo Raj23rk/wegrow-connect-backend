@@ -1,10 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
   IsInt,
   IsNotEmpty,
+  IsOptional,
   IsString,
   Matches,
   Max,
@@ -63,4 +64,34 @@ export class CreateStudentFounderDto {
   @Max(2035)
   @IsNotEmpty()
   courseEndYear!: number;
+
+  @ApiPropertyOptional({ example: 'Yes, I’m ready to start' })
+  @IsString()
+  @IsOptional()
+  readiness?: string;
+
+  @ApiPropertyOptional({ example: 'Yes, I have a clear idea' })
+  @IsString()
+  @IsOptional()
+  hasIdea?: string;
+
+  @ApiPropertyOptional({ example: 'I want to start soon' })
+  @IsString()
+  @IsOptional()
+  seriousness?: string;
+
+  @ApiPropertyOptional({ example: 'Yes' })
+  @IsString()
+  @IsOptional()
+  lookingForFunding?: string;
+
+  @ApiPropertyOptional({ example: 'Yes' })
+  @IsString()
+  @IsOptional()
+  readyToLearn?: string;
+
+  @ApiPropertyOptional({ example: 'Technology / IT' })
+  @IsString()
+  @IsOptional()
+  industryNiche?: string;
 }

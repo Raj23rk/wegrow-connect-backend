@@ -1,12 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
-import {
-  FounderRegistrationStatus,
-  YearOfStudy,
-} from '../schemas/student-founder.schema';
+import { FounderRegistrationStatus } from '../schemas/business-founder.schema';
 
-export class QueryStudentFounderDto {
+export class QueryBusinessFounderDto {
   @ApiPropertyOptional({ example: 1, default: 1 })
   @Type(() => Number)
   @IsInt()
@@ -21,40 +18,40 @@ export class QueryStudentFounderDto {
   @IsOptional()
   limit?: number = 10;
 
-  @ApiPropertyOptional({ description: 'Search name, phone, email, college, or course' })
+  @ApiPropertyOptional({ description: 'Search name, phone, email, business name, or industry' })
   @IsString()
   @IsOptional()
   search?: string;
 
-  @ApiPropertyOptional({ enum: YearOfStudy })
-  @IsEnum(YearOfStudy)
-  @IsOptional()
-  yearOfStudy?: YearOfStudy;
-
-  @ApiPropertyOptional({ example: 'Ayya Nadar Janaki Ammal College' })
+  @ApiPropertyOptional({ example: 'manufacturing' })
   @IsString()
   @IsOptional()
-  collegeName?: string;
+  industry?: string;
+
+  @ApiPropertyOptional({ example: '1_to_3_years' })
+  @IsString()
+  @IsOptional()
+  yearsInBusiness?: string;
+
+  @ApiPropertyOptional({ example: 'More Sales' })
+  @IsString()
+  @IsOptional()
+  biggestPriority?: string;
+
+  @ApiPropertyOptional({ example: 'Lack of Customers' })
+  @IsString()
+  @IsOptional()
+  growthBlocker?: string;
+
+  @ApiPropertyOptional({ example: 'Yes' })
+  @IsString()
+  @IsOptional()
+  hasTeam?: string;
 
   @ApiPropertyOptional({ enum: FounderRegistrationStatus })
   @IsEnum(FounderRegistrationStatus)
   @IsOptional()
   status?: FounderRegistrationStatus;
-
-  @ApiPropertyOptional({ example: 'Technology / IT' })
-  @IsString()
-  @IsOptional()
-  industryNiche?: string;
-
-  @ApiPropertyOptional({ example: 'Yes, I’m ready to start' })
-  @IsString()
-  @IsOptional()
-  readiness?: string;
-
-  @ApiPropertyOptional({ example: 'Yes' })
-  @IsString()
-  @IsOptional()
-  lookingForFunding?: string;
 
   @ApiPropertyOptional({ example: 'createdAt' })
   @IsString()

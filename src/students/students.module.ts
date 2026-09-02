@@ -12,7 +12,10 @@ import { StudentsController } from './students.controller';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+        secret:
+          configService.get<string>('JWT_SECRET') ||
+          process.env.JWT_SECRET ||
+          'wegrow_connect_jwt_secret_key_default_2026',
         signOptions: { expiresIn: '7d' },
       }),
       inject: [ConfigService],

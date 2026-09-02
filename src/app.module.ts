@@ -22,6 +22,7 @@ import { SubmissionsModule } from './submissions/submissions.module';
 import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
 import { WomenEntrepreneursModule } from './women-entrepreneurs/women-entrepreneurs.module';
 import { StudentFoundersModule } from './student-founders/student-founders.module';
+import { BusinessFoundersModule } from './business-founders/business-founders.module';
 
 @Module({
   imports: [
@@ -93,6 +94,8 @@ import { StudentFoundersModule } from './student-founders/student-founders.modul
     WomenEntrepreneursModule,
 
     StudentFoundersModule,
+
+    BusinessFoundersModule,
   ],
 
   controllers: [AppController],

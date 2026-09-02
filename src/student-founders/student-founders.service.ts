@@ -56,6 +56,12 @@ export class StudentFoundersService {
       course: dto.course.trim(),
       courseStartYear: dto.courseStartYear,
       courseEndYear: dto.courseEndYear,
+      readiness: dto.readiness?.trim() || '',
+      hasIdea: dto.hasIdea?.trim() || '',
+      seriousness: dto.seriousness?.trim() || '',
+      lookingForFunding: dto.lookingForFunding?.trim() || '',
+      readyToLearn: dto.readyToLearn?.trim() || '',
+      industryNiche: dto.industryNiche?.trim() || '',
       emailSent: false,
     });
 
@@ -97,6 +103,9 @@ export class StudentFoundersService {
       yearOfStudy,
       collegeName,
       status,
+      industryNiche,
+      readiness,
+      lookingForFunding,
       sortBy = 'createdAt',
       sortOrder = 'desc',
       startDate,
@@ -114,6 +123,15 @@ export class StudentFoundersService {
     if (status) {
       filter.status = status;
     }
+    if (industryNiche) {
+      filter.industryNiche = new RegExp(industryNiche.trim(), 'i');
+    }
+    if (readiness) {
+      filter.readiness = readiness;
+    }
+    if (lookingForFunding) {
+      filter.lookingForFunding = lookingForFunding;
+    }
 
     if (startDate || endDate) {
       filter.createdAt = {};
@@ -129,6 +147,7 @@ export class StudentFoundersService {
         { email: searchRegex },
         { collegeName: searchRegex },
         { course: searchRegex },
+        { industryNiche: searchRegex },
       ];
     }
 
@@ -180,7 +199,7 @@ export class StudentFoundersService {
   }
 
   async getStats() {
-    const [total, years, colleges, statuses] = await Promise.all([
+    const [total, years, colleges, statuses, niches] = await Promise.all([
       this.founderModel.countDocuments(),
       this.founderModel.aggregate([
         { $group: { _id: '$yearOfStudy', count: { $sum: 1 } } },
@@ -192,6 +211,11 @@ export class StudentFoundersService {
       ]),
       this.founderModel.aggregate([
         { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]),
+      this.founderModel.aggregate([
+        { $match: { industryNiche: { $exists: true, $ne: '' } } },
+        { $group: { _id: '$industryNiche', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
       ]),
     ]);
 
@@ -206,6 +230,7 @@ export class StudentFoundersService {
         acc[curr._id] = curr.count;
         return acc;
       }, {}),
+      byIndustryNiche: niches.map((n) => ({ niche: n._id, count: n.count })),
     };
   }
 
@@ -222,6 +247,12 @@ export class StudentFoundersService {
       'Course / Degree',
       'Course Start Year',
       'Course End Year',
+      'Readiness',
+      'Business Idea',
+      'Seriousness',
+      'Looking for Funding',
+      'Ready to Learn',
+      'Industry Niche',
       'Status',
       'Email Sent',
       'Notes',
@@ -238,6 +269,12 @@ export class StudentFoundersService {
       `"${item.course.replace(/"/g, '""')}"`,
       item.courseStartYear,
       item.courseEndYear,
+      `"${(item.readiness || '').replace(/"/g, '""')}"`,
+      `"${(item.hasIdea || '').replace(/"/g, '""')}"`,
+      `"${(item.seriousness || '').replace(/"/g, '""')}"`,
+      `"${(item.lookingForFunding || '').replace(/"/g, '""')}"`,
+      `"${(item.readyToLearn || '').replace(/"/g, '""')}"`,
+      `"${(item.industryNiche || '').replace(/"/g, '""')}"`,
       item.status,
       item.emailSent ? 'Yes' : 'No',
       `"${(item.notes || '').replace(/"/g, '""')}"`,
