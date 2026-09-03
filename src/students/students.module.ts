@@ -5,6 +5,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { Student, StudentSchema } from './schemas/student.schema';
 import { StudentsService } from './students.service';
 import { StudentsController } from './students.controller';
+import { TasksModule } from '../tasks/tasks.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { StudentsController } from './students.controller';
       }),
       inject: [ConfigService],
     }),
+    TasksModule,
+    NotificationsModule,
   ],
   controllers: [StudentsController],
   providers: [StudentsService],

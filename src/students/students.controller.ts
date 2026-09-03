@@ -16,6 +16,8 @@ import { QueryStudentDto } from './dto/query-student.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../guards/admin.guard';
 
+import { SendBulkTaskLinksDto, SendTaskLinkDto } from './dto/send-task-link.dto';
+
 @ApiTags('Students Task Platform')
 @Controller('students')
 export class StudentsController {
@@ -47,6 +49,25 @@ export class StudentsController {
       `attachment; filename="students_export_${Date.now()}.csv"`,
     );
     return res.status(200).send(csvData);
+  }
+
+  @Post('send-task-links')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Bulk assign and email task test links to students (Admin)' })
+  async sendBulkTaskLinks(@Body() dto: SendBulkTaskLinksDto) {
+    return this.studentsService.sendBulkTaskLinks(dto?.studentIds);
+  }
+
+  @Post(':id/send-task-link')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Assign and email task test link to student (Admin)' })
+  async sendTaskLink(
+    @Param('id') id: string,
+    @Body() dto: SendTaskLinkDto,
+  ) {
+    return this.studentsService.sendTaskLink(id, dto?.taskId);
   }
 
   @Get(':id')

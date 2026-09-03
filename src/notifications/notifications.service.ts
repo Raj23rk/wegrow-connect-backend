@@ -3455,4 +3455,181 @@ export class NotificationsService {
       html,
     );
   }
+
+  // ============================================================
+  // STUDENT TASK ASSIGNMENT EMAIL
+  // ============================================================
+
+  async sendStudentTaskAssignmentEmail(data: {
+    email: string;
+    name: string;
+    studentId: string;
+    taskTitle: string;
+    taskCategory: string;
+    duration: number;
+    maxMarks: number;
+    taskUrl: string;
+  }): Promise<boolean> {
+    if (!data.email) return false;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Assigned - WeGrow Connect</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px 0; color: #1e293b; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    .header { background: linear-gradient(135deg, #104288 0%, #0c2b57 100%); padding: 32px 24px; text-align: center; color: #ffffff; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+    .header p { margin: 8px 0 0; font-size: 14px; opacity: 0.9; color: #f3a812; font-weight: 600; }
+    .content { padding: 32px 28px; }
+    .greeting { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0; }
+    .card-title { font-size: 17px; font-weight: 700; color: #104288; margin: 0 0 12px; }
+    .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+    .info-label { color: #64748b; font-weight: 500; }
+    .info-value { color: #0f172a; font-weight: 600; }
+    .rules-box { background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 14px; margin: 20px 0; font-size: 13px; color: #92400e; }
+    .rules-box ul { margin: 6px 0 0; padding-left: 18px; }
+    .btn-wrap { text-align: center; margin: 28px 0; }
+    .btn { display: inline-block; background: #f3a812; color: #0f172a !important; font-weight: 700; font-size: 16px; padding: 14px 36px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 12px rgba(243,168,18,0.3); }
+    .footer { background: #0f172a; padding: 20px; text-align: center; color: #94a3b8; font-size: 12px; }
+    .footer strong { color: #f8fafc; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>WeGrow Connect</h1>
+      <p>Talent Identification & Assessment Platform</p>
+    </div>
+    <div class="content">
+      <p class="greeting">Dear ${data.name},</p>
+      <p>Thank you for registering on the WeGrow Connect Talent Platform (Student ID: <strong>${data.studentId}</strong>). Your specialized assessment task is ready for you.</p>
+
+      <div class="card">
+        <h3 class="card-title">${data.taskTitle}</h3>
+        <div class="info-row"><span class="info-label">Category:</span><span class="info-value">${data.taskCategory}</span></div>
+        <div class="info-row"><span class="info-label">Duration:</span><span class="info-value">${data.duration} Minutes</span></div>
+        <div class="info-row"><span class="info-label">Maximum Marks:</span><span class="info-value">${data.maxMarks}</span></div>
+      </div>
+
+      <div class="rules-box">
+        <strong>⚠️ Strict Anti-Cheating & Proctored Rules:</strong>
+        <ul>
+          <li>Camera & Microphone must be turned on throughout the assessment.</li>
+          <li>The test must be taken in Fullscreen mode.</li>
+          <li>Tab switching, window resizing, or leaving the test window is logged as a violation.</li>
+          <li>Copy, Cut, Paste, and right-click are strictly disabled.</li>
+          <li>Answers are automatically submitted when the 60-minute timer expires.</li>
+        </ul>
+      </div>
+
+      <div class="btn-wrap">
+        <a href="${data.taskUrl}" class="btn">🚀 Start Your Task Now</a>
+      </div>
+
+      <p style="font-size: 13px; color: #64748b; text-align: center;">Or copy this link to your browser:<br><a href="${data.taskUrl}" style="color: #104288; word-break: break-all;">${data.taskUrl}</a></p>
+    </div>
+    <div class="footer">
+      <strong>WeGrow B-School</strong> &bull; Empowering Skills. Transforming Futures.<br>
+      For queries, reach out at <a href="mailto:enquiry@wegrowcampus.in" style="color:#f3a812;">enquiry@wegrowcampus.in</a>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+    return this.sendEmail(
+      data.email,
+      `📝 Online Skill Task Assigned: ${data.taskTitle} | WeGrow Connect`,
+      html,
+    );
+  }
+
+  // ============================================================
+  // STUDENT WINNER / GIFT OFFER EMAIL
+  // ============================================================
+
+  async sendStudentWinnerOfferEmail(data: {
+    email: string;
+    name: string;
+    studentId: string;
+    taskTitle: string;
+    score: number;
+    maxMarks: number;
+    customMessage?: string;
+  }): Promise<boolean> {
+    if (!data.email) return false;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Congratulations - WeGrow Connect Winner</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px 0; color: #1e293b; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    .header { background: linear-gradient(135deg, #15803d 0%, #166534 100%); padding: 36px 24px; text-align: center; color: #ffffff; }
+    .header h1 { margin: 0; font-size: 26px; font-weight: 800; }
+    .header p { margin: 8px 0 0; font-size: 15px; color: #fde047; font-weight: 600; }
+    .content { padding: 32px 28px; }
+    .greeting { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .score-badge { background: #dcfce7; border: 2px solid #86efac; border-radius: 10px; padding: 18px; text-align: center; margin: 20px 0; }
+    .score-num { font-size: 32px; font-weight: 800; color: #15803d; }
+    .score-sub { font-size: 13px; color: #166534; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .offer-box { background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 24px 0; }
+    .offer-title { font-size: 16px; font-weight: 700; color: #1e40af; margin: 0 0 10px; }
+    .footer { background: #0f172a; padding: 20px; text-align: center; color: #94a3b8; font-size: 12px; }
+    .footer strong { color: #f8fafc; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎉 Congratulations, Winner!</h1>
+      <p>Exclusive Gift Offer & Branch Invitation</p>
+    </div>
+    <div class="content">
+      <p class="greeting">Dear ${data.name},</p>
+      <p>Congratulations on your outstanding performance in the WeGrow Connect Talent Assessment for <strong>${data.taskTitle}</strong>!</p>
+
+      <div class="score-badge">
+        <div class="score-num">${data.score} / ${data.maxMarks}</div>
+        <div class="score-sub">Your Final Score</div>
+      </div>
+
+      <div class="offer-box">
+        <h4 class="offer-title">🎁 You have been selected for an Exclusive Gift & Scholarship Offer!</h4>
+        <p style="font-size: 14px; line-height: 1.6; color: #1e3a8a; margin: 0;">
+          ${data.customMessage || 'We are thrilled to invite you to visit our WeGrow B-School branch to meet our academic leadership, receive your official certificate of achievement, and claim your special gift reward.'}
+        </p>
+        <div style="margin-top: 16px; font-size: 13px; color: #3b82f6; font-weight: 600;">
+          📍 Branch Address: WeGrow B-School Campus<br>
+          📞 Helpline: +91 98765 43210 &bull; enquiry@wegrowcampus.in
+        </div>
+      </div>
+
+      <p style="font-size: 14px; color: #475569;">Please carry your Student ID card (<strong>${data.studentId}</strong>) and a copy of this email when you visit our campus.</p>
+    </div>
+    <div class="footer">
+      <strong>WeGrow B-School</strong> &bull; Empowering Skills. Transforming Futures.<br>
+      <a href="https://www.wegrowcampus.in" style="color: #fde047; text-decoration: none;">www.wegrowcampus.in</a>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+    return this.sendEmail(
+      data.email,
+      `🎉 Congratulations! You are selected for WeGrow Gift Offer (${data.name})`,
+      html,
+    );
+  }
 }

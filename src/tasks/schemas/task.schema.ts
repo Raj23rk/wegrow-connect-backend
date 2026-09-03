@@ -15,6 +15,10 @@ export enum TargetAudienceType {
   ALL = 'ALL',
   SCHOOL = 'SCHOOL',
   COLLEGE = 'COLLEGE',
+  BY_YEAR = 'BY_YEAR',
+  BY_CLASS = 'BY_CLASS',
+  BY_DEPARTMENT = 'BY_DEPARTMENT',
+  BY_CAMPAIGN = 'BY_CAMPAIGN',
 }
 
 @Schema({ timestamps: true })

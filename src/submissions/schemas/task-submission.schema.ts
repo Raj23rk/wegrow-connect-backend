@@ -39,6 +39,21 @@ export class TaskSubmission {
   @Prop({ default: '' })
   feedback?: string;
 
+  @Prop({ default: '' })
+  remarks?: string;
+
+  @Prop({ default: false })
+  isWinner?: boolean;
+
+  @Prop({ default: false })
+  selectedForOffer?: boolean;
+
+  @Prop({ default: false })
+  offerEmailSent?: boolean;
+
+  @Prop()
+  offerEmailSentAt?: Date;
+
   @Prop({
     type: String,
     enum: EvaluationStatus,

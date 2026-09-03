@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type StudentDocument = Student & Document;
 
@@ -60,6 +60,15 @@ export class Student {
 
   @Prop({ trim: true, uppercase: true })
   campaignId?: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'Task' })
+  assignedTaskId?: Types.ObjectId;
+
+  @Prop({ default: false })
+  taskEmailSent?: boolean;
+
+  @Prop()
+  taskEmailSentAt?: Date;
 }
 
 export const StudentSchema = SchemaFactory.createForClass(Student);

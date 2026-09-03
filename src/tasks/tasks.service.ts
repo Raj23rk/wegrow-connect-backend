@@ -24,7 +24,7 @@ export class TasksService {
     return task.save();
   }
 
-  async findAll(category?: string, isActive?: boolean): Promise<Task[]> {
+  async findAll(category?: string, isActive?: boolean) {
     const filter: any = {};
     if (category) {
       filter.category = category;
@@ -32,7 +32,12 @@ export class TasksService {
     if (typeof isActive === 'boolean') {
       filter.isActive = isActive;
     }
-    return this.taskModel.find(filter).sort({ createdAt: -1 }).exec();
+    const tasks = await this.taskModel.find(filter).sort({ createdAt: -1 }).exec();
+    return {
+      tasks,
+      data: tasks,
+      total: tasks.length,
+    };
   }
 
   async findOne(id: string): Promise<Task> {
@@ -66,34 +71,67 @@ export class TasksService {
     if (student.campaignId) {
       const campaignTask = await this.taskModel
         .findOne({
-          targetCampaignId: student.campaignId,
+          $or: [
+            { targetCampaignId: student.campaignId },
+            { targetType: TargetAudienceType.BY_CAMPAIGN, targetCampaignId: student.campaignId },
+          ],
           isActive: true,
         })
         .exec();
       if (campaignTask) return campaignTask;
     }
 
-    // 2. Try matching targetType specific criteria
+    // 2. Try matching study year if present (college)
+    if (student.year) {
+      const yearTask = await this.taskModel
+        .findOne({
+          $or: [
+            { targetYear: student.year },
+            { targetType: TargetAudienceType.BY_YEAR, targetYear: student.year },
+          ],
+          isActive: true,
+        })
+        .exec();
+      if (yearTask) return yearTask;
+    }
+
+    // 3. Try matching class if present (school)
+    if (student.class) {
+      const classTask = await this.taskModel
+        .findOne({
+          $or: [
+            { targetClass: student.class },
+            { targetType: TargetAudienceType.BY_CLASS, targetClass: student.class },
+          ],
+          isActive: true,
+        })
+        .exec();
+      if (classTask) return classTask;
+    }
+
+    // 4. Try matching department if present
+    if (student.department) {
+      const deptTask = await this.taskModel
+        .findOne({
+          $or: [
+            { targetDepartment: new RegExp(student.department.trim(), 'i') },
+            { targetType: TargetAudienceType.BY_DEPARTMENT, targetDepartment: new RegExp(student.department.trim(), 'i') },
+          ],
+          isActive: true,
+        })
+        .exec();
+      if (deptTask) return deptTask;
+    }
+
+    // 5. Try matching targetType specific criteria
     if (student.studentType === 'COLLEGE') {
       const collegeTask = await this.taskModel
         .findOne({
           targetType: TargetAudienceType.COLLEGE,
           isActive: true,
-          $or: [
-            { targetDepartment: student.department },
-            { targetYear: student.year },
-          ],
         })
         .exec();
       if (collegeTask) return collegeTask;
-
-      const anyCollegeTask = await this.taskModel
-        .findOne({
-          targetType: TargetAudienceType.COLLEGE,
-          isActive: true,
-        })
-        .exec();
-      if (anyCollegeTask) return anyCollegeTask;
     }
 
     if (student.studentType === 'SCHOOL') {
@@ -101,21 +139,12 @@ export class TasksService {
         .findOne({
           targetType: TargetAudienceType.SCHOOL,
           isActive: true,
-          targetClass: student.class,
         })
         .exec();
       if (schoolTask) return schoolTask;
-
-      const anySchoolTask = await this.taskModel
-        .findOne({
-          targetType: TargetAudienceType.SCHOOL,
-          isActive: true,
-        })
-        .exec();
-      if (anySchoolTask) return anySchoolTask;
     }
 
-    // 3. Fallback to any active ALL target task
+    // 6. Fallback to any active ALL target task
     const defaultTask = await this.taskModel
       .findOne({
         targetType: TargetAudienceType.ALL,
@@ -125,7 +154,7 @@ export class TasksService {
 
     if (defaultTask) return defaultTask;
 
-    // 4. Fallback to latest active task
+    // 7. Fallback to latest active task
     const latestTask = await this.taskModel
       .findOne({ isActive: true })
       .sort({ createdAt: -1 })

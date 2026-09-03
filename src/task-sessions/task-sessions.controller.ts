@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -36,6 +37,15 @@ export class TaskSessionsController {
   @Patch(':id/save')
   @ApiOperation({ summary: 'Auto-save draft answer periodically' })
   async saveAnswer(
+    @Param('id') sessionId: string,
+    @Body() dto: SaveAnswerDto,
+  ) {
+    return this.taskSessionsService.saveAnswer(sessionId, dto);
+  }
+
+  @Put(':id/save')
+  @ApiOperation({ summary: 'Auto-save draft answer periodically (PUT support)' })
+  async saveAnswerPut(
     @Param('id') sessionId: string,
     @Body() dto: SaveAnswerDto,
   ) {

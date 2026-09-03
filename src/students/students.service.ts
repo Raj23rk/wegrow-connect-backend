@@ -10,12 +10,17 @@ import { Student, StudentDocument, StudentType } from './schemas/student.schema'
 import { RegisterStudentTaskDto } from './dto/register-student-task.dto';
 import { QueryStudentDto } from './dto/query-student.dto';
 
+import { TasksService } from '../tasks/tasks.service';
+import { NotificationsService } from '../notifications/notifications.service';
+
 @Injectable()
 export class StudentsService {
   constructor(
     @InjectModel(Student.name)
     private readonly studentModel: Model<StudentDocument>,
     private readonly jwtService: JwtService,
+    private readonly tasksService: TasksService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private async generateUniqueStudentId(): Promise<string> {
@@ -110,7 +115,7 @@ export class StudentsService {
     };
   }
 
-  async findAll(query: QueryStudentDto) {
+  private buildFilter(query: QueryStudentDto) {
     const filter: any = {};
 
     if (query.studentType) {
@@ -129,7 +134,7 @@ export class StudentsService {
       filter.campaignId = query.campaignId.toUpperCase();
     }
     if (query.search) {
-      const searchRegex = new RegExp(query.search, 'i');
+      const searchRegex = new RegExp(query.search.trim(), 'i');
       filter.$or = [
         { name: searchRegex },
         { email: searchRegex },
@@ -138,7 +143,41 @@ export class StudentsService {
       ];
     }
 
-    return this.studentModel.find(filter).sort({ createdAt: -1 }).exec();
+    return filter;
+  }
+
+  async findAll(query: QueryStudentDto) {
+    const filter = this.buildFilter(query);
+
+    const page = query.page ? Math.max(1, Number(query.page)) : 1;
+    const limit = query.limit ? Math.max(1, Number(query.limit)) : 15;
+    const skip = (page - 1) * limit;
+
+    const sortBy = query.sortBy || 'createdAt';
+    const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
+    const sort: any = { [sortBy]: sortOrder };
+
+    const [students, total] = await Promise.all([
+      this.studentModel.find(filter).sort(sort).skip(skip).limit(limit).exec(),
+      this.studentModel.countDocuments(filter),
+    ]);
+
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
+
+    return {
+      students,
+      data: students,
+      total,
+      totalPages,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async findOne(id: string) {
@@ -158,7 +197,11 @@ export class StudentsService {
   }
 
   async exportCsv(query: QueryStudentDto): Promise<string> {
-    const students = await this.findAll(query);
+    const filter = this.buildFilter(query);
+    const students = await this.studentModel
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .exec();
     const headers = [
       'Student ID',
       'Name',
@@ -192,5 +235,72 @@ export class StudentsService {
     ]);
 
     return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+  }
+
+  async sendTaskLink(studentId: string, taskId?: string) {
+    const student = await this.findOne(studentId);
+    let task: any;
+    if (taskId) {
+      task = await this.tasksService.findOne(taskId);
+    } else {
+      task = await this.tasksService.findAssignedTaskForStudent(student);
+    }
+
+    const frontendUrl =
+      process.env.FRONTEND_URL ||
+      'https://wegrow-connect-frontend.vercel.app';
+    const taskUrl = `${frontendUrl}/task?studentId=${student._id}&taskId=${task._id}`;
+
+    await this.notificationsService.sendStudentTaskAssignmentEmail({
+      email: student.email,
+      name: student.name,
+      studentId: student.studentId,
+      taskTitle: task.title,
+      taskCategory: task.category,
+      duration: task.duration || 60,
+      maxMarks: task.maxMarks || 100,
+      taskUrl,
+    });
+
+    student.assignedTaskId = task._id;
+    student.taskEmailSent = true;
+    student.taskEmailSentAt = new Date();
+    await student.save();
+
+    return {
+      success: true,
+      message: `Task link sent successfully to ${student.email}`,
+      studentId: student.studentId,
+      taskId: task._id,
+      taskTitle: task.title,
+      taskUrl,
+    };
+  }
+
+  async sendBulkTaskLinks(studentIds?: string[]) {
+    let students: StudentDocument[];
+    if (studentIds && studentIds.length > 0) {
+      students = await this.studentModel.find({ _id: { $in: studentIds } }).exec();
+    } else {
+      students = await this.studentModel.find({ taskEmailSent: { $ne: true } }).exec();
+    }
+
+    const results = [];
+    for (const student of students) {
+      try {
+        const res = await this.sendTaskLink(student._id.toString());
+        results.push(res);
+      } catch (err: any) {
+        results.push({ studentId: student.studentId, success: false, message: err.message });
+      }
+    }
+
+    return {
+      success: true,
+      total: students.length,
+      sentCount: results.filter((r) => r.success).length,
+      failedCount: results.filter((r) => !r.success).length,
+      results,
+    };
   }
 }
