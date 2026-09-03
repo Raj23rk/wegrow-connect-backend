@@ -15,12 +15,15 @@ import { EvaluateSubmissionDto } from './dto/evaluate-submission.dto';
 import { QuerySubmissionDto } from './dto/query-submission.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 
+import { TasksService } from '../tasks/tasks.service';
+
 @Injectable()
 export class SubmissionsService {
   constructor(
     @InjectModel(TaskSubmission.name)
     private readonly submissionModel: Model<TaskSubmissionDocument>,
     private readonly notificationsService: NotificationsService,
+    private readonly tasksService: TasksService,
   ) {}
 
   async generateUniqueSubmissionId(): Promise<string> {
@@ -54,14 +57,87 @@ export class SubmissionsService {
 
     const submissionId = await this.generateUniqueSubmissionId();
 
+    let score: number | null = null;
+    let evaluationStatus: EvaluationStatus = EvaluationStatus.PENDING;
+    let feedback = '';
+    const questionResults: any[] = [];
+    let evaluatedAt: Date | undefined = undefined;
+
+    // Automatic evaluation against task answer key if present
+    try {
+      const task = await this.tasksService.findTaskWithAnswers(data.taskId);
+      if (task && Array.isArray(task.answerKey) && task.answerKey.length > 0) {
+        let studentAnswers: Record<string, string> = {};
+        try {
+          const parsed = typeof data.answer === 'string' ? JSON.parse(data.answer) : data.answer;
+          if (Array.isArray(parsed)) {
+            parsed.forEach((item: any) => {
+              if (item.questionId) {
+                studentAnswers[String(item.questionId)] = String(item.answer ?? item.selectedAnswer ?? '');
+              }
+            });
+          } else if (typeof parsed === 'object' && parsed !== null) {
+            Object.entries(parsed).forEach(([k, v]) => {
+              studentAnswers[String(k)] = String(v ?? '');
+            });
+          }
+        } catch {
+          // If not JSON, answer is treated as plain text
+        }
+
+        let totalPoints = 0;
+        let maxPoints = 0;
+
+        for (const key of task.answerKey) {
+          const qWeight = key.marks || 1;
+          maxPoints += qWeight;
+
+          const qId = String(key.questionId);
+          const studentAns = (studentAnswers[qId] || studentAnswers[qId.toLowerCase()] || '').trim();
+          const correctAns = String(key.correctAnswer || '').trim();
+
+          const isCorrect = Boolean(studentAns && studentAns.toLowerCase() === correctAns.toLowerCase());
+          const marksAwarded = isCorrect ? qWeight : 0;
+          totalPoints += marksAwarded;
+
+          questionResults.push({
+            questionId: key.questionId,
+            studentAnswer: studentAns,
+            correctAnswer: correctAns,
+            isCorrect,
+            marksAwarded,
+            maxMarks: qWeight,
+          });
+        }
+
+        const taskMaxMarks = task.maxMarks || 100;
+        if (maxPoints > 0) {
+          score = Math.round((totalPoints / maxPoints) * taskMaxMarks);
+        } else {
+          score = 0;
+        }
+
+        const correctCount = questionResults.filter((q) => q.isCorrect).length;
+        feedback = `Auto-evaluated: ${correctCount}/${questionResults.length} correct (${score}/${taskMaxMarks} marks)`;
+        evaluationStatus = EvaluationStatus.EVALUATED;
+        evaluatedAt = new Date();
+      }
+    } catch (err: any) {
+      // Non-fatal, leaves as PENDING if auto-grading encounters error
+    }
+
     const submission = new this.submissionModel({
       submissionId,
       sessionId: new Types.ObjectId(data.sessionId),
       studentId: new Types.ObjectId(data.studentId),
       taskId: new Types.ObjectId(data.taskId),
       answer: data.answer,
+      score,
+      feedback,
+      questionResults,
+      evaluationStatus,
+      evaluatedAt,
       submittedAt: new Date(),
-      evaluationStatus: EvaluationStatus.PENDING,
     });
 
     return submission.save();

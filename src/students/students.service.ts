@@ -246,9 +246,11 @@ export class StudentsService {
       task = await this.tasksService.findAssignedTaskForStudent(student);
     }
 
-    const frontendUrl =
-      process.env.FRONTEND_URL ||
-      'https://wegrow-connect-frontend.vercel.app';
+    const frontendUrl = (
+      process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes('localhost')
+        ? process.env.FRONTEND_URL
+        : 'https://www.wegrowbschool.in'
+    ).replace(/\/+$/, '');
     const taskUrl = `${frontendUrl}/task?studentId=${student._id}&taskId=${task._id}`;
 
     await this.notificationsService.sendStudentTaskAssignmentEmail({

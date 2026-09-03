@@ -17,6 +17,8 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../guards/admin.guard';
 
+import { UploadAnswerKeyDto, UploadQuestionsDto } from './dto/upload-questions.dto';
+
 @ApiTags('Tasks Management')
 @Controller('tasks')
 export class TasksController {
@@ -60,6 +62,28 @@ export class TasksController {
     @Body() updateTaskDto: UpdateTaskDto,
   ) {
     return this.tasksService.update(id, updateTaskDto);
+  }
+
+  @Put(':id/questions')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Upload or update questions list for a task (Admin)' })
+  async uploadQuestions(
+    @Param('id') id: string,
+    @Body() dto: UploadQuestionsDto,
+  ) {
+    return this.tasksService.uploadQuestions(id, dto.questions);
+  }
+
+  @Put(':id/answer-key')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Upload or update separate answer key for a task (Admin)' })
+  async uploadAnswerKey(
+    @Param('id') id: string,
+    @Body() dto: UploadAnswerKeyDto,
+  ) {
+    return this.tasksService.uploadAnswerKey(id, dto.answerKey);
   }
 
   @Patch(':id/status')

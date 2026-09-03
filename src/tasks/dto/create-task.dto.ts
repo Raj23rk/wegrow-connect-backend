@@ -72,4 +72,12 @@ export class CreateTaskDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ description: 'Structured questions list for the task' })
+  @IsOptional()
+  questions?: any[];
+
+  @ApiPropertyOptional({ description: 'Answer keys matching question IDs' })
+  @IsOptional()
+  answerKey?: any[];
 }

@@ -947,7 +947,7 @@ export class NotificationsService {
         <div class="button-wrapper">
 
           <a
-            href="https://wegrow-connect-frontend.vercel.app/student/courses"
+            href="https://www.wegrowbschool.in/student/courses"
             class="event-button"
           >
             View Event
@@ -2029,7 +2029,7 @@ export class NotificationsService {
         <div class="button-wrapper">
 
           <a
-            href="https://wegrow-connect-frontend.vercel.app/student/workshops"
+            href="https://www.wegrowbschool.in/student/workshops"
             class="event-button"
           >
 

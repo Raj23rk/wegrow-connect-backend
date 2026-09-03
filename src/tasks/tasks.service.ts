@@ -40,12 +40,42 @@ export class TasksService {
     };
   }
 
-  async findOne(id: string): Promise<Task> {
+  async findOne(id: string, includeAnswers: boolean = false): Promise<Task> {
+    const task = await this.taskModel.findById(id).lean().exec();
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${id} not found`);
+    }
+    if (!includeAnswers) {
+      const { answerKey, ...safeTask } = task as any;
+      return safeTask as Task;
+    }
+    return task as Task;
+  }
+
+  async findTaskWithAnswers(id: string): Promise<TaskDocument> {
     const task = await this.taskModel.findById(id).exec();
     if (!task) {
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
     return task;
+  }
+
+  async uploadQuestions(id: string, questions: any[]): Promise<Task> {
+    const task = await this.taskModel.findById(id).exec();
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${id} not found`);
+    }
+    task.questions = Array.isArray(questions) ? questions : [];
+    return task.save();
+  }
+
+  async uploadAnswerKey(id: string, answerKey: any[]): Promise<Task> {
+    const task = await this.taskModel.findById(id).exec();
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${id} not found`);
+    }
+    task.answerKey = Array.isArray(answerKey) ? answerKey : [];
+    return task.save();
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
@@ -61,7 +91,10 @@ export class TasksService {
   }
 
   async toggleStatus(id: string): Promise<Task> {
-    const task = await this.findOne(id);
+    const task = await this.taskModel.findById(id).exec();
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${id} not found`);
+    }
     task.isActive = !task.isActive;
     return (task as TaskDocument).save();
   }

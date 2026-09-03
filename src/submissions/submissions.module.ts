@@ -8,6 +8,7 @@ import { SubmissionsService } from './submissions.service';
 import { SubmissionsController } from './submissions.controller';
 
 import { NotificationsModule } from '../notifications/notifications.module';
+import { TasksModule } from '../tasks/tasks.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
       { name: TaskSubmission.name, schema: TaskSubmissionSchema },
     ]),
     NotificationsModule,
+    TasksModule,
   ],
   controllers: [SubmissionsController],
   providers: [SubmissionsService],

@@ -54,6 +54,16 @@ export class TaskSubmission {
   @Prop()
   offerEmailSentAt?: Date;
 
+  @Prop({ type: Array, default: [] })
+  questionResults?: Array<{
+    questionId: string;
+    studentAnswer: string;
+    correctAnswer?: string;
+    isCorrect: boolean;
+    marksAwarded: number;
+    maxMarks: number;
+  }>;
+
   @Prop({
     type: String,
     enum: EvaluationStatus,

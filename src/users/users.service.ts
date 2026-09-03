@@ -220,10 +220,12 @@ export class UsersService {
     await this.setResetPasswordToken(user._id.toString(), tokenHash, expiresAt);
 
     // ========================================================
-    // FRONTEND RESET URL
-    // ========================================================
-
-    const resetUrl = `https://wegrow-connect-frontend.vercel.app/home/login/forgotpassword/setpassword?token=${resetToken}`;
+    const frontendUrl = (
+      process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes('localhost')
+        ? process.env.FRONTEND_URL
+        : 'https://www.wegrowbschool.in'
+    ).replace(/\/+$/, '');
+    const resetUrl = `${frontendUrl}/home/login/forgotpassword/setpassword?token=${resetToken}`;
 
     // ========================================================
     // SEND EMAIL

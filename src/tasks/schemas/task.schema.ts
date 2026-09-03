@@ -67,8 +67,25 @@ export class Task {
   @Prop({ default: true })
   isActive: boolean = true;
 
+  @Prop({ type: Array, default: [] })
+  questions: Array<{
+    id: string;
+    question: string;
+    type?: string;
+    options?: string[];
+    marks?: number;
+  }> = [];
+
+  @Prop({ type: Array, default: [] })
+  answerKey: Array<{
+    questionId: string;
+    correctAnswer: string;
+    marks?: number;
+  }> = [];
+
   @Prop({ type: Types.ObjectId, ref: 'User' })
   createdBy?: Types.ObjectId;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);
+
