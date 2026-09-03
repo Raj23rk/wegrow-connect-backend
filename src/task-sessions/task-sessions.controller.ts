@@ -6,6 +6,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -26,6 +27,15 @@ export class TaskSessionsController {
   @ApiOperation({ summary: 'Start or resume a 60-minute task session' })
   async startSession(@Body() dto: StartTaskSessionDto) {
     return this.taskSessionsService.startSession(dto);
+  }
+
+  @Get('check')
+  @ApiOperation({ summary: 'Check task session and submission status for student and task' })
+  async checkSessionStatus(
+    @Query('studentId') studentId: string,
+    @Query('taskId') taskId: string,
+  ) {
+    return this.taskSessionsService.checkSessionStatus(studentId, taskId);
   }
 
   @Get('active/:studentId')

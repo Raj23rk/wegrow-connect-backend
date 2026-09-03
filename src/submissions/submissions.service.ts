@@ -272,4 +272,18 @@ export class SubmissionsService {
       score: submission.score,
     };
   }
+
+  async findSubmissionByStudentAndTask(studentId: string, taskId: string) {
+    if (!Types.ObjectId.isValid(studentId) || !Types.ObjectId.isValid(taskId)) {
+      return null;
+    }
+    return this.submissionModel
+      .findOne({
+        studentId: new Types.ObjectId(studentId),
+        taskId: new Types.ObjectId(taskId),
+      })
+      .populate('taskId', 'title category maxMarks duration')
+      .sort({ submittedAt: -1 })
+      .exec();
+  }
 }

@@ -33,20 +33,51 @@ export class TaskSessionsService {
       throw new BadRequestException('This task is currently inactive');
     }
 
-    // Check if session already exists for this student and task
+    // 1. Check if a submission already exists for this student and task
+    const existingSubmission = await this.submissionsService.findSubmissionByStudentAndTask(
+      dto.studentId,
+      dto.taskId,
+    );
+
+    // 2. Check if a session already exists for this student and task
     let session = await this.sessionModel
       .findOne({
         studentId: new Types.ObjectId(dto.studentId),
         taskId: new Types.ObjectId(dto.taskId),
       })
+      .populate('taskId')
       .exec();
 
     const now = new Date();
+
+    if (
+      existingSubmission ||
+      (session &&
+        (session.status === SessionStatus.SUBMITTED ||
+          session.status === SessionStatus.EXPIRED))
+    ) {
+      return {
+        alreadyCompleted: true,
+        message: 'You have already completed and submitted this task.',
+        session: session || null,
+        submission: existingSubmission || null,
+        task,
+        remainingSeconds: 0,
+        isExpired: true,
+      };
+    }
 
     if (session) {
       // Check if expired
       if (session.status === SessionStatus.IN_PROGRESS && now > session.expiresAt) {
         await this.autoSubmitExpiredSession(session);
+        return {
+          alreadyCompleted: true,
+          message: 'Task session timer has expired and answers were auto-submitted.',
+          session,
+          remainingSeconds: 0,
+          isExpired: true,
+        };
       }
 
       const remainingSeconds = Math.max(
@@ -58,6 +89,7 @@ export class TaskSessionsService {
         session,
         remainingSeconds,
         isExpired: now > session.expiresAt || session.status !== SessionStatus.IN_PROGRESS,
+        alreadyCompleted: false,
       };
     }
 
@@ -82,6 +114,51 @@ export class TaskSessionsService {
       session: savedSession,
       remainingSeconds,
       isExpired: false,
+      alreadyCompleted: false,
+    };
+  }
+
+  async checkSessionStatus(studentId: string, taskId: string) {
+    if (!Types.ObjectId.isValid(studentId) || !Types.ObjectId.isValid(taskId)) {
+      throw new BadRequestException('Invalid studentId or taskId');
+    }
+
+    const task = await this.tasksService.findOne(taskId).catch(() => null);
+
+    const [session, submission] = await Promise.all([
+      this.sessionModel
+        .findOne({
+          studentId: new Types.ObjectId(studentId),
+          taskId: new Types.ObjectId(taskId),
+        })
+        .populate('taskId')
+        .exec(),
+      this.submissionsService.findSubmissionByStudentAndTask(studentId, taskId),
+    ]);
+
+    const isSubmitted = Boolean(
+      submission ||
+      (session && (session.status === SessionStatus.SUBMITTED || session.status === SessionStatus.EXPIRED))
+    );
+
+    const now = new Date();
+    const isExpired = Boolean(
+      session && (now > session.expiresAt || session.status !== SessionStatus.IN_PROGRESS)
+    );
+
+    const remainingSeconds =
+      session && !isSubmitted && !isExpired
+        ? Math.max(0, Math.floor((session.expiresAt.getTime() - now.getTime()) / 1000))
+        : 0;
+
+    return {
+      alreadyCompleted: isSubmitted,
+      status: isSubmitted ? 'COMPLETED' : (session ? session.status : 'NOT_STARTED'),
+      session,
+      submission,
+      task,
+      remainingSeconds,
+      isExpired,
     };
   }
 
