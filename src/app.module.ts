@@ -23,6 +23,7 @@ import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
 import { WomenEntrepreneursModule } from './women-entrepreneurs/women-entrepreneurs.module';
 import { StudentFoundersModule } from './student-founders/student-founders.module';
 import { BusinessFoundersModule } from './business-founders/business-founders.module';
+import { ArtCompetitionModule } from './art-competition/art-competition.module';
 
 @Module({
   imports: [
@@ -96,6 +97,8 @@ import { BusinessFoundersModule } from './business-founders/business-founders.mo
     StudentFoundersModule,
 
     BusinessFoundersModule,
+
+    ArtCompetitionModule,
   ],
 
   controllers: [AppController],
