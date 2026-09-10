@@ -27,19 +27,13 @@ export class ArtCompetitionService {
   // =====================================================
   // GENERATE UNIQUE REGISTRATION NUMBER
   // =====================================================
-  private async generateRegistrationNumber(): Promise<string> {
+  // =====================================================
+  // GENERATE UNIQUE REGISTRATION NUMBER (SYNCHRONOUS)
+  // =====================================================
+  private generateRegistrationNumber(): string {
     const year = new Date().getFullYear();
-    for (let i = 0; i < 10; i++) {
-      const randomDigits = Math.floor(1000 + Math.random() * 9000);
-      const regNumber = `ART-${year}-${randomDigits}`;
-      const exists = await this.participantModel.exists({
-        registrationNumber: regNumber,
-      });
-      if (!exists) {
-        return regNumber;
-      }
-    }
-    return `ART-${year}-${Date.now().toString().slice(-4)}`;
+    const randomDigits = Math.floor(1000 + Math.random() * 9000);
+    return `ART-${year}-${randomDigits}`;
   }
 
   // =====================================================
@@ -80,40 +74,69 @@ export class ArtCompetitionService {
       dto.artMedium ||
       'Color Pencils & Oil Pastels'
     ).trim();
+    const fullName = dto.fullName.trim();
 
-    // Check duplicate phone number for active registrations
-    const existing = await this.participantModel.findOne({
-      phone,
-      isActive: true,
-    });
+    // Fast path: Direct insert with unique index enforcement on (phone, isActive: true).
+    // Eliminates 2 redundant remote DB network round-trips (pre-check query and exists query).
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const registrationNumber = this.generateRegistrationNumber();
 
-    if (existing) {
-      throw new BadRequestException(
-        `A registration with mobile number ${phone} already exists (Reg No: ${existing.registrationNumber}).`,
-      );
+      try {
+        const participant = new this.participantModel({
+          fullName,
+          phone,
+          email,
+          collegeName,
+          degreeAndYear,
+          preferredArtMedium,
+          registrationNumber,
+          status: ArtParticipantStatus.CONFIRMED,
+          attended: false,
+          isActive: true,
+        });
+
+        const saved = await participant.save();
+        this.logger.log(
+          `New participant registered: ${saved.fullName} (${saved.registrationNumber})`,
+        );
+
+        return saved;
+      } catch (error: any) {
+        // Handle duplicate key error (MongoDB E11000)
+        if (error?.code === 11000) {
+          const isPhoneDup =
+            Boolean(error.keyPattern?.phone) ||
+            Boolean(error.message?.includes('phone'));
+
+          if (isPhoneDup) {
+            const existing = await this.participantModel
+              .findOne({ phone, isActive: true }, { registrationNumber: 1 })
+              .lean()
+              .exec();
+
+            const regNo = existing?.registrationNumber || 'existing record';
+            throw new BadRequestException(
+              `A registration with mobile number ${phone} already exists (Reg No: ${regNo}).`,
+            );
+          }
+
+          // If collision occurred on registrationNumber, retry with a fresh number
+          const isRegDup =
+            Boolean(error.keyPattern?.registrationNumber) ||
+            Boolean(error.message?.includes('registrationNumber'));
+
+          if (isRegDup && attempt < 2) {
+            continue;
+          }
+        }
+
+        throw error;
+      }
     }
 
-    const registrationNumber = await this.generateRegistrationNumber();
-
-    const participant = new this.participantModel({
-      fullName: dto.fullName.trim(),
-      phone,
-      email,
-      collegeName,
-      degreeAndYear,
-      preferredArtMedium,
-      registrationNumber,
-      status: ArtParticipantStatus.CONFIRMED,
-      attended: false,
-      isActive: true,
-    });
-
-    const saved = await participant.save();
-    this.logger.log(
-      `New participant registered: ${saved.fullName} (${saved.registrationNumber})`,
+    throw new BadRequestException(
+      'Unable to complete registration. Please try again.',
     );
-
-    return saved;
   }
 
   // =====================================================

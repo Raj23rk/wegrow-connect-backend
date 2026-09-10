@@ -52,6 +52,14 @@ export class ArtParticipant {
 export const ArtParticipantSchema = SchemaFactory.createForClass(ArtParticipant);
 
 ArtParticipantSchema.index({ phone: 1 });
+ArtParticipantSchema.index(
+  { phone: 1, isActive: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { isActive: true },
+    name: 'phone_isActive_unique',
+  },
+);
 ArtParticipantSchema.index({ email: 1 });
 ArtParticipantSchema.index({ collegeName: 1 });
 ArtParticipantSchema.index({ registrationNumber: 1 }, { unique: true });
