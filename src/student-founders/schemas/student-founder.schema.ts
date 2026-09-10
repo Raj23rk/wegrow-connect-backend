@@ -76,6 +76,14 @@ export class StudentFounder {
   @Prop({ default: false })
   emailSent: boolean = false;
 
+  @Prop({
+    type: String,
+    trim: true,
+    uppercase: true,
+    default: 'STUDENT-SEP-12-2026',
+  })
+  eventId: string = 'STUDENT-SEP-12-2026';
+
   @Prop({ default: '' })
   notes?: string;
 }
@@ -83,7 +91,10 @@ export class StudentFounder {
 export const StudentFounderSchema = SchemaFactory.createForClass(StudentFounder);
 
 StudentFounderSchema.index({ phone: 1 });
+StudentFounderSchema.index({ eventId: 1 });
+StudentFounderSchema.index({ phone: 1, eventId: 1 });
 StudentFounderSchema.index({ email: 1 });
+StudentFounderSchema.index({ email: 1, eventId: 1 });
 StudentFounderSchema.index({ collegeName: 1 });
 StudentFounderSchema.index({ yearOfStudy: 1 });
 StudentFounderSchema.index({ industryNiche: 1 });

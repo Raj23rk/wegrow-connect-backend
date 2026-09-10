@@ -94,4 +94,9 @@ export class CreateStudentFounderDto {
   @IsString()
   @IsOptional()
   industryNiche?: string;
+
+  @ApiPropertyOptional({ example: 'STUDENT-SEP-12-2026' })
+  @IsString()
+  @IsOptional()
+  eventId?: string;
 }

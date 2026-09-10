@@ -48,8 +48,8 @@ export class BusinessFoundersController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get registration statistics and breakdown (Admin)' })
-  async getStats() {
-    const stats = await this.foundersService.getStats();
+  async getStats(@Query('eventId') eventId?: string) {
+    const stats = await this.foundersService.getStats(eventId);
     return { success: true, stats };
   }
 

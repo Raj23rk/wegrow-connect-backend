@@ -60,6 +60,14 @@ export class WomenEntrepreneur {
   @Prop({ default: false })
   emailSent: boolean = false;
 
+  @Prop({
+    type: String,
+    trim: true,
+    uppercase: true,
+    default: 'WOMEN-SEP-11-2026',
+  })
+  eventId: string = 'WOMEN-SEP-11-2026';
+
   @Prop({ default: '' })
   notes?: string;
 }
@@ -67,6 +75,8 @@ export class WomenEntrepreneur {
 export const WomenEntrepreneurSchema = SchemaFactory.createForClass(WomenEntrepreneur);
 
 WomenEntrepreneurSchema.index({ phone: 1 });
+WomenEntrepreneurSchema.index({ eventId: 1 });
+WomenEntrepreneurSchema.index({ phone: 1, eventId: 1 });
 WomenEntrepreneurSchema.index({ email: 1 });
 WomenEntrepreneurSchema.index({ businessStage: 1 });
 WomenEntrepreneurSchema.index({ category: 1 });

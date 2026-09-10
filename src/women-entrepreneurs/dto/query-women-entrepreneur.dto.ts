@@ -61,4 +61,9 @@ export class QueryWomenEntrepreneurDto {
   @IsString()
   @IsOptional()
   endDate?: string;
+
+  @ApiPropertyOptional({ example: 'WOMEN-SEP-11-2026', description: 'Filter by specific event ID' })
+  @IsString()
+  @IsOptional()
+  eventId?: string;
 }

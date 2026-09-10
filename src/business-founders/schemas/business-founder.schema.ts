@@ -54,6 +54,14 @@ export class BusinessFounder {
   @Prop({ default: false })
   emailSent: boolean = false;
 
+  @Prop({
+    type: String,
+    trim: true,
+    uppercase: true,
+    default: 'BUSINESS-SEP-16-2026',
+  })
+  eventId: string = 'BUSINESS-SEP-16-2026';
+
   @Prop({ default: '' })
   notes?: string;
 }
@@ -61,7 +69,10 @@ export class BusinessFounder {
 export const BusinessFounderSchema = SchemaFactory.createForClass(BusinessFounder);
 
 BusinessFounderSchema.index({ phone: 1 });
+BusinessFounderSchema.index({ eventId: 1 });
+BusinessFounderSchema.index({ phone: 1, eventId: 1 });
 BusinessFounderSchema.index({ email: 1 });
+BusinessFounderSchema.index({ email: 1, eventId: 1 });
 BusinessFounderSchema.index({ businessName: 1 });
 BusinessFounderSchema.index({ industry: 1 });
 BusinessFounderSchema.index({ yearsInBusiness: 1 });

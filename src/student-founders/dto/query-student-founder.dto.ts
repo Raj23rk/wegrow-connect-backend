@@ -75,4 +75,9 @@ export class QueryStudentFounderDto {
   @IsString()
   @IsOptional()
   endDate?: string;
+
+  @ApiPropertyOptional({ example: 'STUDENT-SEP-12-2026', description: 'Filter by specific event ID' })
+  @IsString()
+  @IsOptional()
+  eventId?: string;
 }

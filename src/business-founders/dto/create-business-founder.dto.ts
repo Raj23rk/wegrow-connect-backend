@@ -67,4 +67,9 @@ export class CreateBusinessFounderDto {
   @IsString()
   @IsOptional()
   growthChallenge?: string;
+
+  @ApiPropertyOptional({ example: 'BUSINESS-SEP-16-2026' })
+  @IsString()
+  @IsOptional()
+  eventId?: string;
 }

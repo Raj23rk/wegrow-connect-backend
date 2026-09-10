@@ -29,26 +29,28 @@ export class BusinessFoundersService {
   async register(dto: CreateBusinessFounderDto) {
     const phoneTrimmed = dto.phone.trim();
     const emailNormalized = dto.email ? dto.email.toLowerCase().trim() : '';
+    const eventId = (dto.eventId || 'BUSINESS-SEP-16-2026').trim().toUpperCase();
 
-    // Check duplicate phone or email (if email is provided)
+    // Check duplicate phone or email (if email is provided) for this event
     const orConditions: any[] = [{ phone: phoneTrimmed }];
     if (emailNormalized) {
       orConditions.push({ email: emailNormalized });
     }
 
     const existing = await this.founderModel.findOne({
+      eventId,
       $or: orConditions,
-    });
+    }).lean().exec();
 
     if (existing) {
       if (existing.phone === phoneTrimmed) {
         throw new BadRequestException(
-          'A registration with this phone number already exists.',
+          `A registration with phone number ${phoneTrimmed} already exists for event ${eventId}.`,
         );
       }
       if (emailNormalized && existing.email === emailNormalized) {
         throw new BadRequestException(
-          'A registration with this email address already exists.',
+          `A registration with email ${emailNormalized} already exists for event ${eventId}.`,
         );
       }
     }
@@ -65,6 +67,7 @@ export class BusinessFoundersService {
       hasTeam: dto.hasTeam?.trim() || '',
       futureVision: dto.futureVision?.trim() || '',
       growthChallenge: dto.growthChallenge?.trim() || '',
+      eventId,
       emailSent: false,
     });
 
@@ -113,6 +116,7 @@ export class BusinessFoundersService {
       growthBlocker,
       hasTeam,
       status,
+      eventId,
       sortBy = 'createdAt',
       sortOrder = 'desc',
       startDate,
@@ -121,6 +125,9 @@ export class BusinessFoundersService {
 
     const filter: any = {};
 
+    if (eventId) {
+      filter.eventId = eventId.trim().toUpperCase();
+    }
     if (industry) {
       filter.industry = new RegExp(industry.trim(), 'i');
     }
@@ -163,6 +170,8 @@ export class BusinessFoundersService {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
+    const baseCountFilter: any = eventId ? { eventId: eventId.trim().toUpperCase() } : {};
+
     const [
       data,
       total,
@@ -171,20 +180,28 @@ export class BusinessFoundersService {
       attendedCount,
       cancelledCount,
       newRegsCount,
+      distinctEvents,
     ] = await Promise.all([
-      this.founderModel.find(filter).sort(sort).skip(skip).limit(limit).exec(),
+      this.founderModel.find(filter).sort(sort).skip(skip).limit(limit).lean().exec(),
       this.founderModel.countDocuments(filter),
-      this.founderModel.countDocuments(),
+      this.founderModel.countDocuments(baseCountFilter),
       this.founderModel.countDocuments({
+        ...baseCountFilter,
         status: FounderRegistrationStatus.CONFIRMED,
       }),
       this.founderModel.countDocuments({
+        ...baseCountFilter,
         status: FounderRegistrationStatus.ATTENDED,
       }),
       this.founderModel.countDocuments({
+        ...baseCountFilter,
         status: FounderRegistrationStatus.CANCELLED,
       }),
-      this.founderModel.countDocuments({ createdAt: { $gte: todayStart } }),
+      this.founderModel.countDocuments({
+        ...baseCountFilter,
+        createdAt: { $gte: todayStart },
+      }),
+      this.founderModel.distinct('eventId'),
     ]);
 
     const summary = {
@@ -195,6 +212,7 @@ export class BusinessFoundersService {
       attend: attendedCount,
       cancelled: cancelledCount,
       newRegs: newRegsCount,
+      distinctEvents: (distinctEvents || []).filter(Boolean),
     };
 
     return {
@@ -239,7 +257,12 @@ export class BusinessFoundersService {
     return { success: true, message: 'Registration deleted successfully' };
   }
 
-  async getStats() {
+  async getStats(eventId?: string) {
+    const baseFilter: any = {};
+    if (eventId) {
+      baseFilter.eventId = eventId.trim().toUpperCase();
+    }
+
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
@@ -255,46 +278,80 @@ export class BusinessFoundersService {
       blockers,
       teams,
       statuses,
+      distinctEvents,
     ] = await Promise.all([
-      this.founderModel.countDocuments(),
+      this.founderModel.countDocuments(baseFilter),
       this.founderModel.countDocuments({
+        ...baseFilter,
         status: FounderRegistrationStatus.CONFIRMED,
       }),
       this.founderModel.countDocuments({
+        ...baseFilter,
         status: FounderRegistrationStatus.ATTENDED,
       }),
       this.founderModel.countDocuments({
+        ...baseFilter,
         status: FounderRegistrationStatus.CANCELLED,
       }),
-      this.founderModel.countDocuments({ createdAt: { $gte: todayStart } }),
+      this.founderModel.countDocuments({
+        ...baseFilter,
+        createdAt: { $gte: todayStart },
+      }),
       this.founderModel.aggregate([
-        { $match: { industry: { $exists: true, $ne: '' } } },
+        {
+          $match: {
+            ...baseFilter,
+            industry: { $exists: true, $ne: '' },
+          },
+        },
         { $group: { _id: '$industry', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
       this.founderModel.aggregate([
-        { $match: { yearsInBusiness: { $exists: true, $ne: '' } } },
+        {
+          $match: {
+            ...baseFilter,
+            yearsInBusiness: { $exists: true, $ne: '' },
+          },
+        },
         { $group: { _id: '$yearsInBusiness', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
       this.founderModel.aggregate([
-        { $match: { biggestPriority: { $exists: true, $ne: '' } } },
+        {
+          $match: {
+            ...baseFilter,
+            biggestPriority: { $exists: true, $ne: '' },
+          },
+        },
         { $group: { _id: '$biggestPriority', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
       this.founderModel.aggregate([
-        { $match: { growthBlocker: { $exists: true, $ne: '' } } },
+        {
+          $match: {
+            ...baseFilter,
+            growthBlocker: { $exists: true, $ne: '' },
+          },
+        },
         { $group: { _id: '$growthBlocker', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
       this.founderModel.aggregate([
-        { $match: { hasTeam: { $exists: true, $ne: '' } } },
+        {
+          $match: {
+            ...baseFilter,
+            hasTeam: { $exists: true, $ne: '' },
+          },
+        },
         { $group: { _id: '$hasTeam', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
       this.founderModel.aggregate([
+        { $match: baseFilter },
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
+      this.founderModel.distinct('eventId'),
     ]);
 
     return {
@@ -305,6 +362,7 @@ export class BusinessFoundersService {
       attend: attendedCount,
       cancelled: cancelledCount,
       newRegs: newRegsCount,
+      distinctEvents: (distinctEvents || []).filter(Boolean),
       byIndustry: industries.map((i) => ({ industry: i._id, count: i.count })),
       byYearsInBusiness: years.map((y) => ({
         yearsInBusiness: y._id,
@@ -331,6 +389,7 @@ export class BusinessFoundersService {
     const result = await this.findAll(queryForExport);
     const headers = [
       'ID',
+      'Event ID',
       'Full Name',
       'Phone (WhatsApp)',
       'Email',
@@ -348,10 +407,11 @@ export class BusinessFoundersService {
       'Registered Date',
     ];
 
-    const rows = result.data.map((item) => [
+    const rows = result.data.map((item: any) => [
       item._id.toString(),
-      `"${item.fullName.replace(/"/g, '""')}"`,
-      `"${item.phone}"`,
+      `"${item.eventId || 'BUSINESS-SEP-16-2026'}"`,
+      `"${(item.fullName || '').replace(/"/g, '""')}"`,
+      `"${item.phone || ''}"`,
       `"${(item.email || '').replace(/"/g, '""')}"`,
       `"${(item.businessName || '').replace(/"/g, '""')}"`,
       `"${(item.industry || '').replace(/"/g, '""')}"`,
@@ -361,10 +421,10 @@ export class BusinessFoundersService {
       `"${(item.hasTeam || '').replace(/"/g, '""')}"`,
       `"${(item.futureVision || '').replace(/"/g, '""')}"`,
       `"${(item.growthChallenge || '').replace(/"/g, '""')}"`,
-      item.status,
+      item.status || '',
       item.emailSent ? 'Yes' : 'No',
       `"${(item.notes || '').replace(/"/g, '""')}"`,
-      (item as any).createdAt ? (item as any).createdAt.toISOString() : '',
+      item.createdAt ? new Date(item.createdAt).toISOString() : '',
     ]);
 
     return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');

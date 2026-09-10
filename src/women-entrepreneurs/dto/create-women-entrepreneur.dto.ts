@@ -39,4 +39,9 @@ export class CreateWomenEntrepreneurDto {
   @IsEnum(BusinessCategory)
   @IsNotEmpty()
   category!: BusinessCategory;
+
+  @ApiPropertyOptional({ example: 'WOMEN-SEP-11-2026' })
+  @IsString()
+  @IsOptional()
+  eventId?: string;
 }

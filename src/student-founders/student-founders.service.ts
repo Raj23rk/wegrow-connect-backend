@@ -29,21 +29,23 @@ export class StudentFoundersService {
   async register(dto: CreateStudentFounderDto) {
     const phoneTrimmed = dto.phone.trim();
     const emailNormalized = dto.email.toLowerCase().trim();
+    const eventId = (dto.eventId || 'STUDENT-SEP-12-2026').trim().toUpperCase();
 
-    // Check duplicate phone or email
+    // Check duplicate phone or email for this event
     const existing = await this.founderModel.findOne({
+      eventId,
       $or: [{ phone: phoneTrimmed }, { email: emailNormalized }],
-    });
+    }).lean().exec();
 
     if (existing) {
       if (existing.phone === phoneTrimmed) {
         throw new BadRequestException(
-          'A registration with this phone number already exists.',
+          `A registration with phone number ${phoneTrimmed} already exists for event ${eventId}.`,
         );
       }
       if (existing.email === emailNormalized) {
         throw new BadRequestException(
-          'A registration with this email address already exists.',
+          `A registration with email ${emailNormalized} already exists for event ${eventId}.`,
         );
       }
     }
@@ -63,6 +65,7 @@ export class StudentFoundersService {
       lookingForFunding: dto.lookingForFunding?.trim() || '',
       readyToLearn: dto.readyToLearn?.trim() || '',
       industryNiche: dto.industryNiche?.trim() || '',
+      eventId,
       emailSent: false,
     });
 
@@ -107,6 +110,7 @@ export class StudentFoundersService {
       industryNiche,
       readiness,
       lookingForFunding,
+      eventId,
       sortBy = 'createdAt',
       sortOrder = 'desc',
       startDate,
@@ -115,6 +119,9 @@ export class StudentFoundersService {
 
     const filter: any = {};
 
+    if (eventId) {
+      filter.eventId = eventId.trim().toUpperCase();
+    }
     if (yearOfStudy) {
       filter.yearOfStudy = yearOfStudy;
     }
@@ -158,6 +165,8 @@ export class StudentFoundersService {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
+    const baseCountFilter: any = eventId ? { eventId: eventId.trim().toUpperCase() } : {};
+
     const [
       data,
       total,
@@ -166,20 +175,28 @@ export class StudentFoundersService {
       attendedCount,
       cancelledCount,
       newRegsCount,
+      distinctEvents,
     ] = await Promise.all([
-      this.founderModel.find(filter).sort(sort).skip(skip).limit(limit).exec(),
+      this.founderModel.find(filter).sort(sort).skip(skip).limit(limit).lean().exec(),
       this.founderModel.countDocuments(filter),
-      this.founderModel.countDocuments(),
+      this.founderModel.countDocuments(baseCountFilter),
       this.founderModel.countDocuments({
+        ...baseCountFilter,
         status: FounderRegistrationStatus.CONFIRMED,
       }),
       this.founderModel.countDocuments({
+        ...baseCountFilter,
         status: FounderRegistrationStatus.ATTENDED,
       }),
       this.founderModel.countDocuments({
+        ...baseCountFilter,
         status: FounderRegistrationStatus.CANCELLED,
       }),
-      this.founderModel.countDocuments({ createdAt: { $gte: todayStart } }),
+      this.founderModel.countDocuments({
+        ...baseCountFilter,
+        createdAt: { $gte: todayStart },
+      }),
+      this.founderModel.distinct('eventId'),
     ]);
 
     const summary = {
@@ -190,6 +207,7 @@ export class StudentFoundersService {
       attend: attendedCount,
       cancelled: cancelledCount,
       newRegs: newRegsCount,
+      distinctEvents: (distinctEvents || []).filter(Boolean),
     };
 
     return {
@@ -234,7 +252,12 @@ export class StudentFoundersService {
     return { success: true, message: 'Registration deleted successfully' };
   }
 
-  async getStats() {
+  async getStats(eventId?: string) {
+    const baseFilter: any = {};
+    if (eventId) {
+      baseFilter.eventId = eventId.trim().toUpperCase();
+    }
+
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
@@ -248,34 +271,50 @@ export class StudentFoundersService {
       colleges,
       statuses,
       niches,
+      distinctEvents,
     ] = await Promise.all([
-      this.founderModel.countDocuments(),
+      this.founderModel.countDocuments(baseFilter),
       this.founderModel.countDocuments({
+        ...baseFilter,
         status: FounderRegistrationStatus.CONFIRMED,
       }),
       this.founderModel.countDocuments({
+        ...baseFilter,
         status: FounderRegistrationStatus.ATTENDED,
       }),
       this.founderModel.countDocuments({
+        ...baseFilter,
         status: FounderRegistrationStatus.CANCELLED,
       }),
-      this.founderModel.countDocuments({ createdAt: { $gte: todayStart } }),
+      this.founderModel.countDocuments({
+        ...baseFilter,
+        createdAt: { $gte: todayStart },
+      }),
       this.founderModel.aggregate([
+        { $match: baseFilter },
         { $group: { _id: '$yearOfStudy', count: { $sum: 1 } } },
       ]),
       this.founderModel.aggregate([
+        { $match: baseFilter },
         { $group: { _id: '$collegeName', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
         { $limit: 10 },
       ]),
       this.founderModel.aggregate([
+        { $match: baseFilter },
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
       this.founderModel.aggregate([
-        { $match: { industryNiche: { $exists: true, $ne: '' } } },
+        {
+          $match: {
+            ...baseFilter,
+            industryNiche: { $exists: true, $ne: '' },
+          },
+        },
         { $group: { _id: '$industryNiche', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
+      this.founderModel.distinct('eventId'),
     ]);
 
     return {
@@ -286,6 +325,7 @@ export class StudentFoundersService {
       attend: attendedCount,
       cancelled: cancelledCount,
       newRegs: newRegsCount,
+      distinctEvents: (distinctEvents || []).filter(Boolean),
       byYearOfStudy: years.reduce((acc, curr) => {
         acc[curr._id] = curr.count;
         return acc;
@@ -304,6 +344,7 @@ export class StudentFoundersService {
     const result = await this.findAll(queryForExport);
     const headers = [
       'ID',
+      'Event ID',
       'Full Name',
       'Phone (WhatsApp)',
       'Email',
@@ -324,26 +365,27 @@ export class StudentFoundersService {
       'Registered Date',
     ];
 
-    const rows = result.data.map((item) => [
+    const rows = result.data.map((item: any) => [
       item._id.toString(),
-      `"${item.fullName.replace(/"/g, '""')}"`,
-      `"${item.phone}"`,
-      `"${item.email}"`,
-      `"${item.collegeName.replace(/"/g, '""')}"`,
-      `"${item.yearOfStudy}"`,
-      `"${item.course.replace(/"/g, '""')}"`,
-      item.courseStartYear,
-      item.courseEndYear,
+      `"${item.eventId || 'STUDENT-SEP-12-2026'}"`,
+      `"${(item.fullName || '').replace(/"/g, '""')}"`,
+      `"${item.phone || ''}"`,
+      `"${item.email || ''}"`,
+      `"${(item.collegeName || '').replace(/"/g, '""')}"`,
+      `"${item.yearOfStudy || ''}"`,
+      `"${(item.course || '').replace(/"/g, '""')}"`,
+      item.courseStartYear || '',
+      item.courseEndYear || '',
       `"${(item.readiness || '').replace(/"/g, '""')}"`,
       `"${(item.hasIdea || '').replace(/"/g, '""')}"`,
       `"${(item.seriousness || '').replace(/"/g, '""')}"`,
       `"${(item.lookingForFunding || '').replace(/"/g, '""')}"`,
       `"${(item.readyToLearn || '').replace(/"/g, '""')}"`,
       `"${(item.industryNiche || '').replace(/"/g, '""')}"`,
-      item.status,
+      item.status || '',
       item.emailSent ? 'Yes' : 'No',
       `"${(item.notes || '').replace(/"/g, '""')}"`,
-      (item as any).createdAt ? (item as any).createdAt.toISOString() : '',
+      item.createdAt ? new Date(item.createdAt).toISOString() : '',
     ]);
 
     return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');

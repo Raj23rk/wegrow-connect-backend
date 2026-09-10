@@ -72,4 +72,9 @@ export class QueryBusinessFounderDto {
   @IsString()
   @IsOptional()
   endDate?: string;
+
+  @ApiPropertyOptional({ example: 'BUSINESS-SEP-16-2026', description: 'Filter by specific event ID' })
+  @IsString()
+  @IsOptional()
+  eventId?: string;
 }

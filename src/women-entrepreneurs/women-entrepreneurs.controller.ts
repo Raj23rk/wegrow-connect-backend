@@ -48,8 +48,8 @@ export class WomenEntrepreneursController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get registration statistics and summary breakdown (Admin)' })
-  async getStats() {
-    const stats = await this.womenService.getStats();
+  async getStats(@Query('eventId') eventId?: string) {
+    const stats = await this.womenService.getStats(eventId);
     return { success: true, stats };
   }
 

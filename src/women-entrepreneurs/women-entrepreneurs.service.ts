@@ -29,12 +29,17 @@ export class WomenEntrepreneursService {
   async register(dto: CreateWomenEntrepreneurDto) {
     const phoneTrimmed = dto.phone.trim();
     const emailNormalized = dto.email ? dto.email.toLowerCase().trim() : '';
+    const eventId = (dto.eventId || 'WOMEN-SEP-11-2026').trim().toUpperCase();
 
-    // Check duplicate phone
-    const existing = await this.womenModel.findOne({ phone: phoneTrimmed });
+    // Check duplicate phone for this specific event
+    const existing = await this.womenModel
+      .findOne({ phone: phoneTrimmed, eventId }, { _id: 1 })
+      .lean()
+      .exec();
+
     if (existing) {
       throw new BadRequestException(
-        'A registration with this phone number already exists.',
+        `A registration with phone number ${phoneTrimmed} already exists for event ${eventId}.`,
       );
     }
 
@@ -44,6 +49,7 @@ export class WomenEntrepreneursService {
       email: emailNormalized,
       businessStage: dto.businessStage,
       category: dto.category,
+      eventId,
       emailSent: false,
     });
 
@@ -84,6 +90,7 @@ export class WomenEntrepreneursService {
       businessStage,
       category,
       status,
+      eventId,
       sortBy = 'createdAt',
       sortOrder = 'desc',
       startDate,
@@ -92,6 +99,9 @@ export class WomenEntrepreneursService {
 
     const filter: any = {};
 
+    if (eventId) {
+      filter.eventId = eventId.trim().toUpperCase();
+    }
     if (businessStage) {
       filter.businessStage = businessStage;
     }
@@ -123,6 +133,8 @@ export class WomenEntrepreneursService {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
+    const baseCountFilter: any = eventId ? { eventId: eventId.trim().toUpperCase() } : {};
+
     const [
       data,
       total,
@@ -131,20 +143,28 @@ export class WomenEntrepreneursService {
       attendedCount,
       cancelledCount,
       newRegsCount,
+      distinctEvents,
     ] = await Promise.all([
-      this.womenModel.find(filter).sort(sort).skip(skip).limit(limit).exec(),
+      this.womenModel.find(filter).sort(sort).skip(skip).limit(limit).lean().exec(),
       this.womenModel.countDocuments(filter),
-      this.womenModel.countDocuments(),
+      this.womenModel.countDocuments(baseCountFilter),
       this.womenModel.countDocuments({
+        ...baseCountFilter,
         status: RegistrationStatus.CONFIRMED,
       }),
       this.womenModel.countDocuments({
+        ...baseCountFilter,
         status: RegistrationStatus.ATTENDED,
       }),
       this.womenModel.countDocuments({
+        ...baseCountFilter,
         status: RegistrationStatus.CANCELLED,
       }),
-      this.womenModel.countDocuments({ createdAt: { $gte: todayStart } }),
+      this.womenModel.countDocuments({
+        ...baseCountFilter,
+        createdAt: { $gte: todayStart },
+      }),
+      this.womenModel.distinct('eventId'),
     ]);
 
     const summary = {
@@ -155,6 +175,7 @@ export class WomenEntrepreneursService {
       attend: attendedCount,
       cancelled: cancelledCount,
       newRegs: newRegsCount,
+      distinctEvents: (distinctEvents || []).filter(Boolean),
     };
 
     return {
@@ -199,7 +220,12 @@ export class WomenEntrepreneursService {
     return { success: true, message: 'Registration deleted successfully' };
   }
 
-  async getStats() {
+  async getStats(eventId?: string) {
+    const baseFilter: any = {};
+    if (eventId) {
+      baseFilter.eventId = eventId.trim().toUpperCase();
+    }
+
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
@@ -212,27 +238,38 @@ export class WomenEntrepreneursService {
       stages,
       categories,
       statuses,
+      distinctEvents,
     ] = await Promise.all([
-      this.womenModel.countDocuments(),
+      this.womenModel.countDocuments(baseFilter),
       this.womenModel.countDocuments({
+        ...baseFilter,
         status: RegistrationStatus.CONFIRMED,
       }),
       this.womenModel.countDocuments({
+        ...baseFilter,
         status: RegistrationStatus.ATTENDED,
       }),
       this.womenModel.countDocuments({
+        ...baseFilter,
         status: RegistrationStatus.CANCELLED,
       }),
-      this.womenModel.countDocuments({ createdAt: { $gte: todayStart } }),
+      this.womenModel.countDocuments({
+        ...baseFilter,
+        createdAt: { $gte: todayStart },
+      }),
       this.womenModel.aggregate([
+        { $match: baseFilter },
         { $group: { _id: '$businessStage', count: { $sum: 1 } } },
       ]),
       this.womenModel.aggregate([
+        { $match: baseFilter },
         { $group: { _id: '$category', count: { $sum: 1 } } },
       ]),
       this.womenModel.aggregate([
+        { $match: baseFilter },
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
+      this.womenModel.distinct('eventId'),
     ]);
 
     return {
@@ -243,6 +280,7 @@ export class WomenEntrepreneursService {
       attend: attendedCount,
       cancelled: cancelledCount,
       newRegs: newRegsCount,
+      distinctEvents: (distinctEvents || []).filter(Boolean),
       byBusinessStage: stages.reduce((acc, curr) => {
         acc[curr._id] = curr.count;
         return acc;
@@ -263,6 +301,7 @@ export class WomenEntrepreneursService {
     const result = await this.findAll(queryForExport);
     const headers = [
       'ID',
+      'Event ID',
       'Full Name',
       'Phone (WhatsApp)',
       'Email',
@@ -274,17 +313,18 @@ export class WomenEntrepreneursService {
       'Registered Date',
     ];
 
-    const rows = result.data.map((item) => [
+    const rows = result.data.map((item: any) => [
       item._id.toString(),
-      `"${item.fullName.replace(/"/g, '""')}"`,
-      `"${item.phone}"`,
+      `"${item.eventId || 'WOMEN-SEP-11-2026'}"`,
+      `"${(item.fullName || '').replace(/"/g, '""')}"`,
+      `"${item.phone || ''}"`,
       `"${item.email || ''}"`,
-      `"${item.businessStage}"`,
-      `"${item.category}"`,
-      item.status,
+      `"${item.businessStage || ''}"`,
+      `"${item.category || ''}"`,
+      item.status || '',
       item.emailSent ? 'Yes' : 'No',
       `"${(item.notes || '').replace(/"/g, '""')}"`,
-      (item as any).createdAt ? (item as any).createdAt.toISOString() : '',
+      item.createdAt ? new Date(item.createdAt).toISOString() : '',
     ]);
 
     return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
