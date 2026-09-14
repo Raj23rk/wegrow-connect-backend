@@ -24,6 +24,8 @@ import { WomenEntrepreneursModule } from './women-entrepreneurs/women-entreprene
 import { StudentFoundersModule } from './student-founders/student-founders.module';
 import { BusinessFoundersModule } from './business-founders/business-founders.module';
 import { ArtCompetitionModule } from './art-competition/art-competition.module';
+import { SingAlongModule } from './sing-along/sing-along.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -99,6 +101,9 @@ import { ArtCompetitionModule } from './art-competition/art-competition.module';
     BusinessFoundersModule,
 
     ArtCompetitionModule,
+
+    SingAlongModule,
+    PaymentsModule,
   ],
 
   controllers: [AppController],
