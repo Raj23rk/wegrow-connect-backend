@@ -37,6 +37,9 @@ export class SingAlongBooking {
   utr?: string; // UPI Reference / Transaction ID
 
   @Prop({ default: '', trim: true })
+  orderId?: string; // Cashfree / Razorpay Order ID
+
+  @Prop({ default: '', trim: true })
   paymentScreenshot?: string;
 
   @Prop({ default: 'wegrow@okaxis', trim: true })
@@ -70,4 +73,5 @@ SingAlongBookingSchema.index({ phone: 1 });
 SingAlongBookingSchema.index({ eventId: 1 });
 SingAlongBookingSchema.index({ status: 1 });
 SingAlongBookingSchema.index({ utr: 1 });
+SingAlongBookingSchema.index({ orderId: 1 });
 SingAlongBookingSchema.index({ createdAt: -1 });
