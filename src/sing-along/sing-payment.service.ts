@@ -36,41 +36,101 @@ export class SingPaymentService {
     private readonly configService: ConfigService,
   ) {}
 
-  private getAppId(): string {
+  // =========================================================================
+  // PAYU CREDENTIAL HELPERS
+  // =========================================================================
+  private getPayuKey(): string {
     return (
-      this.configService.get<string>('CASHFREE_APP_ID') ||
-      process.env.CASHFREE_APP_ID ||
-      ''
+      this.configService.get<string>('PAYU_MERCHANT_KEY') ||
+      process.env.PAYU_MERCHANT_KEY ||
+      'dBVOrW'
     ).trim();
   }
 
-  private getSecretKey(): string {
+  private getPayuSalt(): string {
     return (
-      this.configService.get<string>('CASHFREE_SECRET_KEY') ||
-      process.env.CASHFREE_SECRET_KEY ||
-      ''
+      this.configService.get<string>('PAYU_MERCHANT_SALT') ||
+      process.env.PAYU_MERCHANT_SALT ||
+      '12chTfEGligkVxqCSomXnbWvYx0ZPJl6'
     ).trim();
   }
 
-  private getApiVersion(): string {
+  private getPayuEnv(): string {
     return (
-      this.configService.get<string>('CASHFREE_API_VERSION') ||
-      process.env.CASHFREE_API_VERSION ||
-      '2023-08-01'
-    ).trim();
-  }
-
-  private getBaseUrl(): string {
-    const env = (
-      this.configService.get<string>('CASHFREE_ENV') ||
-      process.env.CASHFREE_ENV ||
+      this.configService.get<string>('PAYU_ENV') ||
+      process.env.PAYU_ENV ||
       'TEST'
     )
       .trim()
       .toUpperCase();
-    return env === 'PROD'
-      ? 'https://api.cashfree.com/pg'
-      : 'https://sandbox.cashfree.com/pg';
+  }
+
+  private getPayuPaymentUrl(): string {
+    return this.getPayuEnv() === 'PROD'
+      ? 'https://secure.payu.in/_payment'
+      : 'https://test.payu.in/_payment';
+  }
+
+  private getPayuPostServiceUrl(): string {
+    return this.getPayuEnv() === 'PROD'
+      ? 'https://info.payu.in/merchant/postservice?form=2'
+      : 'https://test.payu.in/merchant/postservice?form=2';
+  }
+
+  /**
+   * Generate PayU Request Hash (SHA-512)
+   * Formula: sha512(key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt)
+   */
+  generatePayuHash(
+    txnid: string,
+    amount: string,
+    productinfo: string,
+    firstname: string,
+    email: string,
+    udf1: string = '',
+    udf2: string = '',
+  ): string {
+    const key = this.getPayuKey();
+    const salt = this.getPayuSalt();
+    const hashString = `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|${udf1}|${udf2}|||||||||${salt}`;
+    return crypto.createHash('sha512').update(hashString).digest('hex');
+  }
+
+  /**
+   * Verify PayU Response Hash (SHA-512)
+   * Formula: sha512(salt|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)
+   */
+  verifyPayuResponseHash(body: Record<string, any>): boolean {
+    const key = this.getPayuKey();
+    const salt = this.getPayuSalt();
+    const status = body.status || '';
+    const txnid = body.txnid || '';
+    const amount = body.amount || '';
+    const productinfo = body.productinfo || '';
+    const firstname = body.firstname || '';
+    const email = body.email || '';
+    const udf1 = body.udf1 || '';
+    const udf2 = body.udf2 || '';
+    const udf3 = body.udf3 || '';
+    const udf4 = body.udf4 || '';
+    const udf5 = body.udf5 || '';
+    const additionalCharges = body.additionalCharges;
+
+    let hashSequence = '';
+    if (additionalCharges) {
+      hashSequence = `${additionalCharges}|${salt}|${status}||||||${udf5}|${udf4}|${udf3}|${udf2}|${udf1}|${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
+    } else {
+      hashSequence = `${salt}|${status}||||||${udf5}|${udf4}|${udf3}|${udf2}|${udf1}|${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
+    }
+
+    const calculatedHash = crypto
+      .createHash('sha512')
+      .update(hashSequence)
+      .digest('hex');
+
+    return (
+      calculatedHash.toLowerCase() === (body.hash || '').toLowerCase()
+    );
   }
 
   /**
@@ -82,7 +142,7 @@ export class SingPaymentService {
   }
 
   // =========================================================================
-  // 1. CREATE PAYMENT ORDER (Frontend calls this on "Pay Now")
+  // 1. CREATE PAYMENT ORDER (Frontend calls this on "Pay ₹254 Now")
   // =========================================================================
   async createOrder(dto: CreateSingPaymentOrderDto) {
     const fullName = (dto.fullName || '').trim();
@@ -98,17 +158,23 @@ export class SingPaymentService {
     }
 
     const ticketQty = Math.max(1, Math.min(10, Number(dto.ticketQty) || 1));
-    const unitPrice = 199;
-    const totalAmount = ticketQty * unitPrice;
-    const email = dto.email ? dto.email.toLowerCase().trim() : '';
+    // Default to ₹254 (or custom amount if passed)
+    const totalAmount =
+      dto.amount && Number(dto.amount) > 0
+        ? Number(dto.amount)
+        : ticketQty * 254;
+    const unitPrice = Math.round(totalAmount / ticketQty);
+    const amountStr = totalAmount.toFixed(2);
+    const email = dto.email ? dto.email.toLowerCase().trim() : 'guest@wegrowbschool.in';
     const eventId = (dto.eventId || 'SINGALONG-SEP-13-2026').trim();
 
-    // 1. Generate unique booking reference and order ID
+    // 1. Generate unique booking reference and PayU Transaction ID (txnid)
     const bookingId = this.generateBookingId();
-    const orderId = `order_SA26_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
+    const txnid = `SA26_${Date.now()}`;
+    const productinfo = `Sing Along ${ticketQty} Pass`;
 
     // 2. Pre-create booking in DB with PENDING_VERIFICATION status
-    const booking = await this.bookingModel.create({
+    await this.bookingModel.create({
       bookingId,
       fullName,
       phone,
@@ -116,310 +182,171 @@ export class SingPaymentService {
       ticketQty,
       unitPrice,
       totalAmount,
-      orderId,
+      orderId: txnid,
       status: SingAlongBookingStatus.PENDING_VERIFICATION,
       eventId,
       attended: false,
       isActive: true,
-      paymentMethod: 'CASHFREE',
-      notes: dto.notes || `Pending Cashfree payment for order ${orderId}`,
+      paymentMethod: 'PAYU',
+      notes: dto.notes || `Pending PayU payment for ${txnid}`,
     });
 
-    // 3. Call Cashfree Orders API
-    const appId = this.getAppId();
-    const secretKey = this.getSecretKey();
-
-    if (!appId || !secretKey) {
-      this.logger.warn(
-        'CASHFREE_APP_ID or CASHFREE_SECRET_KEY is not configured in .env. Creating pending order in local DB.',
-      );
-
-      // Save local pending payment record so test flows still function
-      await this.paymentModel.create({
-        orderId,
-        bookingId,
-        amount: totalAmount,
-        currency: 'INR',
-        status: SingAlongPaymentStatus.PENDING,
-        customer: { name: fullName, phone, email },
-        metadata: { eventId, ticketQty },
-      });
-
-      return {
-        orderId,
-        paymentSessionId: `mock_session_${Date.now()}`,
-        bookingId,
-        amount: totalAmount,
-        currency: 'INR',
-        customer: { name: fullName, phone, email },
-        mock: true,
-        message:
-          'Cashfree credentials not configured. Please set CASHFREE_APP_ID & CASHFREE_SECRET_KEY in .env.',
-      };
-    }
-
-    const baseUrl = this.getBaseUrl();
+    // 3. Callback URLs
     const frontendUrl =
       this.configService.get<string>('FRONTEND_URL') ||
       process.env.FRONTEND_URL ||
       'https://www.wegrowbschool.in';
 
-    const orderPayload = {
-      order_id: orderId,
-      order_amount: totalAmount,
-      order_currency: 'INR',
-      customer_details: {
-        customer_id: `cust_${phone}`,
-        customer_name: fullName,
-        customer_phone: phone,
-        customer_email: email || 'bookings@wegrowbschool.in',
+    const surl = 'https://wegrow-connect-backend-1.onrender.com/api/v1/sing-payment/payu-callback';
+    const furl = 'https://wegrow-connect-backend-1.onrender.com/api/v1/sing-payment/payu-callback';
+
+    // 4. Generate PayU Hash
+    const key = this.getPayuKey();
+    const hash = this.generatePayuHash(
+      txnid,
+      amountStr,
+      productinfo,
+      fullName,
+      email,
+      bookingId,
+      String(ticketQty),
+    );
+
+    // 5. Save payment record in DB
+    await this.paymentModel.create({
+      orderId: txnid,
+      bookingId,
+      amount: totalAmount,
+      currency: 'INR',
+      status: SingAlongPaymentStatus.PENDING,
+      customer: { name: fullName, phone, email },
+      metadata: {
+        eventId,
+        ticketQty,
+        productinfo,
+        payuKey: key,
       },
-      order_meta: {
-        return_url: `${frontendUrl}/sing-along?order_id={order_id}`,
-        notify_url:
-          'https://wegrow-connect-backend-1.onrender.com/api/v1/sing-payment/webhook',
+    });
+
+    const actionUrl = this.getPayuPaymentUrl();
+
+    return {
+      orderId: txnid,
+      txnid,
+      bookingId,
+      amount: totalAmount,
+      currency: 'INR',
+      action: actionUrl,
+      params: {
+        key,
+        txnid,
+        amount: amountStr,
+        productinfo,
+        firstname: fullName,
+        email,
+        phone,
+        surl,
+        furl,
+        hash,
+        udf1: bookingId,
+        udf2: String(ticketQty),
       },
-      order_note: `Sing Along - ${ticketQty} Ticket(s) (${bookingId})`,
+      customer: { name: fullName, phone, email },
     };
-
-    try {
-      const response = await fetch(`${baseUrl}/orders`, {
-        method: 'POST',
-        headers: {
-          'x-client-id': appId,
-          'x-client-secret': secretKey,
-          'x-api-version': this.getApiVersion(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderPayload),
-      });
-
-      const cfData = await response.json();
-
-      if (!response.ok) {
-        this.logger.error('Cashfree Create Order Error:', cfData);
-        throw new BadRequestException(
-          cfData.message || 'Failed to initialize Cashfree payment order',
-        );
-      }
-
-      // 4. Save Payment Record in DB
-      await this.paymentModel.create({
-        orderId,
-        cfOrderId: cfData.cf_order_id ? String(cfData.cf_order_id) : '',
-        paymentSessionId: cfData.payment_session_id,
-        bookingId,
-        amount: totalAmount,
-        currency: 'INR',
-        status: SingAlongPaymentStatus.PENDING,
-        customer: { name: fullName, phone, email },
-        metadata: { eventId, ticketQty, cfResponse: cfData },
-      });
-
-      return {
-        orderId,
-        cfOrderId: cfData.cf_order_id,
-        paymentSessionId: cfData.payment_session_id,
-        bookingId,
-        amount: totalAmount,
-        currency: 'INR',
-        customer: { name: fullName, phone, email },
-      };
-    } catch (err: any) {
-      this.logger.error('Error creating Cashfree order:', err);
-      if (err instanceof BadRequestException) throw err;
-      throw new InternalServerErrorException(
-        err.message || 'Could not communicate with Cashfree PG',
-      );
-    }
   }
 
   // =========================================================================
-  // 2. VERIFY CASHFREE WEBHOOK SIGNATURE
-  // =========================================================================
-  verifySignature(
-    rawBody: string | Buffer,
-    timestamp: string,
-    signature: string,
-  ): boolean {
-    const secretKey = this.getSecretKey();
-    if (!secretKey) {
-      this.logger.warn(
-        'CASHFREE_SECRET_KEY not set. Skipping webhook signature verification.',
-      );
-      return true;
-    }
-
-    if (!timestamp || !signature) {
-      return false;
-    }
-
-    try {
-      const bodyStr = Buffer.isBuffer(rawBody)
-        ? rawBody.toString('utf8')
-        : typeof rawBody === 'string'
-          ? rawBody
-          : JSON.stringify(rawBody);
-
-      const generatedSignature = crypto
-        .createHmac('sha256', secretKey)
-        .update(timestamp + bodyStr)
-        .digest('base64');
-
-      return (
-        crypto.timingSafeEqual(
-          Buffer.from(signature),
-          Buffer.from(generatedSignature),
-        ) || signature === generatedSignature
-      );
-    } catch (err: any) {
-      this.logger.error('Error verifying webhook signature:', err);
-      return false;
-    }
-  }
-
-  // =========================================================================
-  // 3. CASHFREE WEBHOOK HANDLER
+  // 2. PAYU WEBHOOK & CALLBACK HANDLER
   // Target: POST /api/v1/sing-payment/webhook
+  // Target: POST /api/v1/sing-payment/payu-callback
   // =========================================================================
-  async handleWebhook(
-    body: any,
-    rawBody: any,
-    headers: Record<string, string | undefined>,
-  ) {
-    this.logger.log('Cashfree Webhook received:', JSON.stringify(body));
+  async handlePayuCallback(body: Record<string, any>) {
+    this.logger.log('PayU Callback/Webhook received:', JSON.stringify(body));
 
-    const timestamp =
-      headers['x-webhook-timestamp'] ||
-      headers['x-webhook-timestamp'.toLowerCase()] ||
-      '';
-    const signature =
-      headers['x-webhook-signature'] ||
-      headers['x-webhook-signature'.toLowerCase()] ||
-      '';
+    const txnid = body.txnid || '';
+    const status = body.status || '';
+    const mihpayid = body.mihpayid || '';
+    const bankRefNum = body.bank_ref_num || mihpayid;
+    const mode = body.mode || 'PAYU';
+    const bookingId = body.udf1 || '';
 
-    if (rawBody && timestamp && signature) {
-      const isValid = this.verifySignature(rawBody, timestamp, signature);
-      if (!isValid) {
-        this.logger.warn('Invalid Cashfree Webhook Signature detected');
-        throw new BadRequestException('Invalid webhook signature');
-      }
+    if (!txnid) {
+      return { status: 'IGNORED', message: 'No txnid provided' };
     }
 
-    const data = body?.data;
-    const eventType = body?.type || '';
-
-    // Extract Order ID & Status
-    const orderId =
-      data?.order?.order_id ||
-      data?.order_id ||
-      body?.order_id ||
-      '';
-
-    if (!orderId) {
-      this.logger.warn('No orderId found in Cashfree Webhook payload');
-      return { status: 'IGNORED', message: 'No orderId provided' };
+    const isHashValid = this.verifyPayuResponseHash(body);
+    if (!isHashValid) {
+      this.logger.warn(`Invalid PayU hash for txnid: ${txnid}`);
     }
 
-    const paymentData = data?.payment || {};
-    const paymentStatus =
-      paymentData.payment_status ||
-      data?.order?.order_status ||
-      (eventType.includes('SUCCESS') || eventType.includes('PAID')
-        ? 'SUCCESS'
-        : 'PENDING');
+    if (status.toLowerCase() === 'success') {
+      this.logger.log(`PayU Payment SUCCESS for txnid: ${txnid}`);
 
-    const cfPaymentId = String(paymentData.cf_payment_id || '');
-    const utr =
-      paymentData.bank_reference ||
-      paymentData.payment_utr ||
-      cfPaymentId;
-    const paymentMethod =
-      paymentData.payment_group ||
-      (paymentData.payment_method?.upi ? 'UPI' : 'CASHFREE');
-
-    if (
-      paymentStatus === 'SUCCESS' ||
-      eventType === 'PAYMENT_SUCCESS_WEBHOOK' ||
-      eventType === 'ORDER_PAID_WEBHOOK'
-    ) {
-      this.logger.log(`Payment SUCCESS for order: ${orderId}`);
-
-      // 1. Update Payment record to SUCCESS
-      const payment = await this.paymentModel.findOneAndUpdate(
-        { orderId },
+      // 1. Update Payment status to SUCCESS
+      await this.paymentModel.findOneAndUpdate(
+        { orderId: txnid },
         {
           status: SingAlongPaymentStatus.SUCCESS,
-          cfPaymentId,
-          utr,
-          paymentMethod,
+          cfPaymentId: mihpayid,
+          utr: bankRefNum,
+          paymentMethod: `PAYU (${mode})`,
           webhookPayload: body,
         },
-        { new: true },
       );
 
-      // 2. Update linked Booking record to CONFIRMED
-      const bookingQuery = payment
-        ? { bookingId: payment.bookingId }
-        : { orderId };
+      // 2. Update Booking status to CONFIRMED
+      const bookingQuery = bookingId
+        ? { bookingId }
+        : { orderId: txnid };
 
       const booking = await this.bookingModel.findOneAndUpdate(
         bookingQuery,
         {
           status: SingAlongBookingStatus.CONFIRMED,
-          utr,
-          paymentMethod: `CASHFREE (${paymentMethod.toUpperCase()})`,
-          notes: `Confirmed via Cashfree Webhook (UTR: ${utr})`,
+          utr: bankRefNum,
+          paymentMethod: `PAYU (${mode})`,
+          notes: `Confirmed via PayU (PayU ID: ${mihpayid}, Ref: ${bankRefNum})`,
         },
         { new: true },
       );
 
       return {
         status: 'SUCCESS',
-        orderId,
+        txnid,
         bookingId: booking?.bookingId,
         message: 'Payment confirmed and ticket activated successfully',
       };
-    } else if (
-      paymentStatus === 'FAILED' ||
-      eventType === 'PAYMENT_FAILED_WEBHOOK'
-    ) {
-      this.logger.warn(`Payment FAILED for order: ${orderId}`);
+    } else {
+      this.logger.warn(`PayU Payment FAILED for txnid: ${txnid} (Status: ${status})`);
 
       await this.paymentModel.findOneAndUpdate(
-        { orderId },
+        { orderId: txnid },
         {
           status: SingAlongPaymentStatus.FAILED,
-          cfPaymentId,
+          cfPaymentId: mihpayid,
           webhookPayload: body,
         },
       );
 
       return {
         status: 'FAILED',
-        orderId,
-        message: 'Payment marked as failed',
+        txnid,
+        message: `PayU payment status: ${status}`,
       };
     }
-
-    return {
-      status: 'RECEIVED',
-      orderId,
-      message: `Webhook received with event: ${eventType}`,
-    };
   }
 
   // =========================================================================
-  // 4. CHECK PAYMENT STATUS / VERIFY (Used by frontend polling & check)
+  // 3. CHECK PAYMENT STATUS / REAL-TIME VERIFY
   // Target: GET /api/v1/sing-payment/status/:orderId
   // Target: POST /api/v1/sing-payment/verify
   // =========================================================================
   async getPaymentStatus(orderId: string) {
     if (!orderId) {
-      throw new BadRequestException('Order ID is required');
+      throw new BadRequestException('Order ID / Transaction ID is required');
     }
 
-    // 1. Check local Payment record
+    // 1. Check local Payment & Booking records
     let payment = await this.paymentModel.findOne({ orderId });
     let booking = payment
       ? await this.bookingModel.findOne({ bookingId: payment.bookingId })
@@ -429,8 +356,11 @@ export class SingPaymentService {
       throw new NotFoundException(`Order with ID "${orderId}" not found`);
     }
 
-    // 2. If already marked SUCCESS, return confirmed result
-    if (payment?.status === SingAlongPaymentStatus.SUCCESS) {
+    // 2. If already marked SUCCESS, return confirmed result immediately
+    if (
+      payment?.status === SingAlongPaymentStatus.SUCCESS ||
+      booking?.status === SingAlongBookingStatus.CONFIRMED
+    ) {
       return {
         success: true,
         isPaid: true,
@@ -453,75 +383,48 @@ export class SingPaymentService {
       };
     }
 
-    // 3. If still pending, directly query Cashfree API to verify real-time status
-    const appId = this.getAppId();
-    const secretKey = this.getSecretKey();
+    // 3. If still pending, call PayU verify_payment Server-to-Server API
+    const key = this.getPayuKey();
+    const salt = this.getPayuSalt();
 
-    if (appId && secretKey) {
+    if (key && salt) {
       try {
-        const baseUrl = this.getBaseUrl();
-        const response = await fetch(`${baseUrl}/orders/${orderId}`, {
-          method: 'GET',
-          headers: {
-            'x-client-id': appId,
-            'x-client-secret': secretKey,
-            'x-api-version': this.getApiVersion(),
-            'Content-Type': 'application/json',
-          },
+        const command = 'verify_payment';
+        const hashStr = `${key}|${command}|${orderId}|${salt}`;
+        const hash = crypto.createHash('sha512').update(hashStr).digest('hex');
+
+        const params = new URLSearchParams({
+          key,
+          command,
+          var1: orderId,
+          hash,
+        });
+
+        const postServiceUrl = this.getPayuPostServiceUrl();
+        const response = await fetch(postServiceUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString(),
         });
 
         if (response.ok) {
-          const cfOrder = await response.json();
+          const data = await response.json();
+          const txnDetails = data?.transaction_details?.[orderId];
 
-          if (cfOrder.order_status === 'PAID') {
-            this.logger.log(
-              `Direct Cashfree check confirmed PAID for order: ${orderId}`,
-            );
+          if (txnDetails && txnDetails.status?.toLowerCase() === 'success') {
+            this.logger.log(`PayU verify_payment confirmed SUCCESS for ${orderId}`);
 
-            // Fetch payment details to grab bank UTR if available
-            let utr = '';
-            let paymentGroup = 'UPI';
-            let cfPaymentId = '';
-
-            try {
-              const paymentsRes = await fetch(
-                `${baseUrl}/orders/${orderId}/payments`,
-                {
-                  method: 'GET',
-                  headers: {
-                    'x-client-id': appId,
-                    'x-client-secret': secretKey,
-                    'x-api-version': this.getApiVersion(),
-                  },
-                },
-              );
-              if (paymentsRes.ok) {
-                const payments = await paymentsRes.json();
-                const successPayment = Array.isArray(payments)
-                  ? payments.find((p) => p.payment_status === 'SUCCESS')
-                  : null;
-                if (successPayment) {
-                  cfPaymentId = String(successPayment.cf_payment_id || '');
-                  utr =
-                    successPayment.bank_reference ||
-                    successPayment.payment_utr ||
-                    cfPaymentId;
-                  paymentGroup =
-                    successPayment.payment_group ||
-                    (successPayment.payment_method?.upi ? 'UPI' : 'CASHFREE');
-                }
-              }
-            } catch (pErr) {
-              this.logger.warn('Could not fetch Cashfree payments list:', pErr);
-            }
+            const mihpayid = txnDetails.mihpayid || '';
+            const bankRefNum = txnDetails.bank_ref_num || mihpayid;
+            const mode = txnDetails.mode || 'PAYU';
 
             payment = await this.paymentModel.findOneAndUpdate(
               { orderId },
               {
                 status: SingAlongPaymentStatus.SUCCESS,
-                cfPaymentId,
-                utr,
-                paymentMethod: paymentGroup,
+                cfPaymentId: mihpayid,
+                utr: bankRefNum,
+                paymentMethod: `PAYU (${mode})`,
               },
               { new: true },
             );
@@ -530,9 +433,9 @@ export class SingPaymentService {
               payment ? { bookingId: payment.bookingId } : { orderId },
               {
                 status: SingAlongBookingStatus.CONFIRMED,
-                utr,
-                paymentMethod: `CASHFREE (${paymentGroup.toUpperCase()})`,
-                notes: `Confirmed via direct status check (UTR: ${utr})`,
+                utr: bankRefNum,
+                paymentMethod: `PAYU (${mode})`,
+                notes: `Confirmed via PayU Real-Time Check (Ref: ${bankRefNum})`,
               },
               { new: true },
             );
@@ -557,24 +460,10 @@ export class SingPaymentService {
                   : '',
               },
             };
-          } else if (cfOrder.order_status === 'EXPIRED') {
-            await this.paymentModel.findOneAndUpdate(
-              { orderId },
-              { status: SingAlongPaymentStatus.CANCELLED },
-            );
-            return {
-              success: true,
-              isPaid: false,
-              status: 'EXPIRED',
-              orderId,
-            };
           }
         }
-      } catch (checkErr) {
-        this.logger.warn(
-          `Cashfree status check failed for ${orderId}:`,
-          checkErr,
-        );
+      } catch (err) {
+        this.logger.warn(`PayU verify_payment check failed for ${orderId}:`, err);
       }
     }
 
@@ -587,9 +476,8 @@ export class SingPaymentService {
   }
 
   // =========================================================================
-  // 5. SUBMIT MANUAL UPI UTR / TRANSACTION ID
+  // 4. SUBMIT MANUAL UPI UTR / TRANSACTION ID (From Image 1: GPay QR)
   // Target: POST /api/v1/sing-payment/submit-utr
-  // Used when user scans GPay QR and enters 12-digit UTR manually
   // =========================================================================
   async submitUtr(dto: SubmitSingUtrDto) {
     const utr = (dto.utr || '').trim();
@@ -661,8 +549,11 @@ export class SingPaymentService {
     }
 
     const ticketQty = Math.max(1, Math.min(10, Number(dto.ticketQty) || 1));
-    const unitPrice = 199;
-    const totalAmount = ticketQty * unitPrice;
+    const totalAmount =
+      dto.amount && Number(dto.amount) > 0
+        ? Number(dto.amount)
+        : ticketQty * 254;
+    const unitPrice = Math.round(totalAmount / ticketQty);
     const bookingId = this.generateBookingId();
 
     const booking = await this.bookingModel.create({
@@ -675,7 +566,7 @@ export class SingPaymentService {
       totalAmount,
       utr,
       paymentScreenshot: dto.paymentScreenshot || '',
-      paymentMethod: dto.paymentMethod || 'kumarrk23dev-1@okaxis',
+      paymentMethod: dto.paymentMethod || 'ashokbcasvk45@oksbi',
       status: SingAlongBookingStatus.CONFIRMED,
       eventId: 'SINGALONG-SEP-13-2026',
       attended: false,

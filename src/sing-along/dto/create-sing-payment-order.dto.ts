@@ -59,6 +59,14 @@ export class CreateSingPaymentOrderDto {
   eventId?: string;
 
   @ApiPropertyOptional({
+    example: 254,
+    description: 'Amount in INR (default 254)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  amount?: number;
+
+  @ApiPropertyOptional({
     example: 'Seating preference or notes',
     description: 'Additional notes or remarks',
   })
@@ -134,6 +142,14 @@ export class SubmitSingUtrDto {
   @IsOptional()
   @Type(() => Number)
   ticketQty?: number;
+
+  @ApiPropertyOptional({
+    example: 254,
+    description: 'Amount paid in INR (default 254)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  amount?: number;
 
   @ApiPropertyOptional({
     example: '',

@@ -6,9 +6,11 @@ import {
   Param,
   Post,
   Req,
+  Res,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { SingPaymentService } from './sing-payment.service';
 import {
   CreateSingPaymentOrderDto,
@@ -16,17 +18,20 @@ import {
   VerifySingPaymentDto,
 } from './dto/create-sing-payment-order.dto';
 
-@ApiTags('Sing Along Cashfree Payment')
+@ApiTags('Sing Along PayU Payment')
 @Controller('sing-payment')
 export class SingPaymentController {
-  constructor(private readonly singPaymentService: SingPaymentService) {}
+  constructor(
+    private readonly singPaymentService: SingPaymentService,
+    private readonly configService: ConfigService,
+  ) {}
 
   // =====================================================
-  // 1. CREATE PAYMENT ORDER
+  // 1. CREATE PAYMENT ORDER (Generates PayU Hash & params)
   // =====================================================
   @Post('create-order')
   @ApiOperation({
-    summary: 'Create Cashfree order & payment_session_id for Sing Along',
+    summary: 'Create PayU payment order & hash for Sing Along',
   })
   async createOrder(@Body() dto: CreateSingPaymentOrderDto) {
     const data = await this.singPaymentService.createOrder(dto);
@@ -38,36 +43,55 @@ export class SingPaymentController {
   }
 
   // =====================================================
-  // 2. CASHFREE WEBHOOK LISTENER
-  // Configured in Cashfree Dashboard:
-  // https://wegrow-connect-backend-1.onrender.com/api/v1/sing-payment/webhook
+  // 2. PAYU BROWSER CALLBACK (SURL / FURL Redirect handler)
   // =====================================================
-  @Post('webhook')
+  @Post('payu-callback')
   @ApiOperation({
-    summary: 'Cashfree webhook listener for Sing Along ticket payments',
+    summary: 'PayU SURL/FURL browser callback handler',
   })
-  async handleWebhook(
-    @Body() body: any,
-    @Req() req: Request,
-    @Headers() headers: Record<string, string | undefined>,
-  ) {
-    const rawBody = (req as any).rawBody || body;
-    return this.singPaymentService.handleWebhook(body, rawBody, headers);
+  async handlePayuCallback(@Body() body: any, @Res() res: Response) {
+    const result = await this.singPaymentService.handlePayuCallback(body);
+
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') ||
+      process.env.FRONTEND_URL ||
+      'https://www.wegrowbschool.in';
+
+    if (result.status === 'SUCCESS') {
+      return res.redirect(
+        `${frontendUrl}/sing-along?payment=success&bookingId=${result.bookingId}&txnid=${result.txnid}`,
+      );
+    } else {
+      return res.redirect(
+        `${frontendUrl}/sing-along?payment=failed&txnid=${result.txnid}`,
+      );
+    }
   }
 
   // =====================================================
-  // 3. CHECK ORDER PAYMENT STATUS (Polling from frontend QR / Checkout)
+  // 3. PAYU / GATEWAY WEBHOOK LISTENER
+  // =====================================================
+  @Post('webhook')
+  @ApiOperation({
+    summary: 'Payment Webhook listener for Sing Along ticket payments',
+  })
+  async handleWebhook(@Body() body: any) {
+    return this.singPaymentService.handlePayuCallback(body);
+  }
+
+  // =====================================================
+  // 4. CHECK ORDER PAYMENT STATUS (Real-time polling from frontend)
   // =====================================================
   @Get('status/:orderId')
   @ApiOperation({
-    summary: 'Get payment status of an order by Order ID',
+    summary: 'Get payment status of an order by Order ID in real-time',
   })
   async getStatus(@Param('orderId') orderId: string) {
     return this.singPaymentService.getPaymentStatus(orderId);
   }
 
   // =====================================================
-  // 4. VERIFY PAYMENT (Active verification from frontend)
+  // 5. VERIFY PAYMENT (Active verification from frontend)
   // =====================================================
   @Post('verify')
   @ApiOperation({
@@ -78,7 +102,7 @@ export class SingPaymentController {
   }
 
   // =====================================================
-  // 5. SUBMIT MANUAL UPI TRANSACTION ID / UTR
+  // 6. SUBMIT MANUAL UPI TRANSACTION ID / UTR (From Image 1)
   // =====================================================
   @Post('submit-utr')
   @ApiOperation({
