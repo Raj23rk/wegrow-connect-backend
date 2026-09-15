@@ -3,6 +3,8 @@ import {
   Controller,
   Get,
   Headers,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Req,
@@ -18,7 +20,7 @@ import {
   VerifySingPaymentDto,
 } from './dto/create-sing-payment-order.dto';
 
-@ApiTags('Sing Along PayU Payment')
+@ApiTags('Sing Along Cashfree Payment')
 @Controller('sing-payment')
 export class SingPaymentController {
   constructor(
@@ -27,11 +29,11 @@ export class SingPaymentController {
   ) {}
 
   // =====================================================
-  // 1. CREATE PAYMENT ORDER (Generates PayU Hash & params)
+  // 1. CREATE PAYMENT ORDER (Cashfree Order & payment_session_id)
   // =====================================================
   @Post('create-order')
   @ApiOperation({
-    summary: 'Create PayU payment order & hash for Sing Along',
+    summary: 'Create Cashfree payment order & session ID for Sing Along',
   })
   async createOrder(@Body() dto: CreateSingPaymentOrderDto) {
     const data = await this.singPaymentService.createOrder(dto);
@@ -43,11 +45,48 @@ export class SingPaymentController {
   }
 
   // =====================================================
-  // 2. PAYU BROWSER CALLBACK (SURL / FURL Redirect handler)
+  // 2. CASHFREE WEBHOOK LISTENER
+  // Handles POST /api/v1/sing-payment AND POST /api/v1/sing-payment/webhook
+  // =====================================================
+  @Post()
+  @Post('webhook')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Cashfree Webhook listener for Sing Along ticket payments',
+  })
+  async handleWebhook(
+    @Body() body: any,
+    @Headers('x-webhook-signature') signature?: string,
+    @Headers('x-webhook-timestamp') timestamp?: string,
+    @Req() req?: Request,
+  ) {
+    return this.singPaymentService.handleCashfreeWebhook(
+      body,
+      signature,
+      timestamp,
+      req,
+    );
+  }
+
+  @Get()
+  @Get('webhook')
+  @ApiOperation({
+    summary: 'Health check for Cashfree webhook endpoint',
+  })
+  async webhookHealth() {
+    return {
+      status: 'ok',
+      message: 'Cashfree Webhook listener is active and operational',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // =====================================================
+  // 3. PAYU BROWSER CALLBACK (SURL / FURL Redirect handler - legacy fallback)
   // =====================================================
   @Post('payu-callback')
   @ApiOperation({
-    summary: 'PayU SURL/FURL browser callback handler',
+    summary: 'PayU SURL/FURL browser callback handler (legacy)',
   })
   async handlePayuCallback(@Body() body: any, @Res() res: Response) {
     const result = await this.singPaymentService.handlePayuCallback(body);
@@ -66,17 +105,6 @@ export class SingPaymentController {
         `${frontendUrl}/sing-along?payment=failed&txnid=${result.txnid}`,
       );
     }
-  }
-
-  // =====================================================
-  // 3. PAYU / GATEWAY WEBHOOK LISTENER
-  // =====================================================
-  @Post('webhook')
-  @ApiOperation({
-    summary: 'Payment Webhook listener for Sing Along ticket payments',
-  })
-  async handleWebhook(@Body() body: any) {
-    return this.singPaymentService.handlePayuCallback(body);
   }
 
   // =====================================================
@@ -102,7 +130,7 @@ export class SingPaymentController {
   }
 
   // =====================================================
-  // 6. SUBMIT MANUAL UPI TRANSACTION ID / UTR (From Image 1)
+  // 6. SUBMIT MANUAL UPI TRANSACTION ID / UTR
   // =====================================================
   @Post('submit-utr')
   @ApiOperation({
