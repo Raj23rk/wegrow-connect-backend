@@ -431,11 +431,16 @@ export class SingAlongService {
 
     const stats = statsResult[0] || {};
     const total = stats.total || 0;
-    const totalRevenue = stats.totalRevenue || 0;
+    const totalRevenue = Number(stats.totalRevenue || 0);
     const confirmedCount = stats.confirmedCount || 0;
     const paymentCount = stats.paymentCount || confirmedCount;
     const totalTickets = stats.totalTickets || 0;
     const pendingCount = stats.pendingCount || 0;
+
+    const totalRevenueFormatted = `₹${totalRevenue.toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
     return {
       data,
@@ -444,6 +449,7 @@ export class SingAlongService {
       limit: Number(limit),
       totalPages: Math.ceil(total / limit) || 1,
       totalRevenue,
+      totalRevenueFormatted,
       confirmedCount,
       totalConfirmed: confirmedCount,
       paymentCount,
@@ -452,6 +458,7 @@ export class SingAlongService {
       summary: {
         total,
         totalRevenue,
+        totalRevenueFormatted,
         confirmedCount,
         paymentCount,
         totalTickets,
@@ -485,10 +492,15 @@ export class SingAlongService {
       },
     ]);
 
+    const totalRevenue = Number(statsResult?.totalRevenue || 0);
     const stats = {
       totalBookings: statsResult?.totalBookings || 0,
       totalTickets: statsResult?.totalTickets || 0,
-      totalRevenue: statsResult?.totalRevenue || 0,
+      totalRevenue,
+      totalRevenueFormatted: `₹${totalRevenue.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
       attendedCount: statsResult?.attendedCount || 0,
     };
 
