@@ -173,11 +173,41 @@ export class SingPaymentService {
   }
 
   /**
-   * Generate an 8-character booking ID like SA26-4821
+   * Generate sequential booking ID starting from SA26-001 (e.g. SA26-001, SA26-002, ...)
    */
-  private generateBookingId(): string {
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `SA26-${randomNum}`;
+  private async generateBookingId(): Promise<string> {
+    const recentBookings = await this.bookingModel
+      .find({ bookingId: { $regex: /^SA26-\d+$/i } })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .select('bookingId')
+      .lean();
+
+    let maxNum = 0;
+    for (const b of recentBookings) {
+      const match = b.bookingId?.match(/^SA26-(\d+)$/i);
+      if (match) {
+        const val = parseInt(match[1], 10);
+        if (!isNaN(val) && val > maxNum) {
+          maxNum = val;
+        }
+      }
+    }
+
+    const count = await this.bookingModel.countDocuments();
+    if (count > maxNum) {
+      maxNum = count;
+    }
+
+    let nextNum = maxNum + 1;
+    let candidate = `SA26-${String(nextNum).padStart(3, '0')}`;
+
+    while (await this.bookingModel.exists({ bookingId: candidate })) {
+      nextNum += 1;
+      candidate = `SA26-${String(nextNum).padStart(3, '0')}`;
+    }
+
+    return candidate;
   }
 
   // =========================================================================
@@ -207,7 +237,7 @@ export class SingPaymentService {
     const eventId = (dto.eventId || 'SINGALONG-SEP-13-2026').trim();
 
     // 1. Generate unique booking reference and Order ID
-    const bookingId = this.generateBookingId();
+    const bookingId = await this.generateBookingId();
     const orderId = `order_SA26_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
 
     // 2. Pre-create booking in DB with PENDING_VERIFICATION status
@@ -783,7 +813,7 @@ export class SingPaymentService {
         ? Number(dto.amount)
         : ticketQty * 254;
     const unitPrice = Math.round(totalAmount / ticketQty);
-    const bookingId = this.generateBookingId();
+    const bookingId = await this.generateBookingId();
 
     const booking = await this.bookingModel.create({
       bookingId,
