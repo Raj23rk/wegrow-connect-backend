@@ -69,9 +69,13 @@ export const SingAlongBookingSchema =
   SchemaFactory.createForClass(SingAlongBooking);
 
 SingAlongBookingSchema.index({ bookingId: 1 }, { unique: true });
+SingAlongBookingSchema.index({ bookingId: 1, isActive: 1 });
+SingAlongBookingSchema.index({ orderId: 1, isActive: 1 });
 SingAlongBookingSchema.index({ phone: 1 });
-SingAlongBookingSchema.index({ eventId: 1 });
+SingAlongBookingSchema.index({ eventId: 1, isActive: 1 });
 SingAlongBookingSchema.index({ status: 1 });
 SingAlongBookingSchema.index({ utr: 1 });
 SingAlongBookingSchema.index({ orderId: 1 });
-SingAlongBookingSchema.index({ createdAt: -1 });
+SingAlongBookingSchema.index({ isActive: 1, createdAt: -1 });
+SingAlongBookingSchema.index({ isActive: 1, attended: 1 });
+

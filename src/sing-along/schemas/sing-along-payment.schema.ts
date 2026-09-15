@@ -71,8 +71,11 @@ export class SingAlongPayment {
 export const SingAlongPaymentSchema =
   SchemaFactory.createForClass(SingAlongPayment);
 
+SingAlongPaymentSchema.index({ orderId: 1 }, { unique: true });
+SingAlongPaymentSchema.index({ orderId: 1, status: 1 });
 SingAlongPaymentSchema.index({ cfOrderId: 1 });
 SingAlongPaymentSchema.index({ bookingId: 1 });
 SingAlongPaymentSchema.index({ status: 1 });
 SingAlongPaymentSchema.index({ 'customer.phone': 1 });
 SingAlongPaymentSchema.index({ createdAt: -1 });
+

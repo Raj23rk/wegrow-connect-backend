@@ -8,6 +8,10 @@ import {
   SingAlongPayment,
   SingAlongPaymentSchema,
 } from './schemas/sing-along-payment.schema';
+import {
+  SingAlongCounter,
+  SingAlongCounterSchema,
+} from './schemas/sing-along-counter.schema';
 import { SingAlongController } from './sing-along.controller';
 import { SingAlongService } from './sing-along.service';
 import { SingPaymentController } from './sing-payment.controller';
@@ -18,6 +22,7 @@ import { SingPaymentService } from './sing-payment.service';
     MongooseModule.forFeature([
       { name: SingAlongBooking.name, schema: SingAlongBookingSchema },
       { name: SingAlongPayment.name, schema: SingAlongPaymentSchema },
+      { name: SingAlongCounter.name, schema: SingAlongCounterSchema },
     ]),
   ],
   controllers: [SingAlongController, SingPaymentController],

@@ -23,10 +23,17 @@ import {
   CreateSingPaymentOrderDto,
   SubmitSingUtrDto,
 } from './dto/create-sing-payment-order.dto';
+import { SingAlongService } from './sing-along.service';
 
 @Injectable()
 export class SingPaymentService {
   private readonly logger = new Logger(SingPaymentService.name);
+
+  // Short-term in-memory cache for polling getPaymentStatus to protect DB & Gateway
+  private statusPollingCache = new Map<
+    string,
+    { data: any; expiresAt: number }
+  >();
 
   constructor(
     @InjectModel(SingAlongPayment.name)
@@ -34,6 +41,7 @@ export class SingPaymentService {
     @InjectModel(SingAlongBooking.name)
     private readonly bookingModel: Model<SingAlongBookingDocument>,
     private readonly configService: ConfigService,
+    private readonly singAlongService: SingAlongService,
   ) {}
 
   // =========================================================================
@@ -172,44 +180,6 @@ export class SingPaymentService {
     return calculatedHash.toLowerCase() === (body.hash || '').toLowerCase();
   }
 
-  /**
-   * Generate sequential booking ID starting from SA26-001 (e.g. SA26-001, SA26-002, ...)
-   */
-  private async generateBookingId(): Promise<string> {
-    const recentBookings = await this.bookingModel
-      .find({ bookingId: { $regex: /^SA26-\d+$/i } })
-      .sort({ createdAt: -1 })
-      .limit(100)
-      .select('bookingId')
-      .lean();
-
-    let maxNum = 0;
-    for (const b of recentBookings) {
-      const match = b.bookingId?.match(/^SA26-(\d+)$/i);
-      if (match) {
-        const val = parseInt(match[1], 10);
-        if (!isNaN(val) && val > maxNum) {
-          maxNum = val;
-        }
-      }
-    }
-
-    const count = await this.bookingModel.countDocuments();
-    if (count > maxNum) {
-      maxNum = count;
-    }
-
-    let nextNum = maxNum + 1;
-    let candidate = `SA26-${String(nextNum).padStart(3, '0')}`;
-
-    while (await this.bookingModel.exists({ bookingId: candidate })) {
-      nextNum += 1;
-      candidate = `SA26-${String(nextNum).padStart(3, '0')}`;
-    }
-
-    return candidate;
-  }
-
   // =========================================================================
   // 1. CREATE PAYMENT ORDER (Cashfree PG Order API)
   // Frontend receives paymentSessionId and opens Cashfree Checkout SDK
@@ -236,12 +206,12 @@ export class SingPaymentService {
     const email = dto.email ? dto.email.toLowerCase().trim() : 'guest@wegrowbschool.in';
     const eventId = (dto.eventId || 'SINGALONG-SEP-13-2026').trim();
 
-    // 1. Generate unique booking reference and Order ID
-    const bookingId = await this.generateBookingId();
+    // 1. High-speed atomic booking ID generation
+    const bookingId = await this.singAlongService.generateBookingId();
     const orderId = `order_SA26_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
 
     // 2. Pre-create booking in DB with PENDING_VERIFICATION status
-    await this.bookingModel.create({
+    const bookingPromise = this.bookingModel.create({
       bookingId,
       fullName,
       phone,
@@ -267,7 +237,7 @@ export class SingPaymentService {
     const returnUrl = `${frontendUrl}/sing-along?order_id={order_id}`;
     const notifyUrl = 'https://wegrow-connect-backend-1.onrender.com/api/v1/sing-payment/webhook';
 
-    // 4. Create Order on Cashfree
+    // 4. Create Order on Cashfree with timeout signal
     const appId = this.getCashfreeAppId();
     const secretKey = this.getCashfreeSecretKey();
     const apiVersion = this.getCashfreeApiVersion();
@@ -300,6 +270,7 @@ export class SingPaymentService {
           },
           order_note: `Sing Along ${ticketQty} Pass (${bookingId})`,
         }),
+        signal: AbortSignal.timeout(8000), // 8s timeout to prevent hanging connections
       });
 
       if (!response.ok) {
@@ -319,23 +290,26 @@ export class SingPaymentService {
       );
     }
 
-    // 5. Save payment record in DB
-    await this.paymentModel.create({
-      orderId,
-      cfOrderId: cfOrder?.cf_order_id ? String(cfOrder.cf_order_id) : '',
-      paymentSessionId: cfOrder?.payment_session_id || '',
-      bookingId,
-      amount: totalAmount,
-      currency: 'INR',
-      status: SingAlongPaymentStatus.PENDING,
-      customer: { name: fullName, phone, email },
-      metadata: {
-        eventId,
-        ticketQty,
-        cfOrderId: cfOrder?.cf_order_id,
-        paymentSessionId: cfOrder?.payment_session_id,
-      },
-    });
+    // 5. Ensure booking is created and save payment record in DB
+    await Promise.all([
+      bookingPromise,
+      this.paymentModel.create({
+        orderId,
+        cfOrderId: cfOrder?.cf_order_id ? String(cfOrder.cf_order_id) : '',
+        paymentSessionId: cfOrder?.payment_session_id || '',
+        bookingId,
+        amount: totalAmount,
+        currency: 'INR',
+        status: SingAlongPaymentStatus.PENDING,
+        customer: { name: fullName, phone, email },
+        metadata: {
+          eventId,
+          ticketQty,
+          cfOrderId: cfOrder?.cf_order_id,
+          paymentSessionId: cfOrder?.payment_session_id,
+        },
+      }),
+    ]);
 
     const isProd = this.getCashfreeEnv() === 'PROD';
 
@@ -357,6 +331,7 @@ export class SingPaymentService {
   // =========================================================================
   // 2. CASHFREE WEBHOOK HANDLER
   // Handles POST /api/v1/sing-payment AND POST /api/v1/sing-payment/webhook
+  // Parallelized database updates for minimum latency
   // =========================================================================
   async handleCashfreeWebhook(
     body: Record<string, any>,
@@ -420,35 +395,38 @@ export class SingPaymentService {
       return { status: 'IGNORED', message: 'No order_id in webhook payload' };
     }
 
+    // Invalidate polling cache for this order
+    this.statusPollingCache.delete(orderId);
+
     if (
       eventType === 'PAYMENT_SUCCESS_WEBHOOK' ||
       paymentStatus.toUpperCase() === 'SUCCESS'
     ) {
       this.logger.log(`Cashfree Payment SUCCESS for order: ${orderId}`);
 
-      // 1. Update Payment record
-      await this.paymentModel.findOneAndUpdate(
-        { orderId },
-        {
-          status: SingAlongPaymentStatus.SUCCESS,
-          cfPaymentId: String(cfPaymentId || ''),
-          utr: String(bankRef || ''),
-          paymentMethod: `CASHFREE (${paymentGroup})`,
-          webhookPayload: body,
-        },
-      );
-
-      // 2. Update Booking record
-      const booking = await this.bookingModel.findOneAndUpdate(
-        { orderId },
-        {
-          status: SingAlongBookingStatus.CONFIRMED,
-          utr: String(bankRef || ''),
-          paymentMethod: `CASHFREE (${paymentGroup})`,
-          notes: `Confirmed via Cashfree Webhook (CF Payment ID: ${cfPaymentId}, Ref: ${bankRef})`,
-        },
-        { new: true },
-      );
+      // Parallelize payment and booking updates
+      const [, booking] = await Promise.all([
+        this.paymentModel.findOneAndUpdate(
+          { orderId },
+          {
+            status: SingAlongPaymentStatus.SUCCESS,
+            cfPaymentId: String(cfPaymentId || ''),
+            utr: String(bankRef || ''),
+            paymentMethod: `CASHFREE (${paymentGroup})`,
+            webhookPayload: body,
+          },
+        ),
+        this.bookingModel.findOneAndUpdate(
+          { orderId },
+          {
+            status: SingAlongBookingStatus.CONFIRMED,
+            utr: String(bankRef || ''),
+            paymentMethod: `CASHFREE (${paymentGroup})`,
+            notes: `Confirmed via Cashfree Webhook (CF Payment ID: ${cfPaymentId}, Ref: ${bankRef})`,
+          },
+          { new: true },
+        ).lean(),
+      ]);
 
       return {
         status: 'SUCCESS',
@@ -513,6 +491,8 @@ export class SingPaymentService {
       return { status: 'IGNORED', message: 'No txnid provided' };
     }
 
+    this.statusPollingCache.delete(txnid);
+
     const isHashValid = this.verifyPayuResponseHash(body);
     if (!isHashValid) {
       this.logger.warn(`Invalid PayU hash for txnid: ${txnid}`);
@@ -521,31 +501,31 @@ export class SingPaymentService {
     if (status.toLowerCase() === 'success') {
       this.logger.log(`PayU Payment SUCCESS for txnid: ${txnid}`);
 
-      // 1. Update Payment status to SUCCESS
-      await this.paymentModel.findOneAndUpdate(
-        { orderId: txnid },
-        {
-          status: SingAlongPaymentStatus.SUCCESS,
-          cfPaymentId: mihpayid,
-          utr: bankRefNum,
-          paymentMethod: `PAYU (${mode})`,
-          webhookPayload: body,
-        },
-      );
-
-      // 2. Update Booking status to CONFIRMED
       const bookingQuery = bookingId ? { bookingId } : { orderId: txnid };
 
-      const booking = await this.bookingModel.findOneAndUpdate(
-        bookingQuery,
-        {
-          status: SingAlongBookingStatus.CONFIRMED,
-          utr: bankRefNum,
-          paymentMethod: `PAYU (${mode})`,
-          notes: `Confirmed via PayU (PayU ID: ${mihpayid}, Ref: ${bankRefNum})`,
-        },
-        { new: true },
-      );
+      // Parallel updates
+      const [, booking] = await Promise.all([
+        this.paymentModel.findOneAndUpdate(
+          { orderId: txnid },
+          {
+            status: SingAlongPaymentStatus.SUCCESS,
+            cfPaymentId: mihpayid,
+            utr: bankRefNum,
+            paymentMethod: `PAYU (${mode})`,
+            webhookPayload: body,
+          },
+        ),
+        this.bookingModel.findOneAndUpdate(
+          bookingQuery,
+          {
+            status: SingAlongBookingStatus.CONFIRMED,
+            utr: bankRefNum,
+            paymentMethod: `PAYU (${mode})`,
+            notes: `Confirmed via PayU (PayU ID: ${mihpayid}, Ref: ${bankRefNum})`,
+          },
+          { new: true },
+        ).lean(),
+      ]);
 
       return {
         status: 'SUCCESS',
@@ -579,28 +559,41 @@ export class SingPaymentService {
   // 4. CHECK PAYMENT STATUS / REAL-TIME VERIFY
   // Target: GET /api/v1/sing-payment/status/:orderId
   // Target: POST /api/v1/sing-payment/verify
+  // Parallel lean lookups + short-term polling cache (sub-5ms when checked)
   // =========================================================================
   async getPaymentStatus(orderId: string) {
     if (!orderId) {
       throw new BadRequestException('Order ID / Transaction ID is required');
     }
 
-    // 1. Check local Payment & Booking records
-    let payment = await this.paymentModel.findOne({ orderId });
-    let booking = payment
-      ? await this.bookingModel.findOne({ bookingId: payment.bookingId })
-      : await this.bookingModel.findOne({ orderId });
+    const now = Date.now();
+    const cached = this.statusPollingCache.get(orderId);
+    if (cached && cached.expiresAt > now) {
+      return cached.data;
+    }
+
+    // 1. Parallel lean lookups in MongoDB
+    let [payment, booking] = await Promise.all([
+      this.paymentModel.findOne({ orderId }).lean(),
+      this.bookingModel.findOne({ orderId }).lean(),
+    ]);
+
+    if (!booking && payment?.bookingId) {
+      booking = await this.bookingModel
+        .findOne({ bookingId: payment.bookingId })
+        .lean();
+    }
 
     if (!payment && !booking) {
       throw new NotFoundException(`Order with ID "${orderId}" not found`);
     }
 
-    // 2. If already marked SUCCESS, return confirmed result immediately
+    // 2. If already marked SUCCESS, cache & return confirmed result immediately
     if (
       payment?.status === SingAlongPaymentStatus.SUCCESS ||
       booking?.status === SingAlongBookingStatus.CONFIRMED
     ) {
-      return {
+      const successResult = {
         success: true,
         isPaid: true,
         status: 'SUCCESS',
@@ -620,6 +613,11 @@ export class SingPaymentService {
             : '',
         },
       };
+      this.statusPollingCache.set(orderId, {
+        data: successResult,
+        expiresAt: now + 60000, // Cache final success for 60s
+      });
+      return successResult;
     }
 
     // 3. Query Cashfree Orders API for real-time payment status
@@ -636,6 +634,7 @@ export class SingPaymentService {
             'x-client-secret': secretKey,
             'x-api-version': apiVersion,
           },
+          signal: AbortSignal.timeout(6000), // 6s timeout
         });
 
         if (cfOrderRes.ok) {
@@ -654,6 +653,7 @@ export class SingPaymentService {
                   'x-client-secret': secretKey,
                   'x-api-version': apiVersion,
                 },
+                signal: AbortSignal.timeout(5000),
               });
               if (cfPayRes.ok) {
                 const payments = await cfPayRes.json();
@@ -670,50 +670,56 @@ export class SingPaymentService {
               this.logger.warn(`Failed to fetch payments for order ${orderId}`, pErr);
             }
 
-            // Update Payment in MongoDB
-            payment = await this.paymentModel.findOneAndUpdate(
-              { orderId },
-              {
-                status: SingAlongPaymentStatus.SUCCESS,
-                cfPaymentId,
-                utr: bankRef,
-                paymentMethod: `CASHFREE (${paymentGroup})`,
-              },
-              { new: true },
-            );
+            // Parallel updates to Payment and Booking
+            const [, updatedBooking] = await Promise.all([
+              this.paymentModel.findOneAndUpdate(
+                { orderId },
+                {
+                  status: SingAlongPaymentStatus.SUCCESS,
+                  cfPaymentId,
+                  utr: bankRef,
+                  paymentMethod: `CASHFREE (${paymentGroup})`,
+                },
+                { new: true },
+              ).lean(),
+              this.bookingModel.findOneAndUpdate(
+                payment ? { bookingId: payment.bookingId } : { orderId },
+                {
+                  status: SingAlongBookingStatus.CONFIRMED,
+                  utr: bankRef,
+                  paymentMethod: `CASHFREE (${paymentGroup})`,
+                  notes: `Confirmed via Cashfree Real-Time Status Check (CF Payment ID: ${cfPaymentId}, Ref: ${bankRef})`,
+                },
+                { new: true },
+              ).lean(),
+            ]);
 
-            // Update Booking in MongoDB
-            booking = await this.bookingModel.findOneAndUpdate(
-              payment ? { bookingId: payment.bookingId } : { orderId },
-              {
-                status: SingAlongBookingStatus.CONFIRMED,
-                utr: bankRef,
-                paymentMethod: `CASHFREE (${paymentGroup})`,
-                notes: `Confirmed via Cashfree Real-Time Status Check (CF Payment ID: ${cfPaymentId}, Ref: ${bankRef})`,
-              },
-              { new: true },
-            );
-
-            return {
+            const confirmedResult = {
               success: true,
               isPaid: true,
               status: 'SUCCESS',
               orderId,
               booking: {
-                id: booking?._id,
-                bookingId: booking?.bookingId,
-                fullName: booking?.fullName,
-                phone: booking?.phone,
-                email: booking?.email,
-                ticketQty: booking?.ticketQty,
-                totalAmount: booking?.totalAmount,
-                status: booking?.status,
-                utr: booking?.utr,
-                verificationToken: booking
-                  ? `SINGALONG-VERIFY:${booking.bookingId}`
+                id: updatedBooking?._id,
+                bookingId: updatedBooking?.bookingId,
+                fullName: updatedBooking?.fullName,
+                phone: updatedBooking?.phone,
+                email: updatedBooking?.email,
+                ticketQty: updatedBooking?.ticketQty,
+                totalAmount: updatedBooking?.totalAmount,
+                status: updatedBooking?.status,
+                utr: updatedBooking?.utr,
+                verificationToken: updatedBooking
+                  ? `SINGALONG-VERIFY:${updatedBooking.bookingId}`
                   : '',
               },
             };
+
+            this.statusPollingCache.set(orderId, {
+              data: confirmedResult,
+              expiresAt: now + 60000,
+            });
+            return confirmedResult;
           } else if (cfOrder?.order_status === 'EXPIRED') {
             await this.paymentModel.findOneAndUpdate(
               { orderId },
@@ -726,17 +732,26 @@ export class SingPaymentService {
       }
     }
 
-    return {
+    const pendingResult = {
       success: true,
       isPaid: false,
       status: payment?.status || 'PENDING',
       orderId,
     };
+
+    // Cache pending response for 2 seconds to absorb burst polling from frontend
+    this.statusPollingCache.set(orderId, {
+      data: pendingResult,
+      expiresAt: now + 2000,
+    });
+
+    return pendingResult;
   }
 
   // =========================================================================
-  // 4. SUBMIT MANUAL UPI UTR / TRANSACTION ID (From Image 1: GPay QR)
+  // 5. SUBMIT MANUAL UPI UTR / TRANSACTION ID
   // Target: POST /api/v1/sing-payment/submit-utr
+  // Parallel updates & atomic ID creation
   // =========================================================================
   async submitUtr(dto: SubmitSingUtrDto) {
     const utr = (dto.utr || '').trim();
@@ -746,58 +761,57 @@ export class SingPaymentService {
       );
     }
 
-    // 1. If existing orderId or bookingId is passed, update that record
+    // 1. If existing orderId or bookingId is passed, update in parallel
     if (dto.orderId || dto.bookingId) {
       const query = dto.orderId
         ? { orderId: dto.orderId }
         : { bookingId: dto.bookingId };
 
-      let booking = await this.bookingModel.findOne(query);
-
-      if (booking) {
-        booking = await this.bookingModel.findOneAndUpdate(
-          { _id: booking._id },
+      const [booking] = await Promise.all([
+        this.bookingModel.findOneAndUpdate(
+          query,
           {
             utr,
-            paymentScreenshot: dto.paymentScreenshot || booking.paymentScreenshot,
+            paymentScreenshot: dto.paymentScreenshot || '',
             paymentMethod: dto.paymentMethod || 'Scan GPay QR (Manual UTR)',
             status: SingAlongBookingStatus.CONFIRMED,
             notes: `Manual UPI UTR submitted: ${utr}`,
           },
           { new: true },
-        );
+        ).lean(),
+        dto.orderId
+          ? this.paymentModel.findOneAndUpdate(
+              { orderId: dto.orderId },
+              {
+                utr,
+                status: SingAlongPaymentStatus.SUCCESS,
+                paymentMethod: 'UPI_MANUAL_QR',
+              },
+            ).lean()
+          : Promise.resolve(null),
+      ]);
 
-        if (dto.orderId) {
-          await this.paymentModel.findOneAndUpdate(
-            { orderId: dto.orderId },
-            {
-              utr,
-              status: SingAlongPaymentStatus.SUCCESS,
-              paymentMethod: 'UPI_MANUAL_QR',
-            },
-          );
-        }
-
+      if (booking) {
         return {
           success: true,
           message: 'UPI Transaction ID / UTR submitted successfully',
           booking: {
-            id: booking?._id,
-            bookingId: booking?.bookingId,
-            fullName: booking?.fullName,
-            phone: booking?.phone,
-            email: booking?.email,
-            ticketQty: booking?.ticketQty,
-            totalAmount: booking?.totalAmount,
-            status: booking?.status,
-            utr: booking?.utr,
-            verificationToken: `SINGALONG-VERIFY:${booking?.bookingId}`,
+            id: booking._id,
+            bookingId: booking.bookingId,
+            fullName: booking.fullName,
+            phone: booking.phone,
+            email: booking.email,
+            ticketQty: booking.ticketQty,
+            totalAmount: booking.totalAmount,
+            status: booking.status,
+            utr: booking.utr,
+            verificationToken: `SINGALONG-VERIFY:${booking.bookingId}`,
           },
         };
       }
     }
 
-    // 2. Otherwise create fresh booking with UTR
+    // 2. Otherwise create fresh booking with UTR using atomic sequential ID
     const fullName = (dto.fullName || '').trim();
     const phone = (dto.phone || '').trim();
 
@@ -813,7 +827,7 @@ export class SingPaymentService {
         ? Number(dto.amount)
         : ticketQty * 254;
     const unitPrice = Math.round(totalAmount / ticketQty);
-    const bookingId = await this.generateBookingId();
+    const bookingId = await this.singAlongService.generateBookingId();
 
     const booking = await this.bookingModel.create({
       bookingId,
