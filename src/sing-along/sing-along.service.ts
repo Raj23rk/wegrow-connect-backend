@@ -353,14 +353,13 @@ export class SingAlongService {
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      padding: ${forExport ? '0' : '20px 10px'};
+      padding: ${forExport ? '0' : '20px 10px 40px 10px'};
       background: ${forExport ? '#ffffff' : '#f4f4f5'};
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       color: #1c1917;
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
     }
     
     /* TOP ACTION BAR (PDF / IMAGE / PRINT) */
@@ -587,11 +586,11 @@ export class SingAlongService {
       ? ''
       : `<!-- TOP ACTION BAR -->
   <div class="action-bar no-print">
-    <button id="btn-pdf" class="action-btn btn-pdf" onclick="downloadTicket('pdf')">
-      📥 Download PDF Ticket
+    <button id="btn-pdf" class="action-btn btn-pdf" onclick="savePdf()">
+      📥 Save as PDF
     </button>
-    <button id="btn-img" class="action-btn btn-img" onclick="downloadTicket('image')">
-      🖼️ Download Image (PNG)
+    <button id="btn-img" class="action-btn btn-img" onclick="saveImage()">
+      🖼️ Save Image (PNG)
     </button>
     <button class="action-btn btn-print" onclick="window.print()">
       🖨️ Print Ticket
@@ -679,53 +678,46 @@ export class SingAlongService {
     forExport
       ? ''
       : `<script>
-    async function downloadTicket(type) {
-      const isPdf = type === 'pdf';
-      const btn = document.getElementById(isPdf ? 'btn-pdf' : 'btn-img');
-      const origText = btn.innerHTML;
+    function savePdf() {
+      const btn = document.getElementById('btn-pdf');
       btn.disabled = true;
-      btn.innerHTML = isPdf ? '⏳ Preparing PDF...' : '⏳ Preparing Image...';
-      
-      const downloadPath = '/api/v1/sing-along/ticket/${booking.bookingId}/' + (isPdf ? 'pdf' : 'image');
-      const fileName = 'SingAlong_Ticket_${booking.bookingId}.' + (isPdf ? 'pdf' : 'png');
-
-      try {
-        const res = await fetch(downloadPath);
-        if (!res.ok) throw new Error('Download failed: ' + res.statusText);
-        const blob = await res.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(blobUrl);
-        btn.innerHTML = isPdf ? '✅ PDF Downloaded' : '✅ Image Downloaded';
-      } catch (err) {
-        console.warn('Direct fetch failed, falling back to native print/navigation...', err);
-        if (isPdf) {
-          btn.innerHTML = '🖨️ Opening Print / Save as PDF...';
-          window.print();
-        } else {
-          window.location.href = downloadPath;
-        }
-      } finally {
+      btn.innerHTML = '⏳ Opening Print Dialog...';
+      // Use browser native Print → Save as PDF (works on all devices incl. mobile)
+      setTimeout(() => {
+        window.print();
         setTimeout(() => {
-          btn.innerHTML = origText;
+          btn.innerHTML = '📥 Save as PDF';
           btn.disabled = false;
-        }, 3000);
-      }
+        }, 2000);
+      }, 150);
     }
 
-    // Auto-trigger direct PDF or Image download if query param is set
+    function saveImage() {
+      const btn = document.getElementById('btn-img');
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Opening Image...';
+      // Open the backend-native PNG endpoint in a new tab — user can long-press / right-click → Save
+      const imgUrl = '/api/v1/sing-along/ticket/${booking.bookingId}/qr.png';
+      // On mobile: open full ticket page as image via server-rendered PNG (if available)
+      // Fallback: show instructions
+      const win = window.open(imgUrl, '_blank');
+      if (!win) {
+        alert('Please allow pop-ups or right-click → Save Image to save your ticket QR.');
+      }
+      setTimeout(() => {
+        btn.innerHTML = '🖼️ Save Image (PNG)';
+        btn.disabled = false;
+      }, 1500);
+    }
+
+    // Auto-trigger save if query param is set (e.g., from email link ?download=pdf)
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
       const dl = (params.get('download') || params.get('format') || '').toLowerCase();
       if (dl === 'pdf') {
-        setTimeout(() => downloadTicket('pdf'), 300);
+        setTimeout(() => savePdf(), 500);
       } else if (dl === 'img' || dl === 'image' || dl === 'png') {
-        setTimeout(() => downloadTicket('image'), 300);
+        setTimeout(() => saveImage(), 500);
       }
     });
   </script>`

@@ -3819,10 +3819,10 @@ export class NotificationsService {
         <!-- DOWNLOAD DIGITAL TICKET OPTION -->
         <div class="download-btn-wrap">
           <a href="${ticketDownloadUrl}" target="_blank" class="download-btn">
-            📥 DOWNLOAD TICKET PASS (PDF / IMAGE)
+            📥 VIEW &amp; DOWNLOAD TICKET PASS
           </a>
           <div style="font-size: 12px; color: #78716c; margin-top: 8px;">
-            Click to view and instantly save your official ticket pass as PDF or Image
+            Click to open your ticket → tap “Save as PDF” or “Print Ticket” to save it
           </div>
         </div>
 
