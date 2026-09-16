@@ -147,26 +147,8 @@ export class SingAlongController {
   @ApiOperation({ summary: 'View and download official printable Sing Along ticket pass' })
   async getTicketPage(
     @Param('id') id: string,
-    @Query('download') download: string,
-    @Query('format') format: string,
     @Res() res: Response,
   ) {
-    const mode = (download || format || '').toLowerCase();
-    if (mode === 'pdf') {
-      try {
-        return await this.downloadTicketPdf(id, res);
-      } catch (err: any) {
-        // Fallback gracefully to HTML ticket page with printable styling
-      }
-    }
-    if (mode === 'image' || mode === 'img' || mode === 'png') {
-      try {
-        return await this.downloadTicketImage(id, res);
-      } catch (err: any) {
-        // Fallback gracefully to HTML ticket page
-      }
-    }
-
     const html = await this.singAlongService.getTicketHtml(id);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.send(html);
@@ -176,14 +158,19 @@ export class SingAlongController {
   @ApiOperation({ summary: 'Download Sing Along ticket as official PDF attachment' })
   async downloadTicketPdf(@Param('id') id: string, @Res() res: Response) {
     const cleanId = (id || '').replace(/^SINGALONG-VERIFY:/i, '').trim().toUpperCase();
-    const pdfBuffer = await this.singAlongService.getTicketPdf(id);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="SingAlong_Ticket_${cleanId}.pdf"`,
-    );
-    res.setHeader('Content-Length', pdfBuffer.length);
-    return res.end(pdfBuffer);
+    try {
+      const pdfBuffer = await this.singAlongService.getTicketPdf(id);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="SingAlong_Ticket_${cleanId}.pdf"`,
+      );
+      res.setHeader('Content-Length', pdfBuffer.length);
+      return res.end(pdfBuffer);
+    } catch (err: any) {
+      // If headless Chrome is not installed in the host container, fallback to the printable ticket pass
+      return res.redirect(`/api/v1/sing-along/ticket/${cleanId}`);
+    }
   }
 
   @Get('ticket/:id/image')
@@ -191,14 +178,18 @@ export class SingAlongController {
   @ApiOperation({ summary: 'Download Sing Along ticket as high-resolution PNG image attachment' })
   async downloadTicketImage(@Param('id') id: string, @Res() res: Response) {
     const cleanId = (id || '').replace(/^SINGALONG-VERIFY:/i, '').trim().toUpperCase();
-    const imgBuffer = await this.singAlongService.getTicketImage(id);
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="SingAlong_Ticket_${cleanId}.png"`,
-    );
-    res.setHeader('Content-Length', imgBuffer.length);
-    return res.end(imgBuffer);
+    try {
+      const imgBuffer = await this.singAlongService.getTicketImage(id);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="SingAlong_Ticket_${cleanId}.png"`,
+      );
+      res.setHeader('Content-Length', imgBuffer.length);
+      return res.end(imgBuffer);
+    } catch (err: any) {
+      return res.redirect(`/api/v1/sing-along/ticket/${cleanId}`);
+    }
   }
 
   @Get('ticket/:id/qr.png')
