@@ -23,7 +23,6 @@ import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
 import { WomenEntrepreneursModule } from './women-entrepreneurs/women-entrepreneurs.module';
 import { StudentFoundersModule } from './student-founders/student-founders.module';
 import { BusinessFoundersModule } from './business-founders/business-founders.module';
-import { ArtCompetitionModule } from './art-competition/art-competition.module';
 import { SingAlongModule } from './sing-along/sing-along.module';
 import { PaymentsModule } from './payments/payments.module';
 
@@ -99,8 +98,6 @@ import { PaymentsModule } from './payments/payments.module';
     StudentFoundersModule,
 
     BusinessFoundersModule,
-
-    ArtCompetitionModule,
 
     SingAlongModule,
     PaymentsModule,
