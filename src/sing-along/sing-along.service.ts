@@ -1518,6 +1518,8 @@ export class SingAlongService {
         });
 
         const json = await res.json();
+        const payload = json.data || json;
+        const attendee = payload.attendee || {};
 
         resCard.className = '';
         resCard.style.display = 'block';
@@ -1528,9 +1530,11 @@ export class SingAlongService {
           return;
         }
 
-        const attendee = json.attendee || {};
+        const isAlreadyAttended = payload.alreadyAttended === true || payload.status === 'ALREADY_CHECKED_IN' || attendee.attended === true;
+        const isInactive = payload.status === 'INACTIVE_OR_CANCELLED' || payload.isActive === false || attendee.isActive === false;
+        const isFirstCheckIn = (payload.success === true) && !isAlreadyAttended && !isInactive;
 
-        if (json.success && !json.alreadyAttended) {
+        if (isFirstCheckIn) {
           // 1. SUCCESS: FRESH CHECK-IN
           playSound('success');
           checkedInCount++;
@@ -1538,7 +1542,7 @@ export class SingAlongService {
 
           resCard.classList.add('res-success');
           resTitle.innerHTML = '✅ ADMISSION GRANTED';
-          resMsg.innerText = json.message || 'Ticket checked in successfully!';
+          resMsg.innerText = payload.message || 'Ticket checked in successfully!';
           resDetails.innerHTML = 
             '<div class="res-row"><span class="lbl">Attendee:</span><span class="val">' + (attendee.fullName || 'Guest') + '</span></div>' +
             '<div class="res-row"><span class="lbl">Booking ID:</span><span class="val">' + (attendee.bookingId || qrData) + '</span></div>' +
@@ -1546,24 +1550,25 @@ export class SingAlongService {
             '<div class="res-row"><span class="lbl">Amount:</span><span class="val">₹' + (attendee.totalAmount || 199) + '</span></div>' +
             '<div class="res-row"><span class="lbl">Phone:</span><span class="val">' + (attendee.phone || '-') + '</span></div>' +
             '<div class="res-row"><span class="lbl">Gate Time:</span><span class="val">' + new Date().toLocaleTimeString('en-IN') + '</span></div>';
-        } else if (json.alreadyAttended) {
+        } else if (isAlreadyAttended) {
           // 2. WARNING: ALREADY CHECKED IN
           playSound('error');
           resCard.classList.add('res-warning');
           resTitle.innerHTML = '⚠️ ALREADY CHECKED IN';
-          resMsg.innerText = json.message || 'This ticket was already checked in earlier!';
+          resMsg.innerText = payload.message || '⚠️ DO NOT ADMIT AGAIN! This ticket was already checked in earlier.';
           resDetails.innerHTML = 
             '<div class="res-row"><span class="lbl">Attendee:</span><span class="val">' + (attendee.fullName || '-') + '</span></div>' +
             '<div class="res-row"><span class="lbl">Booking ID:</span><span class="val">' + (attendee.bookingId || qrData) + '</span></div>' +
-            '<div class="res-row"><span class="lbl">Check-In Time:</span><span class="val">' + (attendee.attendedAt ? new Date(attendee.attendedAt).toLocaleTimeString('en-IN') : 'Earlier today') + '</span></div>';
+            '<div class="res-row"><span class="lbl">Status:</span><span class="val" style="color:#f59e0b; font-weight:800;">ALREADY ATTENDED</span></div>' +
+            '<div class="res-row"><span class="lbl">Original Check-In:</span><span class="val">' + (attendee.attendedAt ? new Date(attendee.attendedAt).toLocaleTimeString('en-IN') : 'Earlier today') + '</span></div>';
         } else {
           // 3. ERROR: INACTIVE / CANCELLED / NOT FOUND
           playSound('error');
           resCard.classList.add('res-error');
           resTitle.innerHTML = '❌ ADMISSION DENIED';
-          resMsg.innerText = json.message || 'Ticket is inactive or not found!';
+          resMsg.innerText = payload.message || json.message || 'Ticket is inactive or not found!';
           resDetails.innerHTML = 
-            '<div class="res-row"><span class="lbl">Status:</span><span class="val">' + (json.status || 'REJECTED') + '</span></div>' +
+            '<div class="res-row"><span class="lbl">Status:</span><span class="val">' + (payload.status || 'REJECTED') + '</span></div>' +
             '<div class="res-row"><span class="lbl">Reference:</span><span class="val">' + (attendee.bookingId || qrData) + '</span></div>' +
             (attendee.fullName ? '<div class="res-row"><span class="lbl">Attendee:</span><span class="val">' + attendee.fullName + '</span></div>' : '');
         }
