@@ -793,6 +793,39 @@ export class SingAlongService {
   }
 
   // =========================================================================
+  // GENERATE PURE PNG QR CODE BUFFER (NEVER FAILS, DIRECT FOR EMAIL & PASS)
+  // =========================================================================
+  async getTicketQrBuffer(idOrBookingId: string): Promise<Buffer> {
+    const cleanId = this.extractBookingId(idOrBookingId);
+    const redirectUrl = `https://www.wegrowbschool.in/sing-along?bookingId=${cleanId}`;
+    return QRCode.toBuffer(redirectUrl, {
+      type: 'png',
+      width: 260,
+      margin: 1,
+      errorCorrectionLevel: 'H',
+      color: {
+        dark: '#000000',
+        light: '#ffffff',
+      },
+    });
+  }
+
+  // =========================================================================
+  // SERVE OFFICIAL WEGROW MASCOT PNG BUFFER (FOR EMAILS & HEADERS)
+  // =========================================================================
+  async getMascotPngBuffer(): Promise<Buffer> {
+    const fs = await import('fs');
+    const path = await import('path');
+    const mascotPath = path.join(process.cwd(), 'src/sing-along/assets/mascot.png');
+    if (fs.existsSync(mascotPath)) {
+      return fs.readFileSync(mascotPath);
+    }
+    const res = await fetch('https://www.wegrowbschool.in/mascot.webp');
+    const arr = await res.arrayBuffer();
+    return Buffer.from(arr);
+  }
+
+  // =========================================================================
   // VERIFY BOOKING BY BOOKING ID OR MONGODB _ID (PUBLIC / SCANNER)
   // =========================================================================
   async verifyBooking(idOrBookingId: string) {

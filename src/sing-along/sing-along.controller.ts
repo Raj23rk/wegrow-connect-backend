@@ -193,6 +193,25 @@ export class SingAlongController {
     return res.end(imgBuffer);
   }
 
+  @Get('ticket/:id/qr.png')
+  @Get('ticket/:id/qr')
+  @ApiOperation({ summary: 'Get official raw PNG QR Code image for ticket' })
+  async getTicketQrPng(@Param('id') id: string, @Res() res: Response) {
+    const qrBuffer = await this.singAlongService.getTicketQrBuffer(id);
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=604800, s-maxage=604800');
+    return res.end(qrBuffer);
+  }
+
+  @Get('mascot.png')
+  @ApiOperation({ summary: 'Get official WeGrow Mascot PNG image' })
+  async getMascotPng(@Res() res: Response) {
+    const mascotBuffer = await this.singAlongService.getMascotPngBuffer();
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=604800, s-maxage=604800');
+    return res.end(mascotBuffer);
+  }
+
   // =====================================================
   // SCAN REDIRECT: Redirects any QR scan to WeGrow B School Website
   // =====================================================

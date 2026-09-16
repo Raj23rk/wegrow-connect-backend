@@ -3655,18 +3655,16 @@ export class NotificationsService {
     const bookingId = data.bookingId;
     const token = data.verificationToken || `SINGALONG-VERIFY:${bookingId}`;
     const redirectUrl = `https://www.wegrowbschool.in/sing-along?bookingId=${bookingId}`;
-    const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(redirectUrl)}&size=200&ecLevel=H&margin=1`;
+    const baseUrl =
+      process.env.API_BASE_URL || 'https://wegrow-connect-backend-1.onrender.com';
+    const qrUrl = `${baseUrl}/api/v1/sing-along/ticket/${bookingId}/qr.png`;
+    const mascotUrl = `${baseUrl}/api/v1/sing-along/mascot.png`;
     const formattedDate = new Date().toLocaleDateString('en-IN', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
     });
 
-    const baseUrl =
-      process.env.API_BASE_URL ||
-      (process.env.NODE_ENV === 'production'
-        ? 'https://wegrow-connect-backend-1.onrender.com'
-        : 'http://localhost:4000');
     const ticketDownloadUrl = `${baseUrl}/api/v1/sing-along/ticket/${bookingId}?download=pdf`;
 
     const html = `
@@ -3730,7 +3728,7 @@ export class NotificationsService {
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 4px;">
           <tr>
             <td align="left" width="58" style="vertical-align: middle;">
-              <img src="https://www.wegrowbschool.in/mascot.webp" alt="WeGrow Mascot" width="54" height="54" style="display:block; border-radius:50%; border:2px solid #a855f7; background:#ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.25);" />
+              <img src="${mascotUrl}" alt="WeGrow Mascot" width="54" height="54" style="display:block; border-radius:50%; border:2px solid #a855f7; background:#ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.25);" />
             </td>
             <td align="center" style="vertical-align: middle; padding-right: 54px;">
               <div class="header-title">WeGrow Sing Along 2026</div>
