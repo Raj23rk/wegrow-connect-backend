@@ -24,6 +24,7 @@ import {
   SubmitSingUtrDto,
 } from './dto/create-sing-payment-order.dto';
 import { SingAlongService } from './sing-along.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SingPaymentService {
@@ -42,7 +43,70 @@ export class SingPaymentService {
     private readonly bookingModel: Model<SingAlongBookingDocument>,
     private readonly configService: ConfigService,
     private readonly singAlongService: SingAlongService,
+    private readonly notificationsService: NotificationsService,
   ) {}
+
+  /**
+   * Helper method to dispatch Sing Along ticket email asynchronously
+   */
+  async sendTicketEmailAsync(booking: any, force = false): Promise<boolean> {
+    if (!booking || !booking.email) {
+      this.logger.warn(
+        `Cannot send ticket email: no email address for booking ${booking?.bookingId || 'UNKNOWN'}`,
+      );
+      return false;
+    }
+
+    if (booking.emailSent && !force) {
+      this.logger.log(
+        `Ticket email already sent previously for booking ${booking.bookingId}. (Set force=true to resend)`,
+      );
+      return true;
+    }
+
+    try {
+      this.logger.log(
+        `Dispatching Sing Along ticket email to ${booking.email} for booking ${booking.bookingId}`,
+      );
+
+      const success = await this.notificationsService.sendSingAlongTicketEmail({
+        email: booking.email,
+        fullName: booking.fullName || 'Guest Attendee',
+        phone: booking.phone || '',
+        bookingId: booking.bookingId,
+        ticketQty: booking.ticketQty || 1,
+        unitPrice: booking.unitPrice || 199,
+        totalAmount: booking.totalAmount || 199,
+        paymentMethod: booking.paymentMethod || 'CASHFREE',
+        utr: booking.utr || '',
+        orderId: booking.orderId || '',
+        eventId: booking.eventId || 'SINGALONG-SEP-27-2026',
+        verificationToken: `SINGALONG-VERIFY:${booking.bookingId}`,
+      });
+
+      if (success) {
+        await this.bookingModel.updateOne(
+          { bookingId: booking.bookingId },
+          { $set: { emailSent: true } },
+        );
+        this.logger.log(
+          `Ticket email successfully sent and recorded for booking ${booking.bookingId}`,
+        );
+      } else {
+        this.logger.warn(
+          `NotificationsService failed to send ticket email to ${booking.email}`,
+        );
+      }
+
+      return success;
+    } catch (err: any) {
+      this.logger.error(
+        `Failed to send ticket email for booking ${booking.bookingId}: ${err?.message}`,
+        err?.stack,
+      );
+      return false;
+    }
+  }
 
   // =========================================================================
   // CASHFREE CREDENTIAL & CONFIG HELPERS
@@ -204,7 +268,7 @@ export class SingPaymentService {
         : ticketQty * 254;
     const unitPrice = Math.round(totalAmount / ticketQty);
     const email = dto.email ? dto.email.toLowerCase().trim() : 'guest@wegrowbschool.in';
-    const eventId = (dto.eventId || 'SINGALONG-SEP-13-2026').trim();
+    const eventId = (dto.eventId || 'SINGALONG-SEP-27-2026').trim();
 
     // 1. High-speed atomic booking ID generation
     const bookingId = await this.singAlongService.generateBookingId();
@@ -389,6 +453,10 @@ export class SingPaymentService {
     const cfPaymentId = paymentData.cf_payment_id || '';
     const bankRef = paymentData.bank_reference || cfPaymentId;
     const paymentGroup = paymentData.payment_group || 'CASHFREE';
+    const customerDetails = body.data?.customer_details || body.customer_details || {};
+    const customerEmail = (customerDetails.customer_email || body.email || '').trim();
+    const customerName = (customerDetails.customer_name || body.name || '').trim();
+    const customerPhone = (customerDetails.customer_phone || body.phone || '').trim();
 
     if (!orderId) {
       this.logger.warn('Cashfree webhook received without order_id');
@@ -405,9 +473,16 @@ export class SingPaymentService {
       this.logger.log(`Cashfree Payment SUCCESS for order: ${orderId}`);
 
       // Parallelize payment and booking updates
-      const [, booking] = await Promise.all([
+      const [updatedPayment, booking] = await Promise.all([
         this.paymentModel.findOneAndUpdate(
-          { orderId },
+          {
+            $or: [
+              { orderId },
+              { bookingId: orderId },
+              { cfOrderId: orderId },
+              ...(orderId ? [{ 'customer.phone': orderId }] : []),
+            ],
+          },
           {
             status: SingAlongPaymentStatus.SUCCESS,
             cfPaymentId: String(cfPaymentId || ''),
@@ -415,23 +490,103 @@ export class SingPaymentService {
             paymentMethod: `CASHFREE (${paymentGroup})`,
             webhookPayload: body,
           },
+          { new: true },
         ),
         this.bookingModel.findOneAndUpdate(
-          { orderId },
+          { $or: [{ orderId }, { bookingId: orderId }] },
           {
             status: SingAlongBookingStatus.CONFIRMED,
             utr: String(bankRef || ''),
             paymentMethod: `CASHFREE (${paymentGroup})`,
             notes: `Confirmed via Cashfree Webhook (CF Payment ID: ${cfPaymentId}, Ref: ${bankRef})`,
+            ...(customerEmail ? { email: customerEmail.toLowerCase().trim() } : {}),
+            ...(customerName ? { fullName: customerName } : {}),
+            ...(customerPhone ? { phone: customerPhone } : {}),
           },
           { new: true },
         ).lean(),
       ]);
 
+      let confirmedBooking: any = booking;
+      if (!confirmedBooking && updatedPayment?.bookingId) {
+        confirmedBooking = await this.bookingModel.findOneAndUpdate(
+          { bookingId: updatedPayment.bookingId },
+          {
+            status: SingAlongBookingStatus.CONFIRMED,
+            utr: String(bankRef || ''),
+            paymentMethod: `CASHFREE (${paymentGroup})`,
+            notes: `Confirmed via Cashfree Webhook (CF Payment ID: ${cfPaymentId}, Ref: ${bankRef})`,
+            ...(customerEmail ? { email: customerEmail.toLowerCase().trim() } : {}),
+          },
+          { new: true },
+        ).lean();
+      }
+
+      // If booking was not found, auto-upsert booking record so no ticket is lost
+      if (!confirmedBooking) {
+        const bId =
+          updatedPayment?.bookingId ||
+          (orderId.startsWith('SA26-')
+            ? orderId
+            : await this.singAlongService.generateBookingId());
+
+        const finalEmail = (
+          customerEmail ||
+          updatedPayment?.customer?.email ||
+          ''
+        )
+          .toLowerCase()
+          .trim();
+
+        confirmedBooking = await this.bookingModel.findOneAndUpdate(
+          { bookingId: bId },
+          {
+            $setOnInsert: {
+              bookingId: bId,
+              fullName:
+                customerName || updatedPayment?.customer?.name || 'Guest Attendee',
+              phone: customerPhone || updatedPayment?.customer?.phone || '',
+              ticketQty: updatedPayment?.metadata?.ticketQty || 1,
+              unitPrice: 199,
+              totalAmount: Number(
+                body?.data?.order?.order_amount || updatedPayment?.amount || 199,
+              ),
+              orderId: updatedPayment?.orderId || orderId,
+              eventId: 'SINGALONG-SEP-27-2026',
+              attended: false,
+              isActive: true,
+              emailSent: false,
+            },
+            $set: {
+              status: SingAlongBookingStatus.CONFIRMED,
+              utr: String(bankRef || ''),
+              paymentMethod: `CASHFREE (${paymentGroup})`,
+              notes: `Confirmed via Cashfree Webhook (CF Payment ID: ${cfPaymentId}, Ref: ${bankRef})`,
+              ...(finalEmail ? { email: finalEmail } : {}),
+            },
+          },
+          { new: true, upsert: true },
+        ).lean();
+      }
+
+      // Generate & send ticket email asynchronously upon payment confirmation
+      const shouldForceEmail = Boolean(body?.forceEmail || body?.resend);
+      if (confirmedBooking?.email) {
+        this.sendTicketEmailAsync(confirmedBooking, shouldForceEmail).catch((err) =>
+          this.logger.error(`Error sending ticket email: ${err?.message}`),
+        );
+      } else {
+        this.logger.warn(`No email found for confirmed booking ${confirmedBooking?.bookingId}`);
+      }
+
       return {
         status: 'SUCCESS',
         orderId,
-        bookingId: booking?.bookingId,
+        bookingId: confirmedBooking?.bookingId,
+        customerName: confirmedBooking?.fullName,
+        customerEmail: confirmedBooking?.email,
+        ticketQty: confirmedBooking?.ticketQty,
+        totalAmount: confirmedBooking?.totalAmount,
         message: 'Payment confirmed and ticket activated successfully',
       };
     } else if (
@@ -526,6 +681,12 @@ export class SingPaymentService {
           { new: true },
         ).lean(),
       ]);
+
+      if (booking?.email && !booking.emailSent) {
+        this.sendTicketEmailAsync(booking).catch((err) =>
+          this.logger.error(`Error sending ticket email: ${err?.message}`),
+        );
+      }
 
       return {
         status: 'SUCCESS',
@@ -715,6 +876,12 @@ export class SingPaymentService {
               },
             };
 
+            if (updatedBooking?.email && !updatedBooking.emailSent) {
+              this.sendTicketEmailAsync(updatedBooking).catch((err) =>
+                this.logger.error(`Error sending ticket email: ${err?.message}`),
+              );
+            }
+
             this.statusPollingCache.set(orderId, {
               data: confirmedResult,
               expiresAt: now + 60000,
@@ -792,6 +959,12 @@ export class SingPaymentService {
       ]);
 
       if (booking) {
+        if (booking.email && !booking.emailSent) {
+          this.sendTicketEmailAsync(booking).catch((err) =>
+            this.logger.error(`Error sending ticket email: ${err?.message}`),
+          );
+        }
+
         return {
           success: true,
           message: 'UPI Transaction ID / UTR submitted successfully',
@@ -841,11 +1014,17 @@ export class SingPaymentService {
       paymentScreenshot: dto.paymentScreenshot || '',
       paymentMethod: dto.paymentMethod || 'ashokbcasvk45@oksbi',
       status: SingAlongBookingStatus.CONFIRMED,
-      eventId: 'SINGALONG-SEP-13-2026',
+      eventId: 'SINGALONG-SEP-27-2026',
       attended: false,
       isActive: true,
       notes: `Manual GPay QR payment verified with UTR: ${utr}`,
     });
+
+    if (booking.email) {
+      this.sendTicketEmailAsync(booking).catch((err) =>
+        this.logger.error(`Error sending ticket email: ${err?.message}`),
+      );
+    }
 
     return {
       success: true,

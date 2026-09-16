@@ -16,6 +16,7 @@ import { SingAlongController } from './sing-along.controller';
 import { SingAlongService } from './sing-along.service';
 import { SingPaymentController } from './sing-payment.controller';
 import { SingPaymentService } from './sing-payment.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { SingPaymentService } from './sing-payment.service';
       { name: SingAlongPayment.name, schema: SingAlongPaymentSchema },
       { name: SingAlongCounter.name, schema: SingAlongCounterSchema },
     ]),
+    NotificationsModule,
   ],
   controllers: [SingAlongController, SingPaymentController],
   providers: [SingAlongService, SingPaymentService],

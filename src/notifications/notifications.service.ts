@@ -3632,4 +3632,237 @@ export class NotificationsService {
       html,
     );
   }
+
+  // ============================================================
+  // SING ALONG TICKET CONFIRMATION EMAIL
+  // ============================================================
+  async sendSingAlongTicketEmail(data: {
+    email: string;
+    fullName: string;
+    phone: string;
+    bookingId: string;
+    ticketQty: number;
+    unitPrice: number;
+    totalAmount: number;
+    paymentMethod?: string;
+    utr?: string;
+    orderId?: string;
+    eventId?: string;
+    verificationToken?: string;
+  }): Promise<boolean> {
+    if (!data.email) return false;
+
+    const bookingId = data.bookingId;
+    const token = data.verificationToken || `SINGALONG-VERIFY:${bookingId}`;
+    const redirectUrl = `https://www.wegrowbschool.in/sing-along?bookingId=${bookingId}`;
+    const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(redirectUrl)}&size=200&ecLevel=H&margin=1`;
+    const formattedDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+
+    const baseUrl =
+      process.env.API_BASE_URL ||
+      (process.env.NODE_ENV === 'production'
+        ? 'https://wegrow-connect-backend-1.onrender.com'
+        : 'http://localhost:4000');
+    const ticketDownloadUrl = `${baseUrl}/api/v1/sing-along/ticket/${bookingId}?download=pdf`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sing Along Ticket Pass - WeGrow</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #fafaf9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #1c1917; }
+    .wrapper { width: 100%; background-color: #fafaf9; padding: 26px 10px; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 18px; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,0.09); border: 1px solid #fed7aa; }
+    
+    /* HEADER THEME (Royal Indigo & Purple Glow - Matching Image 2) */
+    .header { background: linear-gradient(135deg, #1e1b4b 0%, #2e1065 50%, #4338ca 100%); padding: 26px 20px 22px 20px; text-align: center; color: #ffffff; }
+    .badge { display: inline-block; background-color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.35); color: #fbbf24; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 14px; border-radius: 9999px; margin-bottom: 12px; }
+    .header-title { font-size: 26px; font-weight: 800; color: #ffffff; margin: 6px 0 4px 0; letter-spacing: -0.5px; line-height: 1.2; }
+    .header-subtitle { font-size: 14px; font-weight: 600; color: #c7d2fe; margin: 0; letter-spacing: 0.5px; }
+    
+    .content { padding: 26px 22px; }
+    .greeting { font-size: 15px; color: #292524; line-height: 1.6; margin-bottom: 18px; }
+    .status-pill { display: inline-block; background-color: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 9999px; margin-bottom: 20px; }
+    
+    /* EVENT HIGHLIGHTS BAR */
+    .event-bar { background-color: #fffbeb; border: 1px solid #fef08a; border-radius: 12px; margin-bottom: 22px; padding: 10px 8px; width: 100%; }
+    .event-bar td { font-size: 12px; font-weight: 700; color: #854d0e; text-align: center; padding: 4px 6px; vertical-align: middle; }
+    
+    /* TICKET CARD (IMAGE 3) */
+    .ticket-card { background: #ffffff; border: 2px dashed #f59e0b; border-radius: 16px; padding: 22px; margin: 18px 0; }
+    .booking-badge { font-family: monospace; font-size: 15px; font-weight: 800; color: #78350f; background: #fef3c7; padding: 5px 12px; border-radius: 6px; letter-spacing: 0.5px; border: 1px solid #fcd34d; }
+    .ticket-details { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+    .ticket-details td { padding: 7px 2px; font-size: 14px; color: #44403c; vertical-align: top; }
+    .ticket-details td.label { width: 42%; font-weight: 600; color: #78716c; }
+    .ticket-details td.value { width: 58%; font-weight: 700; color: #1c1917; }
+    
+    .qr-container { text-align: center; padding: 16px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; margin-top: 14px; }
+    .qr-container img { margin: 0 auto; display: block; border-radius: 8px; }
+    .qr-code-text { font-family: monospace; font-size: 13px; font-weight: 800; color: #92400e; margin-top: 8px; letter-spacing: 0.5px; }
+    .qr-hint { font-size: 11px; color: #78716c; margin-top: 3px; }
+    
+    /* DOWNLOAD BUTTON */
+    .download-btn-wrap { text-align: center; margin: 24px 0 14px 0; }
+    .download-btn { display: inline-block; background: linear-gradient(135deg, #4338ca 0%, #312e81 100%); color: #ffffff !important; font-weight: 800; font-size: 15px; text-decoration: none; padding: 14px 28px; border-radius: 10px; box-shadow: 0 4px 14px rgba(67, 56, 202, 0.35); letter-spacing: 0.5px; }
+    
+    .instructions { background-color: #fefce8; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 14px 16px; margin: 22px 0; }
+    .instructions h4 { margin: 0 0 8px 0; font-size: 13px; font-weight: 800; color: #78350f; }
+    .instructions ul { margin: 0; padding-left: 18px; font-size: 12px; color: #57534e; line-height: 1.6; }
+    
+    .footer { background-color: #fafaf9; border-top: 1px solid #fed7aa; padding: 22px; text-align: center; font-size: 12px; color: #78716c; line-height: 1.6; }
+    .footer a { color: #4338ca; text-decoration: none; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <!-- HEADER: ROYAL VIOLET/INDIGO THEME (IMAGE 2) WITH LEFT MASCOT LOGO -->
+      <div class="header">
+        <div class="badge">&#127925; OFFICIAL TICKET PASS</div>
+        
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 4px;">
+          <tr>
+            <td align="left" width="58" style="vertical-align: middle;">
+              <img src="https://www.wegrowbschool.in/mascot.webp" alt="WeGrow Mascot" width="54" height="54" style="display:block; border-radius:50%; border:2px solid #a855f7; background:#ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.25);" />
+            </td>
+            <td align="center" style="vertical-align: middle; padding-right: 54px;">
+              <div class="header-title">WeGrow Sing Along 2026</div>
+              <div class="header-subtitle">Live Music Event</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="content">
+        <div class="greeting">
+          Hello <strong>${data.fullName}</strong>,<br>
+          Thank you for booking your ticket for <strong>Sing Along - Live Music Event</strong>! Your payment has been confirmed and your digital pass is active below.
+        </div>
+        
+        <div>
+          <span class="status-pill">&#10004; PAYMENT CONFIRMED &bull; PASS ACTIVE</span>
+        </div>
+
+        <!-- 5TH IMAGE EVENT HIGHLIGHTS BAR -->
+        <table class="event-bar" cellpadding="0" cellspacing="0">
+          <tr>
+            <td><span style="color:#ea580c; font-size:14px;">📍</span> Arasan Turf, Sivakasi</td>
+            <td><span style="color:#ea580c; font-size:14px;">📅</span> Sun, Sep 27, 2026</td>
+            <td><span style="color:#ea580c; font-size:14px;">✨</span> Instant QR Pass</td>
+            <td><span style="color:#16a34a; font-size:14px;">📞</span> <a href="tel:+919344037331" style="color:#16a34a; text-decoration:none;">+91 93440 37331</a></td>
+          </tr>
+        </table>
+
+        <!-- TICKET PASS CARD -->
+        <div class="ticket-card">
+          <table width="100%" cellpadding="0" cellspacing="0" style="border-bottom: 1px solid #fed7aa; padding-bottom: 12px; margin-bottom: 16px;">
+            <tr>
+              <td>
+                <div style="font-size: 18px; font-weight: 800; color: #78350f;">Sing Along Entry Pass</div>
+                <div style="font-size: 12px; color: #a8a29e; margin-top: 2px;">WeGrow B School Live Music Celebration</div>
+              </td>
+              <td align="right">
+                <span class="booking-badge">${bookingId}</span>
+              </td>
+            </tr>
+          </table>
+
+          <table class="ticket-details" cellpadding="0" cellspacing="0">
+            <tr>
+              <td class="label">Attendee Name</td>
+              <td class="value">${data.fullName}</td>
+            </tr>
+            <tr>
+              <td class="label">Mobile Number</td>
+              <td class="value">${data.phone}</td>
+            </tr>
+            <tr>
+              <td class="label">Ticket Quantity</td>
+              <td class="value">${data.ticketQty} ${data.ticketQty > 1 ? 'Tickets (Admit ' + data.ticketQty + ')' : 'Ticket (Admit 1)'}</td>
+            </tr>
+            <tr>
+              <td class="label">Amount Paid</td>
+              <td class="value" style="color: #059669; font-size: 16px;">&#8377;${data.totalAmount}</td>
+            </tr>
+            <tr>
+              <td class="label">Venue</td>
+              <td class="value" style="color:#78350f;">Arasan Turf, Sivakasi</td>
+            </tr>
+            <tr>
+              <td class="label">Event Date</td>
+              <td class="value" style="color:#78350f;">Sunday, 27 September 2026</td>
+            </tr>
+            <tr>
+              <td class="label">Payment Method</td>
+              <td class="value">${data.paymentMethod || 'Online Gateway / UPI'}</td>
+            </tr>
+            ${data.utr ? `<tr><td class="label">Reference / UTR</td><td class="value" style="font-family: monospace; font-size: 13px;">${data.utr}</td></tr>` : ''}
+            ${data.orderId ? `<tr><td class="label">Order ID</td><td class="value" style="font-family: monospace; font-size: 12px;">${data.orderId}</td></tr>` : ''}
+            <tr>
+              <td class="label">Confirmation Date</td>
+              <td class="value">${formattedDate}</td>
+            </tr>
+          </table>
+
+          <div class="qr-container">
+            <img src="${qrUrl}" alt="Ticket QR Code" width="180" height="180" style="margin:0 auto; display:block;" />
+            <div class="qr-code-text">${token}</div>
+            <div class="qr-hint">Scan with any phone camera to view pass on wegrowbschool.in</div>
+          </div>
+        </div>
+
+        <!-- DOWNLOAD DIGITAL TICKET OPTION -->
+        <div class="download-btn-wrap">
+          <a href="${ticketDownloadUrl}" target="_blank" class="download-btn">
+            📥 DOWNLOAD TICKET PASS (PDF / IMAGE)
+          </a>
+          <div style="font-size: 12px; color: #78716c; margin-top: 8px;">
+            Click to view and instantly save your official ticket pass as PDF or Image
+          </div>
+        </div>
+
+        <div class="instructions">
+          <h4>&#128204; Entry Guidelines & Venue Details:</h4>
+          <ul>
+            <li><strong>Venue:</strong> Arasan Turf, Sivakasi</li>
+            <li><strong>Date:</strong> Sunday, 27 September 2026</li>
+            <li><strong>Helpline:</strong> <a href="tel:+919344037331" style="color:#78350f; font-weight:700;">+91 93440 37331</a></li>
+            <li>Please present this digital pass or downloaded PDF with the QR code on your mobile phone at the entrance.</li>
+            <li>Each QR code admits <strong>${data.ticketQty} ${data.ticketQty > 1 ? 'persons' : 'person'}</strong>.</li>
+            <li>Gates open 30 minutes prior to the event. Please arrive on time.</li>
+          </ul>
+        </div>
+
+        <p style="font-size: 13px; color: #78716c; margin: 20px 0 0 0; text-align: center;">
+          For queries or assistance, contact us at <a href="tel:+919344037331" style="color:#d97706; font-weight:700;">+91 93440 37331</a> or <a href="mailto:enquiry@wegrowcampus.in" style="color:#d97706; font-weight:700;">enquiry@wegrowcampus.in</a>.
+        </p>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        <div style="margin-bottom: 6px; font-weight: 700; color: #44403c;">
+          📍 Arasan Turf, Sivakasi &bull; 📅 Sun, Sep 27, 2026 &bull; 📞 +91 93440 37331
+        </div>
+        <strong>WeGrow B School</strong> &bull; Empowering Skills. Transforming Futures.<br>
+        <a href="https://www.wegrowbschool.in">www.wegrowbschool.in</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    return this.sendEmail(
+      data.email,
+      `🎟️ Sing Along Ticket Pass [${bookingId}] - Confirmed!`,
+      html,
+    );
+  }
 }

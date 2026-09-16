@@ -52,14 +52,20 @@ export class SingAlongBooking {
   })
   status: SingAlongBookingStatus = SingAlongBookingStatus.CONFIRMED;
 
-  @Prop({ default: 'SINGALONG-SEP-13-2026', trim: true })
-  eventId: string = 'SINGALONG-SEP-13-2026';
+  @Prop({ default: 'SINGALONG-SEP-27-2026', trim: true })
+  eventId: string = 'SINGALONG-SEP-27-2026';
 
   @Prop({ default: false })
   attended: boolean = false;
 
+  @Prop({ type: Date, default: null })
+  attendedAt?: Date;
+
   @Prop({ default: true })
   isActive: boolean = true;
+
+  @Prop({ default: false })
+  emailSent: boolean = false;
 
   @Prop({ default: '', trim: true })
   notes?: string;

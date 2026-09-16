@@ -12,14 +12,19 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SingAlongService } from './sing-along.service';
 import { CreateSingAlongBookingDto } from './dto/create-sing-along-booking.dto';
 import { QuerySingAlongBookingDto } from './dto/query-sing-along-booking.dto';
+import { ScanSingAlongDto } from './dto/scan-sing-along.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../guards/admin.guard';
+import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
 
 @ApiTags('Sing Along Ticketing')
 @Controller('sing-along')
 export class SingAlongController {
-  constructor(private readonly singAlongService: SingAlongService) {}
+  constructor(
+    private readonly singAlongService: SingAlongService,
+    private readonly configService: ConfigService,
+  ) {}
 
   // =====================================================
   // BOOK TICKETS (PUBLIC)
@@ -54,12 +59,153 @@ export class SingAlongController {
   }
 
   // =====================================================
-  // GATE CHECK-IN ATTENDEE (SCANNER)
+  // ADMIN MOBILE SCANNER WEB APP (CAMERA SCANNER FOR MOBILE PHONES)
+  // =====================================================
+  @Get('admin/scanner')
+  @Get('scanner')
+  @ApiOperation({
+    summary:
+      'Open Mobile Admin Ticket Scanner Web App with Camera, Login, and Instant Gate Check-in',
+  })
+  async getAdminScannerPage(@Res() res: Response) {
+    const html = await this.singAlongService.getAdminScannerHtml();
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(html);
+  }
+
+  // =====================================================
+  // ADMIN SCANNER API: SCAN QR & VIEW / CHECK-IN ATTENDEE (ADMIN ONLY)
+  // =====================================================
+  @Post('admin/scan')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Scan ticket QR code, view attendee details, and mark check-in (Admin Only)',
+  })
+  async adminScanPost(@Body() dto: ScanSingAlongDto) {
+    return this.singAlongService.adminScanTicket(dto);
+  }
+
+  @Get('admin/scan')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Scan ticket QR code via GET query, view attendee details, and mark check-in (Admin Only)',
+  })
+  async adminScanGet(
+    @Query('qrData') qrData: string,
+    @Query('autoCheckIn') autoCheckIn?: string,
+  ) {
+    return this.singAlongService.adminScanTicket({
+      qrData,
+      autoCheckIn: autoCheckIn !== 'false',
+    });
+  }
+
+  @Get('admin/scan/:id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Scan ticket by booking ID in URL param, view attendee details, and mark check-in (Admin Only)',
+  })
+  async adminScanParam(
+    @Param('id') id: string,
+    @Query('autoCheckIn') autoCheckIn?: string,
+  ) {
+    return this.singAlongService.adminScanTicket({
+      qrData: id,
+      autoCheckIn: autoCheckIn !== 'false',
+    });
+  }
+
+  // =====================================================
+  // GATE CHECK-IN ATTENDEE (SCANNER / PUBLIC COMPATIBILITY)
   // =====================================================
   @Post('checkin/:id')
   @ApiOperation({ summary: 'Check-in attendee at event gate' })
   async checkIn(@Param('id') id: string) {
     return this.singAlongService.checkIn(id);
+  }
+
+  // =====================================================
+  // SEND / RESEND TICKET EMAIL (PUBLIC / ADMIN)
+  // =====================================================
+  @Post('send-ticket/:id')
+  @ApiOperation({ summary: 'Send or resend Sing Along ticket email with QR code' })
+  async sendTicket(@Param('id') id: string) {
+    return this.singAlongService.sendTicketEmail(id);
+  }
+
+  // =====================================================
+  // VIEW / DOWNLOAD PRINTABLE TICKET PASS
+  // =====================================================
+  @Get('ticket/:id')
+  @Get('ticket/:id/download')
+  @ApiOperation({ summary: 'View and download official printable Sing Along ticket pass' })
+  async getTicketPage(
+    @Param('id') id: string,
+    @Query('download') download: string,
+    @Query('format') format: string,
+    @Res() res: Response,
+  ) {
+    const mode = (download || format || '').toLowerCase();
+    if (mode === 'pdf') {
+      return this.downloadTicketPdf(id, res);
+    }
+    if (mode === 'image' || mode === 'img' || mode === 'png') {
+      return this.downloadTicketImage(id, res);
+    }
+
+    const html = await this.singAlongService.getTicketHtml(id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(html);
+  }
+
+  @Get('ticket/:id/pdf')
+  @ApiOperation({ summary: 'Download Sing Along ticket as official PDF attachment' })
+  async downloadTicketPdf(@Param('id') id: string, @Res() res: Response) {
+    const cleanId = (id || '').replace(/^SINGALONG-VERIFY:/i, '').trim().toUpperCase();
+    const pdfBuffer = await this.singAlongService.getTicketPdf(id);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="SingAlong_Ticket_${cleanId}.pdf"`,
+    );
+    res.setHeader('Content-Length', pdfBuffer.length);
+    return res.end(pdfBuffer);
+  }
+
+  @Get('ticket/:id/image')
+  @Get('ticket/:id/png')
+  @ApiOperation({ summary: 'Download Sing Along ticket as high-resolution PNG image attachment' })
+  async downloadTicketImage(@Param('id') id: string, @Res() res: Response) {
+    const cleanId = (id || '').replace(/^SINGALONG-VERIFY:/i, '').trim().toUpperCase();
+    const imgBuffer = await this.singAlongService.getTicketImage(id);
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="SingAlong_Ticket_${cleanId}.png"`,
+    );
+    res.setHeader('Content-Length', imgBuffer.length);
+    return res.end(imgBuffer);
+  }
+
+  // =====================================================
+  // SCAN REDIRECT: Redirects any QR scan to WeGrow B School Website
+  // =====================================================
+  @Get('scan/:id')
+  @ApiOperation({ summary: 'Redirect QR scan directly to WeGrow B School ticket page' })
+  async scanRedirect(@Param('id') id: string, @Res() res: Response) {
+    const cleanId = (id || '').replace(/^SINGALONG-VERIFY:/i, '').trim().toUpperCase();
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') ||
+      process.env.FRONTEND_URL ||
+      'https://www.wegrowbschool.in';
+
+    return res.redirect(`${frontendUrl}/sing-along?bookingId=${cleanId}`);
   }
 
   // =====================================================

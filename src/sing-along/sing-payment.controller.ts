@@ -46,9 +46,8 @@ export class SingPaymentController {
 
   // =====================================================
   // 2. CASHFREE WEBHOOK LISTENER
-  // Handles POST /api/v1/sing-payment AND POST /api/v1/sing-payment/webhook
+  // Handles POST /api/v1/sing-payment/webhook AND POST /api/v1/sing-payment
   // =====================================================
-  @Post()
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -68,7 +67,20 @@ export class SingPaymentController {
     );
   }
 
-  @Get()
+  @Post()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Cashfree Webhook listener alias (root endpoint)',
+  })
+  async handleWebhookRoot(
+    @Body() body: any,
+    @Headers('x-webhook-signature') signature?: string,
+    @Headers('x-webhook-timestamp') timestamp?: string,
+    @Req() req?: Request,
+  ) {
+    return this.handleWebhook(body, signature, timestamp, req);
+  }
+
   @Get('webhook')
   @ApiOperation({
     summary: 'Health check for Cashfree webhook endpoint',
@@ -79,6 +91,14 @@ export class SingPaymentController {
       message: 'Cashfree Webhook listener is active and operational',
       timestamp: new Date().toISOString(),
     };
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'Health check alias for Cashfree webhook root endpoint',
+  })
+  async webhookHealthRoot() {
+    return this.webhookHealth();
   }
 
   // =====================================================
