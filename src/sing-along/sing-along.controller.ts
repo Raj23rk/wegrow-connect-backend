@@ -153,10 +153,18 @@ export class SingAlongController {
   ) {
     const mode = (download || format || '').toLowerCase();
     if (mode === 'pdf') {
-      return this.downloadTicketPdf(id, res);
+      try {
+        return await this.downloadTicketPdf(id, res);
+      } catch (err: any) {
+        // Fallback gracefully to HTML ticket page with printable styling
+      }
     }
     if (mode === 'image' || mode === 'img' || mode === 'png') {
-      return this.downloadTicketImage(id, res);
+      try {
+        return await this.downloadTicketImage(id, res);
+      } catch (err: any) {
+        // Fallback gracefully to HTML ticket page
+      }
     }
 
     const html = await this.singAlongService.getTicketHtml(id);

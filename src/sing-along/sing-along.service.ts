@@ -703,8 +703,13 @@ export class SingAlongService {
         window.URL.revokeObjectURL(blobUrl);
         btn.innerHTML = isPdf ? '✅ PDF Downloaded' : '✅ Image Downloaded';
       } catch (err) {
-        console.warn('Direct fetch failed, navigating to download endpoint...', err);
-        window.location.href = downloadPath;
+        console.warn('Direct fetch failed, falling back to native print/navigation...', err);
+        if (isPdf) {
+          btn.innerHTML = '🖨️ Opening Print / Save as PDF...';
+          window.print();
+        } else {
+          window.location.href = downloadPath;
+        }
       } finally {
         setTimeout(() => {
           btn.innerHTML = origText;

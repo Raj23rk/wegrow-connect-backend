@@ -3665,7 +3665,7 @@ export class NotificationsService {
       year: 'numeric',
     });
 
-    const ticketDownloadUrl = `${baseUrl}/api/v1/sing-along/ticket/${bookingId}?download=pdf`;
+    const ticketDownloadUrl = `${baseUrl}/api/v1/sing-along/ticket/${bookingId}`;
 
     const html = `
 <!DOCTYPE html>
