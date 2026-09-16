@@ -349,6 +349,9 @@ export class SingAlongService {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sing Along Ticket Pass - ${booking.bookingId}</title>
+  <!-- Client-side PDF + Image generation (no server Puppeteer needed) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -586,11 +589,8 @@ export class SingAlongService {
       ? ''
       : `<!-- TOP ACTION BAR -->
   <div class="action-bar no-print">
-    <button id="btn-pdf" class="action-btn btn-pdf" onclick="savePdf()">
-      📥 Save as PDF
-    </button>
-    <button id="btn-img" class="action-btn btn-img" onclick="saveImage()">
-      🖼️ Save Image (PNG)
+    <button id="btn-pdf" class="action-btn btn-pdf" onclick="downloadPdf()">
+      📥 Download PDF Ticket
     </button>
     <button class="action-btn btn-print" onclick="window.print()">
       🖨️ Print Ticket
@@ -678,46 +678,50 @@ export class SingAlongService {
     forExport
       ? ''
       : `<script>
-    function savePdf() {
+    async function captureTicket() {
+      const el = document.getElementById('ticket-pass-card');
+      // Hide action bar & scanner link during capture
+      document.querySelectorAll('.no-print').forEach(e => e.style.visibility = 'hidden');
+      const canvas = await html2canvas(el, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      document.querySelectorAll('.no-print').forEach(e => e.style.visibility = '');
+      return canvas;
+    }
+
+    async function downloadPdf() {
       const btn = document.getElementById('btn-pdf');
       btn.disabled = true;
-      btn.innerHTML = '⏳ Opening Print Dialog...';
-      // Use browser native Print → Save as PDF (works on all devices incl. mobile)
-      setTimeout(() => {
-        window.print();
-        setTimeout(() => {
-          btn.innerHTML = '📥 Save as PDF';
-          btn.disabled = false;
-        }, 2000);
-      }, 150);
-    }
-
-    function saveImage() {
-      const btn = document.getElementById('btn-img');
-      btn.disabled = true;
-      btn.innerHTML = '⏳ Opening Image...';
-      // Open the backend-native PNG endpoint in a new tab — user can long-press / right-click → Save
-      const imgUrl = '/api/v1/sing-along/ticket/${booking.bookingId}/qr.png';
-      // On mobile: open full ticket page as image via server-rendered PNG (if available)
-      // Fallback: show instructions
-      const win = window.open(imgUrl, '_blank');
-      if (!win) {
-        alert('Please allow pop-ups or right-click → Save Image to save your ticket QR.');
+      btn.innerHTML = '⏳ Generating PDF...';
+      try {
+        const canvas = await captureTicket();
+        const imgData = canvas.toDataURL('image/jpeg', 0.97);
+        const { jsPDF } = window.jspdf;
+        const pxToMm = px => px * 0.264583;
+        const pdfW = pxToMm(canvas.width);
+        const pdfH = pxToMm(canvas.height);
+        const pdf = new jsPDF({ orientation: pdfH > pdfW ? 'p' : 'l', unit: 'mm', format: [pdfW, pdfH] });
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+        pdf.save('SingAlong_Ticket_${booking.bookingId}.pdf');
+        btn.innerHTML = '✅ PDF Downloaded!';
+      } catch (err) {
+        console.error('PDF generation error:', err);
+        btn.innerHTML = '❌ Failed — try Print';
+        setTimeout(() => window.print(), 300);
+      } finally {
+        setTimeout(() => { btn.innerHTML = '📥 Download PDF Ticket'; btn.disabled = false; }, 3000);
       }
-      setTimeout(() => {
-        btn.innerHTML = '🖼️ Save Image (PNG)';
-        btn.disabled = false;
-      }, 1500);
     }
 
-    // Auto-trigger save if query param is set (e.g., from email link ?download=pdf)
+    // Auto-trigger download if query param is set (e.g., from email link ?download=pdf)
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
       const dl = (params.get('download') || params.get('format') || '').toLowerCase();
       if (dl === 'pdf') {
-        setTimeout(() => savePdf(), 500);
-      } else if (dl === 'img' || dl === 'image' || dl === 'png') {
-        setTimeout(() => saveImage(), 500);
+        setTimeout(() => downloadPdf(), 800);
       }
     });
   </script>`
