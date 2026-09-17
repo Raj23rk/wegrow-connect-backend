@@ -1,28 +1,26 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsEnum,
   IsInt,
   IsOptional,
   IsString,
   Min,
 } from 'class-validator';
 
-export enum QueryTypeFilter {
-  ALL = 'all',
-  TEST = 'test',
-  DIAGNOSTIC = 'diagnostic',
-}
-
 export class QueryBusinessDependencyDto {
   @ApiPropertyOptional({
-    description: 'Filter by submission type: test, diagnostic, or all',
-    enum: QueryTypeFilter,
-    default: QueryTypeFilter.ALL,
+    description: 'Filter by submission type: test, diagnostic, Business Test, Business Diagnostic, or all',
   })
   @IsOptional()
   @IsString()
   type?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by category: ALL, red, high, growing, self or category string',
+  })
+  @IsOptional()
+  @IsString()
+  category?: string;
 
   @ApiPropertyOptional({
     description: 'Page number for pagination',
@@ -45,7 +43,7 @@ export class QueryBusinessDependencyDto {
   limit: number = 10;
 
   @ApiPropertyOptional({
-    description: 'Search across name, company, phone, email, and industry',
+    description: 'Search across name, company, phone, email, industry, category, challenge',
   })
   @IsOptional()
   @IsString()
@@ -80,21 +78,20 @@ export class QueryBusinessDependencyDto {
   status?: string;
 
   @ApiPropertyOptional({
-    description: 'Sort field: createdAt, fullName, company, score',
-    default: 'createdAt',
+    description: 'Sort option: newest, oldest, score_high, score_low, or field name',
+    default: 'newest',
   })
   @IsOptional()
   @IsString()
-  sortBy: string = 'createdAt';
+  sortBy: string = 'newest';
 
   @ApiPropertyOptional({
     description: 'Sort direction: asc or desc',
     default: 'desc',
-    enum: ['asc', 'desc'],
   })
   @IsOptional()
   @IsString()
-  sortOrder: 'asc' | 'desc' = 'desc';
+  sortOrder: string = 'desc';
 
   @ApiPropertyOptional({
     description: 'Start date filter (ISO string)',

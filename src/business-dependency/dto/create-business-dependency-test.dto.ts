@@ -1,103 +1,80 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
 
 export class CreateBusinessDependencyTestDto {
-  // Can receive either yourName, fullName, or name
-  @ApiPropertyOptional({
-    description: 'Your name',
-    example: 'Arjun Mehta',
-  })
+  @ApiPropertyOptional({ description: 'Client-generated ID' })
   @IsOptional()
-  @IsString()
-  yourName?: string;
+  id?: string;
 
-  @ApiPropertyOptional({
-    description: 'Full name',
-    example: 'Arjun Mehta',
-  })
+  @ApiPropertyOptional({ description: 'Submission type' })
   @IsOptional()
-  @IsString()
-  fullName?: string;
+  type?: string;
 
-  @ApiPropertyOptional({
-    description: 'Name alias',
-    example: 'Arjun Mehta',
-  })
+  @ApiPropertyOptional({ description: 'Submission timestamp' })
   @IsOptional()
-  @IsString()
+  submittedAt?: string;
+
+  @ApiPropertyOptional({ description: 'Your name / participant name' })
+  @IsOptional()
   name?: string;
 
-  // Can receive either businessName or company
-  @ApiPropertyOptional({
-    description: 'Business name',
-    example: 'Mehta Interiors',
-  })
+  @ApiPropertyOptional({ description: 'Your name' })
   @IsOptional()
-  @IsString()
+  yourName?: string;
+
+  @ApiPropertyOptional({ description: 'Full name' })
+  @IsOptional()
+  fullName?: string;
+
+  @ApiPropertyOptional({ description: 'Business name' })
+  @IsOptional()
+  business?: string;
+
+  @ApiPropertyOptional({ description: 'Business name' })
+  @IsOptional()
   businessName?: string;
 
-  @ApiPropertyOptional({
-    description: 'Company name',
-    example: 'Mehta Interiors',
-  })
+  @ApiPropertyOptional({ description: 'Company name' })
   @IsOptional()
-  @IsString()
   company?: string;
 
-  // Can receive either phone or phoneNumber
-  @ApiPropertyOptional({
-    description: 'Phone number',
-    example: '9876543210',
-  })
+  @ApiPropertyOptional({ description: 'Phone number' })
   @IsOptional()
-  @IsString()
-  phoneNumber?: string;
-
-  @ApiPropertyOptional({
-    description: 'Phone',
-    example: '9876543210',
-  })
-  @IsOptional()
-  @IsString()
   phone?: string;
 
-  // Score
-  @ApiPropertyOptional({
-    description: 'Test Score',
-    example: 72,
-  })
+  @ApiPropertyOptional({ description: 'Phone number' })
   @IsOptional()
-  score?: number | string;
+  phoneNumber?: string;
 
-  @ApiPropertyOptional({
-    description: 'Formatted Score Display',
-    example: '72/100',
-  })
+  @ApiPropertyOptional({ description: 'Test Score' })
   @IsOptional()
-  @IsString()
+  score?: any;
+
+  @ApiPropertyOptional({ description: 'Category / Band label' })
+  @IsOptional()
+  category?: string;
+
+  @ApiPropertyOptional({ description: 'Score display string' })
+  @IsOptional()
   scoreDisplay?: string;
 
-  @ApiPropertyOptional({
-    description: 'Score classification summary',
-    example: 'Partially Systemized',
-  })
+  @ApiPropertyOptional({ description: 'Score classification summary' })
   @IsOptional()
-  @IsString()
   scoreSummary?: string;
 
-  @ApiPropertyOptional({
-    description: 'Optional answers or responses payload',
-  })
+  @ApiPropertyOptional({ description: 'Stage of the submission' })
   @IsOptional()
-  answers?: Record<string, any>;
+  stage?: string;
 
-  @ApiPropertyOptional({
-    description: 'Optional test answers',
-  })
+  @ApiPropertyOptional({ description: 'Status of the submission' })
   @IsOptional()
-  testAnswers?: Record<string, any>;
+  status?: string;
+
+  @ApiPropertyOptional({ description: 'Array of answers' })
+  @IsOptional()
+  answers?: any;
+
+  @ApiPropertyOptional({ description: 'Optional test answers object' })
+  @IsOptional()
+  testAnswers?: any;
 }

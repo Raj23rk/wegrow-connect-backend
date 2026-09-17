@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   BusinessDependency,
   BusinessDependencyDocument,
@@ -27,23 +27,48 @@ export class BusinessDependencyService {
     private readonly dependencyModel: Model<BusinessDependencyDocument>,
   ) {}
 
+  // Helper to map DB doc to frontend friendly object
+  private formatItem(doc: any) {
+    const raw = doc.toObject ? doc.toObject({ virtuals: true }) : doc;
+    const isTest = raw.type === BusinessDependencyType.TEST;
+    return {
+      ...raw,
+      id: raw.customId || raw._id?.toString(),
+      type: isTest ? 'Business Test' : 'Business Diagnostic',
+      rawType: raw.type,
+      name: raw.fullName || raw.name || '',
+      fullName: raw.fullName || raw.name || '',
+      company: raw.company || raw.business || '',
+      business: raw.company || raw.business || '',
+      phone: raw.phone || '',
+      email: raw.email || '',
+      designation: raw.designation || '',
+      industry: raw.industry || '',
+      size: raw.businessSize || raw.size || '',
+      businessSize: raw.businessSize || raw.size || '',
+      challengeSelect: raw.biggestChallenge || raw.challengeSelect || '',
+      biggestChallenge: raw.biggestChallenge || raw.challengeSelect || '',
+      challengeNote: raw.challengeDetails || raw.challengeNote || '',
+      challengeDetails: raw.challengeDetails || raw.challengeNote || '',
+      score: typeof raw.score === 'number' ? raw.score : 0,
+      scoreDisplay: raw.scoreDisplay || (raw.score !== undefined ? `${raw.score}/100` : ''),
+      category: raw.category || raw.scoreSummary || 'Not Calculated',
+      scoreSummary: raw.scoreSummary || raw.category || '',
+      stage: raw.stage || (isTest ? 'Test Completed' : 'Diagnostic Booked'),
+      submittedAt: raw.submittedAt || raw.createdAt,
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+    };
+  }
+
   // =====================================================
   // 1. CREATE TEST API (type: 'test')
   // =====================================================
   async createTest(dto: CreateBusinessDependencyTestDto) {
-    const fullName = (dto.yourName || dto.fullName || dto.name || '').trim();
-    const company = (dto.businessName || dto.company || '').trim();
-    const phone = (dto.phoneNumber || dto.phone || '').trim();
-
-    if (!fullName) {
-      throw new BadRequestException('Your name is required');
-    }
-    if (!company) {
-      throw new BadRequestException('Business name is required');
-    }
-    if (!phone) {
-      throw new BadRequestException('Phone number is required');
-    }
+    const customId = (dto.id || '').trim();
+    const fullName = (dto.name || dto.yourName || dto.fullName || 'Anonymous').trim();
+    const company = (dto.business || dto.company || dto.businessName || 'Not Specified').trim();
+    const phone = (dto.phone || dto.phoneNumber || '').trim();
 
     let parsedScore: number | undefined;
     if (dto.score !== undefined && dto.score !== null) {
@@ -53,40 +78,55 @@ export class BusinessDependencyService {
       }
     }
 
-    const record = new this.dependencyModel({
+    const category = (dto.category || dto.scoreSummary || '').trim();
+    const submittedAt = dto.submittedAt ? new Date(dto.submittedAt) : new Date();
+
+    const payload = {
+      customId,
       type: BusinessDependencyType.TEST,
       fullName,
       company,
       phone,
       score: parsedScore,
-      scoreDisplay: dto.scoreDisplay?.trim() || (parsedScore !== undefined ? `${parsedScore}/100` : ''),
-      scoreSummary: dto.scoreSummary?.trim() || '',
-      testAnswers: dto.testAnswers || dto.answers || {},
+      scoreDisplay:
+        dto.scoreDisplay?.trim() ||
+        (parsedScore !== undefined ? `${parsedScore}/100` : ''),
+      scoreSummary: category,
+      category,
+      stage: dto.stage?.trim() || 'Test Completed',
+      submittedAt,
+      answers: Array.isArray(dto.answers) ? dto.answers : [],
+      testAnswers: dto.testAnswers || {},
       status: BusinessDependencyStatus.PENDING,
-    });
+    };
 
-    const saved = await record.save();
-    this.logger.log(`New Business Dependency Test submitted: ID ${saved._id} by ${fullName} (${company})`);
-    return saved;
+    // If client ID provided, upsert so duplicate requests update cleanly
+    let saved: any;
+    if (customId) {
+      saved = await this.dependencyModel.findOneAndUpdate(
+        { customId },
+        { $set: payload },
+        { new: true, upsert: true, setDefaultsOnInsert: true },
+      );
+    } else {
+      const record = new this.dependencyModel(payload);
+      saved = await record.save();
+    }
+
+    this.logger.log(
+      `New Business Dependency Test submitted: ID ${saved._id} (customId: ${customId}) by ${fullName} (${company})`,
+    );
+    return this.formatItem(saved);
   }
 
   // =====================================================
   // 2. CREATE DIAGNOSTIC API (type: 'diagnostic')
   // =====================================================
   async createDiagnostic(dto: CreateBusinessDependencyDiagnosticDto) {
-    const fullName = (dto.fullName || dto.yourName || dto.name || '').trim();
-    const company = (dto.company || dto.businessName || '').trim();
+    const customId = (dto.id || '').trim();
+    const fullName = (dto.name || dto.fullName || dto.yourName || 'Anonymous').trim();
+    const company = (dto.company || dto.business || dto.businessName || 'Not Specified').trim();
     const phone = (dto.phone || dto.phoneNumber || '').trim();
-
-    if (!fullName) {
-      throw new BadRequestException('Full name is required');
-    }
-    if (!company) {
-      throw new BadRequestException('Company name is required');
-    }
-    if (!phone) {
-      throw new BadRequestException('Phone number is required');
-    }
 
     let parsedScore: number | undefined;
     if (dto.score !== undefined && dto.score !== null) {
@@ -96,7 +136,11 @@ export class BusinessDependencyService {
       }
     }
 
-    const record = new this.dependencyModel({
+    const category = (dto.category || dto.scoreSummary || '').trim();
+    const submittedAt = dto.submittedAt ? new Date(dto.submittedAt) : new Date();
+
+    const payload = {
+      customId,
       type: BusinessDependencyType.DIAGNOSTIC,
       fullName,
       company,
@@ -104,30 +148,60 @@ export class BusinessDependencyService {
       email: (dto.email || '').trim().toLowerCase(),
       designation: (dto.designation || '').trim(),
       industry: (dto.industry || '').trim(),
-      businessSize: (dto.businessSize || dto.teamSize || '').trim(),
-      biggestChallenge: (dto.biggestChallenge || '').trim(),
-      challengeDetails: (dto.challengeDetails || dto.notes || '').trim(),
+      businessSize: (dto.size || dto.businessSize || dto.teamSize || '').trim(),
+      biggestChallenge: (dto.challengeSelect || dto.biggestChallenge || '').trim(),
+      challengeDetails: (dto.challengeNote || dto.challengeDetails || dto.notes || '').trim(),
       score: parsedScore,
-      scoreDisplay: dto.scoreDisplay?.trim() || (parsedScore !== undefined ? `${parsedScore}/100` : ''),
-      scoreSummary: dto.scoreSummary?.trim() || '',
-      testAnswers: dto.answers || {},
+      scoreDisplay:
+        dto.scoreDisplay?.trim() ||
+        (parsedScore !== undefined ? `${parsedScore}/100` : ''),
+      scoreSummary: category,
+      category,
+      originalTestName: (dto.originalTestName || '').trim(),
+      originalBusiness: (dto.originalBusiness || '').trim(),
+      stage: dto.stage?.trim() || 'Diagnostic Booked',
+      submittedAt,
+      answers: Array.isArray(dto.answers) ? dto.answers : [],
+      testAnswers: dto.testAnswers || {},
       status: BusinessDependencyStatus.PENDING,
-    });
+    };
 
-    const saved = await record.save();
-    this.logger.log(`New Business Diagnostic booked: ID ${saved._id} by ${fullName} (${company})`);
-    return saved;
+    let saved: any;
+    if (customId) {
+      saved = await this.dependencyModel.findOneAndUpdate(
+        { customId },
+        { $set: payload },
+        { new: true, upsert: true, setDefaultsOnInsert: true },
+      );
+    } else {
+      const record = new this.dependencyModel(payload);
+      saved = await record.save();
+    }
+
+    this.logger.log(
+      `New Business Diagnostic booked: ID ${saved._id} (customId: ${customId}) by ${fullName} (${company})`,
+    );
+    return this.formatItem(saved);
   }
 
   // =====================================================
   // 3. UNIVERSAL CREATE / REGULAR CRUD CREATE
   // =====================================================
   async create(dto: CreateBusinessDependencyDto) {
-    // If type is explicitly test or diagnostic, follow that;
-    // Otherwise, auto-infer from diagnostic fields
+    const rawType = String(dto.type || '').toLowerCase();
     const isDiagnostic =
-      dto.type === BusinessDependencyType.DIAGNOSTIC ||
-      Boolean(dto.industry || dto.biggestChallenge || dto.businessSize || dto.email || dto.designation);
+      rawType.includes('diag') ||
+      rawType.includes('dyn') ||
+      Boolean(
+        dto.industry ||
+        dto.biggestChallenge ||
+        dto.challengeSelect ||
+        dto.businessSize ||
+        dto.size ||
+        dto.email ||
+        dto.designation ||
+        dto.stage === 'Diagnostic Booked',
+      );
 
     if (isDiagnostic) {
       return this.createDiagnostic(dto as CreateBusinessDependencyDiagnosticDto);
@@ -144,12 +218,13 @@ export class BusinessDependencyService {
       page = 1,
       limit = 10,
       type,
+      category,
       search,
       industry,
       businessSize,
       biggestChallenge,
       status,
-      sortBy = 'createdAt',
+      sortBy = 'newest',
       sortOrder = 'desc',
       startDate,
       endDate,
@@ -157,19 +232,29 @@ export class BusinessDependencyService {
 
     const filter: any = {};
 
-    // Filter by type: test, diagnostic (dyn), or all
-    if (type && type !== 'all') {
-      const normalizedType = type.trim().toLowerCase();
-      if (normalizedType === 'test') {
-        filter.type = BusinessDependencyType.TEST;
-      } else if (
-        normalizedType === 'dyn' ||
-        normalizedType === 'diagnostic' ||
-        normalizedType.startsWith('dyn')
-      ) {
+    // Filter by type: test, diagnostic, Business Test, Business Diagnostic, or all
+    if (type && type.toUpperCase() !== 'ALL') {
+      const lower = type.trim().toLowerCase();
+      if (lower.includes('diag') || lower.includes('dyn')) {
         filter.type = BusinessDependencyType.DIAGNOSTIC;
+      } else if (lower.includes('test')) {
+        filter.type = BusinessDependencyType.TEST;
+      }
+    }
+
+    // Filter by category
+    if (category && category.toUpperCase() !== 'ALL') {
+      if (category === 'red') {
+        filter.score = { $lte: 25 };
+      } else if (category === 'high') {
+        filter.score = { $gt: 25, $lte: 50 };
+      } else if (category === 'growing') {
+        filter.score = { $gt: 50, $lte: 75 };
+      } else if (category === 'self') {
+        filter.score = { $gt: 75 };
       } else {
-        filter.type = normalizedType;
+        const catRegex = new RegExp(category.trim(), 'i');
+        filter.$or = [{ category: catRegex }, { scoreSummary: catRegex }];
       }
     }
 
@@ -206,11 +291,25 @@ export class BusinessDependencyService {
         { industry: searchRegex },
         { designation: searchRegex },
         { biggestChallenge: searchRegex },
+        { category: searchRegex },
       ];
     }
 
     const skip = (Math.max(1, page) - 1) * limit;
-    const sort: any = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+
+    // Sorting logic supporting frontend presets
+    let sort: any = { createdAt: -1 };
+    if (sortBy === 'newest') {
+      sort = { submittedAt: -1, createdAt: -1 };
+    } else if (sortBy === 'oldest') {
+      sort = { submittedAt: 1, createdAt: 1 };
+    } else if (sortBy === 'score_high') {
+      sort = { score: -1 };
+    } else if (sortBy === 'score_low') {
+      sort = { score: 1 };
+    } else if (sortBy) {
+      sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
+    }
 
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -239,8 +338,12 @@ export class BusinessDependencyService {
       }).exec(),
     ]);
 
+    const formattedItems = data.map((d) => this.formatItem(d));
+
     return {
-      items: data,
+      items: formattedItems,
+      // Provide both items and submissions aliases for seamless frontend compatibility
+      submissions: formattedItems,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -249,8 +352,8 @@ export class BusinessDependencyService {
       },
       counts: {
         total: totalAll,
-        totalTests, // Count total test attended
-        totalDiagnostics, // Count total diagnostics booked
+        totalTests,
+        totalDiagnostics,
         todayTotal: todayTests + todayDiagnostics,
         todayTests,
         todayDiagnostics,
@@ -316,15 +419,17 @@ export class BusinessDependencyService {
 
     return {
       total,
+      testCount: totalTests,
       totalTests,
+      diagnosticCount: totalDiagnostics,
       totalDiagnostics,
+      avgScore,
       today: {
         total: todayTotal,
         tests: todayTests,
         diagnostics: todayDiagnostics,
       },
       last7DaysTotal: weekTotal,
-      avgScore,
       industryBreakdown: industryAgg.map((item) => ({
         industry: item._id,
         count: item.count,
@@ -337,14 +442,16 @@ export class BusinessDependencyService {
   }
 
   // =====================================================
-  // 6. FIND ONE BY ID
+  // 6. FIND ONE BY ID (Handles MongoDB ObjectId or customId)
   // =====================================================
   async findOne(id: string) {
-    const record = await this.dependencyModel.findById(id).exec();
+    const isObjId = Types.ObjectId.isValid(id);
+    const query = isObjId ? { $or: [{ _id: id }, { customId: id }] } : { customId: id };
+    const record = await this.dependencyModel.findOne(query).exec();
     if (!record) {
       throw new NotFoundException(`Business Dependency entry with ID "${id}" not found`);
     }
-    return record;
+    return this.formatItem(record);
   }
 
   // =====================================================
@@ -353,39 +460,48 @@ export class BusinessDependencyService {
   async update(id: string, dto: UpdateBusinessDependencyDto) {
     const updatePayload: any = { ...dto };
 
-    // Standardize aliases if passed
-    if (dto.yourName || dto.name) {
-      updatePayload.fullName = (dto.fullName || dto.yourName || dto.name)!.trim();
+    if (dto.name || dto.yourName) {
+      updatePayload.fullName = (dto.fullName || dto.name || dto.yourName)!.trim();
     }
-    if (dto.businessName) {
-      updatePayload.company = (dto.company || dto.businessName)!.trim();
+    if (dto.business) {
+      updatePayload.company = (dto.company || dto.business)!.trim();
     }
     if (dto.phoneNumber) {
       updatePayload.phone = (dto.phone || dto.phoneNumber)!.trim();
     }
-    if (dto.teamSize) {
-      updatePayload.businessSize = (dto.businessSize || dto.teamSize)!.trim();
+    if (dto.size) {
+      updatePayload.businessSize = (dto.businessSize || dto.size)!.trim();
+    }
+    if (dto.challengeSelect) {
+      updatePayload.biggestChallenge = (dto.biggestChallenge || dto.challengeSelect)!.trim();
+    }
+    if (dto.challengeNote) {
+      updatePayload.challengeDetails = (dto.challengeDetails || dto.challengeNote)!.trim();
     }
 
+    const isObjId = Types.ObjectId.isValid(id);
+    const query = isObjId ? { $or: [{ _id: id }, { customId: id }] } : { customId: id };
+
     const updated = await this.dependencyModel
-      .findByIdAndUpdate(id, { $set: updatePayload }, { new: true })
+      .findOneAndUpdate(query, { $set: updatePayload }, { new: true })
       .exec();
 
     if (!updated) {
       throw new NotFoundException(`Business Dependency entry with ID "${id}" not found`);
     }
 
-    return updated;
+    return this.formatItem(updated);
   }
 
   // =====================================================
-  // 8. REMOVE BY ID
+  // 8. REMOVE BY ID (Safe from CastError)
   // =====================================================
   async remove(id: string) {
-    const deleted = await this.dependencyModel.findByIdAndDelete(id).exec();
-    if (!deleted) {
-      throw new NotFoundException(`Business Dependency entry with ID "${id}" not found`);
-    }
+    const isObjId = Types.ObjectId.isValid(id);
+    const query = isObjId ? { $or: [{ _id: id }, { customId: id }] } : { customId: id };
+
+    await this.dependencyModel.findOneAndDelete(query).exec();
+
     return {
       success: true,
       message: 'Record deleted successfully',
@@ -417,8 +533,8 @@ export class BusinessDependencyService {
       'Challenge Details',
       'Score',
       'Score Display',
-      'Score Summary',
-      'Status',
+      'Category / Status',
+      'Stage',
       'Submitted At',
     ];
 
@@ -429,22 +545,22 @@ export class BusinessDependencyService {
     };
 
     const rows = items.map((doc: any) => [
-      escapeCsv(doc._id),
+      escapeCsv(doc.id || doc._id),
       escapeCsv(doc.type),
-      escapeCsv(doc.fullName),
-      escapeCsv(doc.company),
+      escapeCsv(doc.name || doc.fullName),
+      escapeCsv(doc.company || doc.business),
       escapeCsv(doc.phone),
       escapeCsv(doc.email || ''),
       escapeCsv(doc.designation || ''),
       escapeCsv(doc.industry || ''),
-      escapeCsv(doc.businessSize || ''),
-      escapeCsv(doc.biggestChallenge || ''),
-      escapeCsv(doc.challengeDetails || ''),
+      escapeCsv(doc.size || doc.businessSize || ''),
+      escapeCsv(doc.challengeSelect || doc.biggestChallenge || ''),
+      escapeCsv(doc.challengeNote || doc.challengeDetails || ''),
       escapeCsv(doc.score !== undefined ? doc.score : ''),
       escapeCsv(doc.scoreDisplay || ''),
-      escapeCsv(doc.scoreSummary || ''),
-      escapeCsv(doc.status),
-      escapeCsv(doc.createdAt ? new Date(doc.createdAt).toISOString() : ''),
+      escapeCsv(doc.category || doc.scoreSummary || ''),
+      escapeCsv(doc.stage || ''),
+      escapeCsv(doc.submittedAt ? new Date(doc.submittedAt).toISOString() : ''),
     ]);
 
     return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');

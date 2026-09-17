@@ -1,115 +1,132 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-} from 'class-validator';
-import { BusinessDependencyType } from '../schemas/business-dependency.schema';
+import { IsOptional } from 'class-validator';
 
 export class CreateBusinessDependencyDto {
-  @ApiPropertyOptional({
-    description: 'Submission type',
-    enum: BusinessDependencyType,
-    example: BusinessDependencyType.TEST,
-  })
+  @ApiPropertyOptional({ description: 'Client custom ID' })
   @IsOptional()
-  @IsEnum(BusinessDependencyType)
-  type?: BusinessDependencyType;
+  id?: string;
 
-  @ApiPropertyOptional({ example: 'Arjun Mehta' })
+  @ApiPropertyOptional({ description: 'Submission type' })
   @IsOptional()
-  @IsString()
+  type?: any;
+
+  @ApiPropertyOptional({ description: 'Submission timestamp' })
+  @IsOptional()
+  submittedAt?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   fullName?: string;
 
-  @ApiPropertyOptional({ example: 'Arjun Mehta' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
-  yourName?: string;
-
-  @ApiPropertyOptional({ example: 'Arjun Mehta' })
-  @IsOptional()
-  @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ example: 'Mehta Interiors' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  yourName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   company?: string;
 
-  @ApiPropertyOptional({ example: 'Mehta Interiors' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  business?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   businessName?: string;
 
-  @ApiPropertyOptional({ example: '9876543210' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
   phone?: string;
 
-  @ApiPropertyOptional({ example: '9876543210' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
   phoneNumber?: string;
 
-  @ApiPropertyOptional({ example: 'arjun@example.com' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
   email?: string;
 
-  @ApiPropertyOptional({ example: 'Founder, CEO' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
   designation?: string;
 
-  @ApiPropertyOptional({ example: 'Retail' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
   industry?: string;
 
-  @ApiPropertyOptional({ example: '1-5 employees' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  size?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   businessSize?: string;
 
-  @ApiPropertyOptional({ example: '1-5 employees' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
   teamSize?: string;
 
-  @ApiPropertyOptional({ example: 'Operations & Scaling' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  challengeSelect?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   biggestChallenge?: string;
 
-  @ApiPropertyOptional({ example: 'Need a clear operational roadmap.' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  challengeNote?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   challengeDetails?: string;
 
-  @ApiPropertyOptional({ example: 'Need a clear operational roadmap.' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
   notes?: string;
 
-  @ApiPropertyOptional({ example: 72 })
+  @ApiPropertyOptional()
   @IsOptional()
-  score?: number | string;
+  score?: any;
 
-  @ApiPropertyOptional({ example: '72/100' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
   scoreDisplay?: string;
 
-  @ApiPropertyOptional({ example: 'Partially Systemized' })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
   scoreSummary?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  answers?: Record<string, any>;
+  category?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  testAnswers?: Record<string, any>;
+  stage?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  status?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  originalTestName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  originalBusiness?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  answers?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  testAnswers?: any;
 }
