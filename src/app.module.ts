@@ -25,6 +25,7 @@ import { StudentFoundersModule } from './student-founders/student-founders.modul
 import { BusinessFoundersModule } from './business-founders/business-founders.module';
 import { SingAlongModule } from './sing-along/sing-along.module';
 import { PaymentsModule } from './payments/payments.module';
+import { BusinessDependencyModule } from './business-dependency/business-dependency.module';
 
 @Module({
   imports: [
@@ -101,6 +102,7 @@ import { PaymentsModule } from './payments/payments.module';
 
     SingAlongModule,
     PaymentsModule,
+    BusinessDependencyModule,
   ],
 
   controllers: [AppController],
