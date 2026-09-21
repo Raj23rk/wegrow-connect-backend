@@ -133,10 +133,42 @@ export class SingAlongController {
   // =====================================================
   // SEND / RESEND TICKET EMAIL (PUBLIC / ADMIN)
   // =====================================================
-  @Post('send-ticket/:id')
-  @ApiOperation({ summary: 'Send or resend Sing Along ticket email with QR code' })
-  async sendTicket(@Param('id') id: string) {
-    return this.singAlongService.sendTicketEmail(id);
+  @Post(['admin/send-ticket', 'send-ticket', 'send-mail'])
+  @ApiOperation({
+    summary:
+      'Send or resend Sing Along ticket email with QR code and download options via body payload',
+  })
+  async sendTicketBody(
+    @Body() body: { id?: string; bookingId?: string; email?: string },
+  ) {
+    const idToUse = body?.bookingId || body?.id || '';
+    return this.singAlongService.sendTicketEmail(idToUse, body?.email);
+  }
+
+  @Post([
+    'admin/send-ticket/:id',
+    'send-ticket/:id',
+    'send-mail/:id',
+    'ticket/:id/send-email',
+  ])
+  @ApiOperation({
+    summary:
+      'Send or resend Sing Along ticket email with QR code and download options',
+  })
+  async sendTicket(
+    @Param('id') id: string,
+    @Body() body?: { email?: string },
+  ) {
+    return this.singAlongService.sendTicketEmail(id, body?.email);
+  }
+
+  @Get(['send-ticket/:id', 'admin/send-ticket/:id'])
+  @ApiOperation({ summary: 'Send ticket email via GET request (Quick action)' })
+  async sendTicketGet(
+    @Param('id') id: string,
+    @Query('email') email?: string,
+  ) {
+    return this.singAlongService.sendTicketEmail(id, email);
   }
 
   // =====================================================
@@ -249,13 +281,13 @@ export class SingAlongController {
   }
 
   // =====================================================
-  // GET ALL BOOKINGS (ADMIN)
+  // GET ALL BOOKINGS (ADMIN LIST API)
   // =====================================================
-  @Get()
+  @Get(['admin/list', 'admin/bookings', 'list', 'bookings', ''])
   @UseGuards(JwtAuthGuard, AdminGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Get all bookings with pagination & search (Admin)',
+    summary: 'Get all bookings with pagination, passFilter & search (Admin)',
   })
   async findAll(@Query() query: QuerySingAlongBookingDto) {
     return this.singAlongService.findAll(query);

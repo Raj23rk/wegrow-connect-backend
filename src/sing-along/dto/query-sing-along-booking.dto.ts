@@ -37,4 +37,24 @@ export class QuerySingAlongBookingDto {
   @IsInt()
   @Min(1)
   limit: number = 50;
+
+  @ApiPropertyOptional({ description: 'Filter by pass type: SPONSOR, PROMO, FREE, PAID' })
+  @IsOptional()
+  @IsString()
+  passType?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by pass category: ALL, SPONSOR, PROMO, FREE, PAID' })
+  @IsOptional()
+  @IsString()
+  passFilter?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by specific date (YYYY-MM-DD)' })
+  @IsOptional()
+  @IsString()
+  date?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by sponsor or promo code' })
+  @IsOptional()
+  @IsString()
+  code?: string;
 }

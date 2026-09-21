@@ -67,6 +67,27 @@ export class SingAlongBooking {
   @Prop({ default: false })
   emailSent: boolean = false;
 
+  @Prop({ type: Date, default: null })
+  emailSentAt?: Date;
+
+  @Prop({ default: '', trim: true })
+  company?: string;
+
+  @Prop({ default: 'Sivakasi', trim: true })
+  city?: string;
+
+  @Prop({ default: 'REGULAR', trim: true })
+  passType?: string; // e.g. 'VIP_SPONSOR', 'PROMO', 'REGULAR'
+
+  @Prop({ default: '', trim: true })
+  code?: string; // e.g. 'SA26_SP01', 'SA26_PO01'
+
+  @Prop({ default: '', trim: true })
+  sponsorCode?: string;
+
+  @Prop({ default: false })
+  isFree?: boolean;
+
   @Prop({ default: '', trim: true })
   notes?: string;
 }

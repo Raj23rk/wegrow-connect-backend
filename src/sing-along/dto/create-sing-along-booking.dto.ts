@@ -24,14 +24,30 @@ export class CreateSingAlongBookingDto {
 
   @ApiProperty({
     example: '9876543210',
-    description: '10-digit Indian WhatsApp or mobile number',
+    description: '10-digit Indian WhatsApp or mobile number (with optional +91 prefix)',
   })
   @IsString()
   @IsNotEmpty({ message: 'Phone number is required' })
-  @Matches(/^[6-9]\d{9}$/, {
-    message: 'Please provide a valid 10-digit Indian mobile number',
+  @Matches(/^(?:\+?91[\s-]?)?[6-9]\d{9}$/, {
+    message: 'Please provide a valid Indian mobile number',
   })
   phone!: string;
+
+  @ApiPropertyOptional({
+    example: 'SA26-SP-ABC123',
+    description: 'Explicit booking ID (e.g. from Sponsor/Promo pass)',
+  })
+  @IsOptional()
+  @IsString()
+  bookingId?: string;
+
+  @ApiPropertyOptional({
+    example: 'TKT-SA26-SP-ABC123',
+    description: 'Ticket ID reference',
+  })
+  @IsOptional()
+  @IsString()
+  ticketId?: string;
 
   @ApiPropertyOptional({
     example: 'raj@example.com',
@@ -51,6 +67,77 @@ export class CreateSingAlongBookingDto {
   @Max(10, { message: 'Maximum 10 tickets per booking allowed' })
   @Type(() => Number)
   ticketQty: number = 1;
+
+  @ApiPropertyOptional({
+    example: 0,
+    description: 'Total amount (0 for complimentary/sponsor/promo pass)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  totalAmount?: number;
+
+  @ApiPropertyOptional({
+    example: 0,
+    description: 'Amount alias',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  amount?: number;
+
+  @ApiPropertyOptional({
+    example: 199,
+    description: 'Unit price per ticket',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  unitPrice?: number;
+
+  @ApiPropertyOptional({
+    example: 'WeGrow Inc.',
+    description: 'Company or organization name for sponsor/partner pass',
+  })
+  @IsOptional()
+  @IsString()
+  company?: string;
+
+  @ApiPropertyOptional({
+    example: 'Sivakasi',
+    description: 'City or location of attendee',
+  })
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional({
+    example: 'VIP_SPONSOR',
+    description: 'Pass type classification: VIP_SPONSOR, PROMO, REGULAR',
+  })
+  @IsOptional()
+  @IsString()
+  passType?: string;
+
+  @ApiPropertyOptional({
+    example: 'SA26_SP01',
+    description: 'Promo or Sponsor code applied',
+  })
+  @IsOptional()
+  @IsString()
+  code?: string;
+
+  @ApiPropertyOptional({
+    example: 'SA26_SP01',
+    description: 'Sponsor code alias',
+  })
+  @IsOptional()
+  @IsString()
+  sponsorCode?: string;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Flag indicating 100% complimentary pass',
+  })
+  @IsOptional()
+  isFree?: boolean;
 
   @ApiPropertyOptional({
     example: '123456789012',

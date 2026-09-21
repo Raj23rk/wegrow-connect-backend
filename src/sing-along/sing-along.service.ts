@@ -109,7 +109,9 @@ export class SingAlongService {
       throw new BadRequestException('Full name is required.');
     }
 
-    const phone = (dto.phone || '').trim();
+    const rawPhone = (dto.phone || '').trim();
+    const phoneDigits = rawPhone.replace(/\D/g, '');
+    const phone = phoneDigits.length >= 10 ? phoneDigits.slice(-10) : rawPhone;
     if (!phone || !/^[6-9]\d{9}$/.test(phone)) {
       throw new BadRequestException(
         'A valid 10-digit Indian mobile / WhatsApp number is required.',
@@ -117,13 +119,32 @@ export class SingAlongService {
     }
 
     const ticketQty = Math.max(1, Math.min(10, Number(dto.ticketQty) || 1));
-    const unitPrice = 199;
-    const totalAmount = ticketQty * unitPrice;
+    const isFree =
+      dto.isFree ||
+      dto.totalAmount === 0 ||
+      dto.amount === 0 ||
+      (dto.passType && /SPONSOR|PROMO/i.test(dto.passType)) ||
+      (dto.code && /SP|PO/i.test(dto.code));
+
+    const unitPrice = isFree
+      ? 0
+      : dto.unitPrice !== undefined
+      ? Number(dto.unitPrice)
+      : 199;
+    const totalAmount = isFree
+      ? 0
+      : dto.totalAmount !== undefined
+      ? Number(dto.totalAmount)
+      : ticketQty * unitPrice;
+
     const utr = (dto.utr || '').trim();
     const eventId = (dto.eventId || 'SINGALONG-SEP-27-2026').trim();
     const email = dto.email ? dto.email.toLowerCase().trim() : '';
 
-    const bookingId = await this.generateBookingId();
+    let bookingId = (dto.bookingId || '').trim().toUpperCase();
+    if (!bookingId) {
+      bookingId = await this.generateBookingId();
+    }
 
     try {
       const newBooking = await this.bookingModel.create({
@@ -138,16 +159,28 @@ export class SingAlongService {
         paymentScreenshot: dto.paymentScreenshot || '',
         paymentMethod:
           dto.paymentMethod ||
-          (utr && utr.startsWith('pay_')
+          (isFree
+            ? dto.code === 'SA26_SP01' || (dto.passType && /SPONSOR/i.test(dto.passType))
+              ? 'VIP SPONSOR PASS (FREE)'
+              : 'PROMO PASS (FREE)'
+            : utr && utr.startsWith('pay_')
             ? 'RAZORPAY'
             : 'kumarrk23dev-1@okaxis'),
         status: dto.status || SingAlongBookingStatus.CONFIRMED,
         eventId,
         attended: false,
         isActive: true,
+        company: dto.company || '',
+        city: dto.city || 'Sivakasi',
+        passType: dto.passType || (isFree ? 'SPONSOR' : 'REGULAR'),
+        code: dto.code || dto.sponsorCode || '',
+        sponsorCode: dto.sponsorCode || dto.code || '',
+        isFree: !!isFree,
         notes:
           dto.notes ||
-          (utr && utr.startsWith('pay_')
+          (isFree
+            ? `Complimentary Pass (${dto.code || dto.passType || 'SPONSOR'})`
+            : utr && utr.startsWith('pay_')
             ? `Paid via Razorpay (${utr})`
             : 'UPI QR Payment'),
       });
@@ -173,6 +206,12 @@ export class SingAlongService {
         utr: newBooking.utr,
         status: newBooking.status,
         eventId: newBooking.eventId,
+        company: newBooking.company,
+        city: newBooking.city,
+        passType: newBooking.passType,
+        code: newBooking.code,
+        sponsorCode: newBooking.sponsorCode,
+        isFree: newBooking.isFree,
         verificationToken: `SINGALONG-VERIFY:${newBooking.bookingId}`,
         createdAt: (newBooking as any).createdAt,
       };
@@ -195,6 +234,12 @@ export class SingAlongService {
           eventId,
           attended: false,
           isActive: true,
+          company: dto.company || '',
+          city: dto.city || 'Sivakasi',
+          passType: dto.passType || (isFree ? 'SPONSOR' : 'REGULAR'),
+          code: dto.code || dto.sponsorCode || '',
+          sponsorCode: dto.sponsorCode || dto.code || '',
+          isFree: !!isFree,
           notes: dto.notes || 'UPI QR Payment',
         });
 
@@ -216,6 +261,12 @@ export class SingAlongService {
           utr: fallbackBooking.utr,
           status: fallbackBooking.status,
           eventId: fallbackBooking.eventId,
+          company: fallbackBooking.company,
+          city: fallbackBooking.city,
+          passType: fallbackBooking.passType,
+          code: fallbackBooking.code,
+          sponsorCode: fallbackBooking.sponsorCode,
+          isFree: fallbackBooking.isFree,
           verificationToken: `SINGALONG-VERIFY:${fallbackBooking.bookingId}`,
           createdAt: (fallbackBooking as any).createdAt,
         };
@@ -227,7 +278,7 @@ export class SingAlongService {
   // =========================================================================
   // SEND / RESEND TICKET CONFIRMATION EMAIL
   // =========================================================================
-  async sendTicketEmail(idOrBookingId: string) {
+  async sendTicketEmail(idOrBookingId: string, overrideEmail?: string) {
     const term = (idOrBookingId || '').trim();
     if (!term) {
       throw new BadRequestException('Booking identifier is required.');
@@ -249,42 +300,56 @@ export class SingAlongService {
       throw new NotFoundException(`No booking found for identifier "${term}".`);
     }
 
-    if (!booking.email) {
+    const targetEmail = (overrideEmail || booking.email || '').trim().toLowerCase();
+    if (!targetEmail) {
       throw new BadRequestException(
-        `Booking ${booking.bookingId} has no associated email address.`,
+        `Booking ${booking.bookingId} has no associated email address. Please provide an email address.`,
+      );
+    }
+
+    // If an override email was provided and differs from stored, persist it
+    if (overrideEmail && overrideEmail.trim().toLowerCase() !== booking.email) {
+      await this.bookingModel.updateOne(
+        { bookingId: booking.bookingId },
+        { $set: { email: targetEmail } },
       );
     }
 
     const success = await this.notificationsService.sendSingAlongTicketEmail({
-      email: booking.email,
+      email: targetEmail,
       fullName: booking.fullName || 'Guest Attendee',
       phone: booking.phone || '',
       bookingId: booking.bookingId,
       ticketQty: booking.ticketQty || 1,
-      unitPrice: booking.unitPrice || 199,
-      totalAmount: booking.totalAmount || 199,
-      paymentMethod: booking.paymentMethod || 'CASHFREE',
+      unitPrice: booking.unitPrice || 0,
+      totalAmount: booking.totalAmount || 0,
+      paymentMethod: booking.paymentMethod || 'Complimentary / Online',
       utr: booking.utr || '',
       orderId: booking.orderId || '',
       eventId: booking.eventId || 'SINGALONG-SEP-27-2026',
       verificationToken: `SINGALONG-VERIFY:${booking.bookingId}`,
+      passType: (booking as any).passType,
+      company: (booking as any).company,
+      city: (booking as any).city,
+      code: (booking as any).code || (booking as any).sponsorCode,
+      isFree: (booking as any).isFree || (booking as any).totalAmount === 0,
     });
 
     if (success) {
       await this.bookingModel.updateOne(
         { bookingId: booking.bookingId },
-        { $set: { emailSent: true } },
+        { $set: { emailSent: true, emailSentAt: new Date() } },
       );
-      this.logger.log(`Ticket email sent successfully for ${booking.bookingId} to ${booking.email}`);
+      this.logger.log(`Ticket email sent successfully for ${booking.bookingId} to ${targetEmail}`);
     }
 
     return {
       success,
       message: success
-        ? `Ticket confirmation email sent to ${booking.email}`
-        : `Failed to send email to ${booking.email}`,
+        ? `Ticket confirmation email sent to ${targetEmail}`
+        : `Failed to send email to ${targetEmail}`,
       bookingId: booking.bookingId,
-      email: booking.email,
+      email: targetEmail,
     };
   }
 
@@ -1886,6 +1951,44 @@ export class SingAlongService {
       filter.eventId = eventId;
     }
 
+    if (query.date && query.date.trim()) {
+      const d = query.date.trim();
+      const startOfDay = new Date(`${d}T00:00:00.000Z`);
+      const endOfDay = new Date(`${d}T23:59:59.999Z`);
+      if (!isNaN(startOfDay.getTime())) {
+        filter.createdAt = { $gte: startOfDay, $lte: endOfDay };
+      }
+    }
+
+    const passCategory = (query.passFilter || query.passType || '').toUpperCase().trim();
+    if (passCategory === 'SPONSOR') {
+      filter.$or = [
+        { passType: { $regex: /SPONSOR/i } },
+        { code: { $regex: /SP/i } },
+        { sponsorCode: { $regex: /SP/i } },
+        { notes: { $regex: /SPONSOR/i } },
+        { bookingId: { $regex: /SA26-SP/i } },
+      ];
+    } else if (passCategory === 'PROMO') {
+      filter.$or = [
+        { passType: { $regex: /PROMO/i } },
+        { code: { $regex: /PO/i } },
+        { sponsorCode: { $regex: /PO/i } },
+        { notes: { $regex: /PROMO/i } },
+        { bookingId: { $regex: /SA26-PO/i } },
+      ];
+    } else if (passCategory === 'FREE') {
+      filter.$or = [
+        { isFree: true },
+        { totalAmount: 0 },
+        { unitPrice: 0 },
+        { notes: { $regex: /FREE|COMPLIMENTARY|SPONSOR|PROMO/i } },
+      ];
+    } else if (passCategory === 'PAID') {
+      filter.totalAmount = { $gt: 0 };
+      filter.isFree = { $ne: true };
+    }
+
     if (search && search.trim()) {
       const s = search.trim();
       // Optimization: if phone number or bookingId pattern, use direct field match instead of wide $or
@@ -1900,6 +2003,8 @@ export class SingAlongService {
           { bookingId: { $regex: s, $options: 'i' } },
           { utr: { $regex: s, $options: 'i' } },
           { email: { $regex: s, $options: 'i' } },
+          { company: { $regex: s, $options: 'i' } },
+          { code: { $regex: s, $options: 'i' } },
         ];
       }
     }
@@ -1911,7 +2016,7 @@ export class SingAlongService {
       this.bookingModel
         .find(filter)
         .select(
-          'bookingId fullName phone email ticketQty unitPrice totalAmount utr status attended eventId createdAt paymentMethod notes',
+          'bookingId fullName phone email ticketQty unitPrice totalAmount utr orderId paymentScreenshot status attended attendedAt eventId createdAt updatedAt paymentMethod notes company city passType code sponsorCode isFree emailSent emailSentAt',
         )
         .sort({ createdAt: -1 })
         .skip(skip)

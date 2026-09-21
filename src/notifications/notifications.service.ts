@@ -1042,7 +1042,7 @@ export class NotificationsService {
       const from = this.getMailFrom();
 
       const { data, error } = await this.resend.emails.send({
-        from: `WeGrow B School <${from}>`,
+        from,
         to: [to],
         subject,
         html,
@@ -1245,7 +1245,7 @@ export class NotificationsService {
       const from = this.getMailFrom();
 
       const { data, error } = await this.resend.emails.send({
-        from: `WeGrow B School <${from}>`,
+        from,
         to: [email],
         subject: 'Reset Your WeGrow Password',
         html,
@@ -3649,6 +3649,11 @@ export class NotificationsService {
     orderId?: string;
     eventId?: string;
     verificationToken?: string;
+    passType?: string;
+    company?: string;
+    city?: string;
+    code?: string;
+    isFree?: boolean;
   }): Promise<boolean> {
     if (!data.email) return false;
 
@@ -3666,6 +3671,20 @@ export class NotificationsService {
     });
 
     const ticketDownloadUrl = `${baseUrl}/api/v1/sing-along/ticket/${bookingId}`;
+    const isComplimentary =
+      data.isFree ||
+      data.totalAmount === 0 ||
+      (data.passType && /SPONSOR|PROMO/i.test(data.passType)) ||
+      (data.code && /SP|PO/i.test(data.code));
+
+    const passCategoryTitle =
+      data.code === 'SA26_SP01' || (data.passType && /SPONSOR/i.test(data.passType))
+        ? 'VIP SPONSOR PASS (SA26_SP01)'
+        : data.code === 'SA26_PO01' || (data.passType && /PROMO/i.test(data.passType))
+        ? 'PROMO ACCESS PASS (SA26_PO01)'
+        : data.passType
+        ? `${data.passType} PASS`
+        : 'LIVE CONCERT PASS';
 
     const html = `
 <!DOCTYPE html>
@@ -3741,11 +3760,11 @@ export class NotificationsService {
       <div class="content">
         <div class="greeting">
           Hello <strong>${data.fullName}</strong>,<br>
-          Thank you for booking your ticket for <strong>Sing Along - Live Music Event</strong>! Your payment has been confirmed and your digital pass is active below.
+          Thank you for booking your ticket for <strong>Sing Along - Live Music Event</strong>! Your registration is confirmed and your official pass is ready below.
         </div>
         
         <div>
-          <span class="status-pill">&#10004; PAYMENT CONFIRMED &bull; PASS ACTIVE</span>
+          <span class="status-pill">&#10004; CONFIRMED &bull; PASS ACTIVE</span>
         </div>
 
         <!-- 5TH IMAGE EVENT HIGHLIGHTS BAR -->
@@ -3778,6 +3797,12 @@ export class NotificationsService {
               <td class="value">${data.fullName}</td>
             </tr>
             <tr>
+              <td class="label">Pass Category</td>
+              <td class="value" style="color: #7c3aed; font-weight: 800;">${passCategoryTitle}</td>
+            </tr>
+            ${data.company ? `<tr><td class="label">Company / Org</td><td class="value">${data.company}</td></tr>` : ''}
+            ${data.city ? `<tr><td class="label">Location / City</td><td class="value">${data.city}</td></tr>` : ''}
+            <tr>
               <td class="label">Mobile Number</td>
               <td class="value">${data.phone}</td>
             </tr>
@@ -3787,7 +3812,13 @@ export class NotificationsService {
             </tr>
             <tr>
               <td class="label">Amount Paid</td>
-              <td class="value" style="color: #059669; font-size: 16px;">&#8377;${data.totalAmount}</td>
+              <td class="value">
+                ${
+                  isComplimentary
+                    ? '<span style="color: #059669; font-weight: 800; background: #ecfdf5; padding: 2px 8px; border-radius: 6px; border: 1px solid #a7f3d0;">COMPLIMENTARY PASS (FREE ₹0)</span>'
+                    : `<span style="color: #059669; font-size: 16px;">&#8377;${data.totalAmount}</span>`
+                }
+              </td>
             </tr>
             <tr>
               <td class="label">Venue</td>
@@ -3795,11 +3826,11 @@ export class NotificationsService {
             </tr>
             <tr>
               <td class="label">Event Date</td>
-              <td class="value" style="color:#78350f;">Sunday, 27 September 2026</td>
+              <td class="value" style="color:#78350f;">Sunday, 27 September 2026 (6:00 PM)</td>
             </tr>
             <tr>
-              <td class="label">Payment Method</td>
-              <td class="value">${data.paymentMethod || 'Online Gateway / UPI'}</td>
+              <td class="label">Payment / Code</td>
+              <td class="value">${data.paymentMethod || (isComplimentary ? 'Verified Authorization Code' : 'Online Gateway / UPI')}</td>
             </tr>
             ${data.utr ? `<tr><td class="label">Reference / UTR</td><td class="value" style="font-family: monospace; font-size: 13px;">${data.utr}</td></tr>` : ''}
             ${data.orderId ? `<tr><td class="label">Order ID</td><td class="value" style="font-family: monospace; font-size: 12px;">${data.orderId}</td></tr>` : ''}
@@ -3816,21 +3847,46 @@ export class NotificationsService {
           </div>
         </div>
 
-        <!-- DOWNLOAD DIGITAL TICKET OPTION -->
-        <div class="download-btn-wrap">
-          <a href="${ticketDownloadUrl}" target="_blank" class="download-btn">
-            📥 VIEW &amp; DOWNLOAD TICKET PASS
-          </a>
-          <div style="font-size: 12px; color: #78716c; margin-top: 8px;">
-            Click to open your ticket → tap “Save as PDF” or “Print Ticket” to save it
+        <!-- DOWNLOAD & VIEW DIGITAL TICKET OPTIONS -->
+        <div class="download-btn-wrap" style="text-align: center; margin: 26px 0 16px 0;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td align="center" style="padding-bottom: 12px;">
+                <a href="${ticketDownloadUrl}" target="_blank" class="download-btn" style="display: inline-block; background: linear-gradient(135deg, #4338ca 0%, #312e81 100%); color: #ffffff !important; font-weight: 800; font-size: 15px; text-decoration: none; padding: 14px 28px; border-radius: 10px; box-shadow: 0 4px 14px rgba(67, 56, 202, 0.35); letter-spacing: 0.5px;">
+                  🎟️ VIEW LIVE TICKET PASS
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td align="center">
+                <table cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="padding: 4px 6px;">
+                      <a href="${baseUrl}/api/v1/sing-along/ticket/${bookingId}/pdf" target="_blank" style="display: inline-block; background-color: #f8fafc; border: 1px solid #cbd5e1; color: #334155; font-size: 12px; font-weight: 700; text-decoration: none; padding: 8px 16px; border-radius: 8px;">
+                        📄 Download PDF Ticket
+                      </a>
+                    </td>
+                    <td style="padding: 4px 6px;">
+                      <a href="${baseUrl}/api/v1/sing-along/ticket/${bookingId}/image" target="_blank" style="display: inline-block; background-color: #f8fafc; border: 1px solid #cbd5e1; color: #334155; font-size: 12px; font-weight: 700; text-decoration: none; padding: 8px 16px; border-radius: 8px;">
+                        🖼️ Download PNG Pass
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+          <div style="font-size: 12px; color: #78716c; margin-top: 10px;">
+            Click any option above to save or print your ticket for entry verification
           </div>
         </div>
 
+        <!-- INSTRUCTIONS -->
         <div class="instructions">
           <h4>&#128204; Entry Guidelines & Venue Details:</h4>
           <ul>
             <li><strong>Venue:</strong> Arasan Turf, Sivakasi</li>
-            <li><strong>Date:</strong> Sunday, 27 September 2026</li>
+            <li><strong>Date:</strong> Sunday, 27 September 2026 (6:00 PM)</li>
             <li><strong>Helpline:</strong> <a href="tel:+919344037331" style="color:#78350f; font-weight:700;">+91 93440 37331</a></li>
             <li>Please present this digital pass or downloaded PDF with the QR code on your mobile phone at the entrance.</li>
             <li>Each QR code admits <strong>${data.ticketQty} ${data.ticketQty > 1 ? 'persons' : 'person'}</strong>.</li>
