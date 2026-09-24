@@ -29,7 +29,7 @@ export class BusinessFoundersService {
   async register(dto: CreateBusinessFounderDto) {
     const phoneTrimmed = dto.phone.trim();
     const emailNormalized = dto.email ? dto.email.toLowerCase().trim() : '';
-    const eventId = (dto.eventId || 'BUSINESS-SEP-16-2026').trim().toUpperCase();
+    const eventId = (dto.eventId || 'BUSINESS-OCT-09-2026').trim().toUpperCase();
 
     // Check duplicate phone or email (if email is provided) for this event
     const orConditions: any[] = [{ phone: phoneTrimmed }];
@@ -59,9 +59,16 @@ export class BusinessFoundersService {
       fullName: dto.fullName.trim(),
       phone: phoneTrimmed,
       email: emailNormalized,
-      businessName: dto.businessName?.trim() || '',
-      industry: dto.industry?.trim() || '',
+      state: dto.state?.trim() || '',
+      city: dto.city?.trim() || '',
+      isBusinessOwner: dto.isBusinessOwner?.trim() || '',
       yearsInBusiness: dto.yearsInBusiness?.trim() || '',
+      teamSize: dto.teamSize?.trim() || '',
+      industry: dto.industry?.trim() || '',
+      annualTurnover: dto.annualTurnover?.trim() || '',
+      productService: dto.productService?.trim() || '',
+      currentRole: dto.currentRole?.trim() || '',
+      businessName: dto.businessName?.trim() || '',
       biggestPriority: dto.biggestPriority?.trim() || '',
       growthBlocker: dto.growthBlocker?.trim() || '',
       hasTeam: dto.hasTeam?.trim() || '',
@@ -110,8 +117,14 @@ export class BusinessFoundersService {
       page = 1,
       limit = 10,
       search,
+      state,
+      city,
+      isBusinessOwner,
       industry,
       yearsInBusiness,
+      teamSize,
+      annualTurnover,
+      currentRole,
       biggestPriority,
       growthBlocker,
       hasTeam,
@@ -128,11 +141,29 @@ export class BusinessFoundersService {
     if (eventId) {
       filter.eventId = eventId.trim().toUpperCase();
     }
+    if (state) {
+      filter.state = new RegExp(state.trim(), 'i');
+    }
+    if (city) {
+      filter.city = new RegExp(city.trim(), 'i');
+    }
+    if (isBusinessOwner) {
+      filter.isBusinessOwner = isBusinessOwner.trim().toLowerCase();
+    }
     if (industry) {
       filter.industry = new RegExp(industry.trim(), 'i');
     }
     if (yearsInBusiness) {
       filter.yearsInBusiness = yearsInBusiness;
+    }
+    if (teamSize) {
+      filter.teamSize = teamSize;
+    }
+    if (annualTurnover) {
+      filter.annualTurnover = annualTurnover;
+    }
+    if (currentRole) {
+      filter.currentRole = currentRole;
     }
     if (biggestPriority) {
       filter.biggestPriority = biggestPriority;
@@ -161,6 +192,10 @@ export class BusinessFoundersService {
         { email: searchRegex },
         { businessName: searchRegex },
         { industry: searchRegex },
+        { city: searchRegex },
+        { state: searchRegex },
+        { productService: searchRegex },
+        { currentRole: searchRegex },
       ];
     }
 
@@ -274,6 +309,12 @@ export class BusinessFoundersService {
       newRegsCount,
       industries,
       years,
+      teamSizes,
+      annualTurnovers,
+      cities,
+      states,
+      businessOwners,
+      currentRoles,
       priorities,
       blockers,
       teams,
@@ -315,6 +356,66 @@ export class BusinessFoundersService {
           },
         },
         { $group: { _id: '$yearsInBusiness', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      this.founderModel.aggregate([
+        {
+          $match: {
+            ...baseFilter,
+            teamSize: { $exists: true, $ne: '' },
+          },
+        },
+        { $group: { _id: '$teamSize', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      this.founderModel.aggregate([
+        {
+          $match: {
+            ...baseFilter,
+            annualTurnover: { $exists: true, $ne: '' },
+          },
+        },
+        { $group: { _id: '$annualTurnover', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      this.founderModel.aggregate([
+        {
+          $match: {
+            ...baseFilter,
+            city: { $exists: true, $ne: '' },
+          },
+        },
+        { $group: { _id: '$city', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      this.founderModel.aggregate([
+        {
+          $match: {
+            ...baseFilter,
+            state: { $exists: true, $ne: '' },
+          },
+        },
+        { $group: { _id: '$state', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      this.founderModel.aggregate([
+        {
+          $match: {
+            ...baseFilter,
+            isBusinessOwner: { $exists: true, $ne: '' },
+          },
+        },
+        { $group: { _id: '$isBusinessOwner', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      this.founderModel.aggregate([
+        {
+          $match: {
+            ...baseFilter,
+            currentRole: { $exists: true, $ne: '' },
+          },
+        },
+        { $group: { _id: '$currentRole', count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]),
       this.founderModel.aggregate([
@@ -368,6 +469,30 @@ export class BusinessFoundersService {
         yearsInBusiness: y._id,
         count: y.count,
       })),
+      byTeamSize: teamSizes.map((t) => ({
+        teamSize: t._id,
+        count: t.count,
+      })),
+      byAnnualTurnover: annualTurnovers.map((a) => ({
+        annualTurnover: a._id,
+        count: a.count,
+      })),
+      byCity: cities.map((c) => ({
+        city: c._id,
+        count: c.count,
+      })),
+      byState: states.map((s) => ({
+        state: s._id,
+        count: s.count,
+      })),
+      byIsBusinessOwner: businessOwners.map((b) => ({
+        isBusinessOwner: b._id,
+        count: b.count,
+      })),
+      byCurrentRole: currentRoles.map((r) => ({
+        currentRole: r._id,
+        count: r.count,
+      })),
       byPriority: priorities.map((p) => ({
         priority: p._id,
         count: p.count,
@@ -393,9 +518,16 @@ export class BusinessFoundersService {
       'Full Name',
       'Phone (WhatsApp)',
       'Email',
-      'Business / Company Name',
-      'Industry / Sector',
+      'State',
+      'City',
+      'Is Business Owner',
       'Years in Business',
+      'Team Size',
+      'Industry / Sector',
+      'Annual Turnover',
+      'Product / Service',
+      'Current Role',
+      'Business / Company Name',
       'Biggest Priority',
       'Growth Blocker',
       'Has Team',
@@ -409,13 +541,20 @@ export class BusinessFoundersService {
 
     const rows = result.data.map((item: any) => [
       item._id.toString(),
-      `"${item.eventId || 'BUSINESS-SEP-16-2026'}"`,
+      `"${item.eventId || 'BUSINESS-OCT-09-2026'}"`,
       `"${(item.fullName || '').replace(/"/g, '""')}"`,
       `"${item.phone || ''}"`,
       `"${(item.email || '').replace(/"/g, '""')}"`,
-      `"${(item.businessName || '').replace(/"/g, '""')}"`,
-      `"${(item.industry || '').replace(/"/g, '""')}"`,
+      `"${(item.state || '').replace(/"/g, '""')}"`,
+      `"${(item.city || '').replace(/"/g, '""')}"`,
+      `"${(item.isBusinessOwner || '').replace(/"/g, '""')}"`,
       `"${(item.yearsInBusiness || '').replace(/"/g, '""')}"`,
+      `"${(item.teamSize || '').replace(/"/g, '""')}"`,
+      `"${(item.industry || '').replace(/"/g, '""')}"`,
+      `"${(item.annualTurnover || '').replace(/"/g, '""')}"`,
+      `"${(item.productService || '').replace(/"/g, '""')}"`,
+      `"${(item.currentRole || '').replace(/"/g, '""')}"`,
+      `"${(item.businessName || '').replace(/"/g, '""')}"`,
       `"${(item.biggestPriority || '').replace(/"/g, '""')}"`,
       `"${(item.growthBlocker || '').replace(/"/g, '""')}"`,
       `"${(item.hasTeam || '').replace(/"/g, '""')}"`,
@@ -430,3 +569,4 @@ export class BusinessFoundersService {
     return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
   }
 }
+

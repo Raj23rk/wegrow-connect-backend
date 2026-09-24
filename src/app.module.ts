@@ -26,6 +26,7 @@ import { BusinessFoundersModule } from './business-founders/business-founders.mo
 import { SingAlongModule } from './sing-along/sing-along.module';
 import { PaymentsModule } from './payments/payments.module';
 import { BusinessDependencyModule } from './business-dependency/business-dependency.module';
+import { EventTeaserModule } from './event-teaser/event-teaser.module';
 
 @Module({
   imports: [
@@ -103,6 +104,7 @@ import { BusinessDependencyModule } from './business-dependency/business-depende
     SingAlongModule,
     PaymentsModule,
     BusinessDependencyModule,
+    EventTeaserModule,
   ],
 
   controllers: [AppController],

@@ -28,20 +28,55 @@ export class CreateBusinessFounderDto {
   @IsString()
   email?: string;
 
-  @ApiPropertyOptional({ example: 'Sri Meenakshi Industries' })
+  @ApiPropertyOptional({ example: 'Tamil Nadu' })
   @IsString()
   @IsOptional()
-  businessName?: string;
+  state?: string;
 
-  @ApiPropertyOptional({ example: 'manufacturing' })
+  @ApiPropertyOptional({ example: 'Sivakasi' })
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @ApiPropertyOptional({ example: 'yes' })
+  @IsString()
+  @IsOptional()
+  isBusinessOwner?: string;
+
+  @ApiPropertyOptional({ example: '6 to 10 Years' })
+  @IsString()
+  @IsOptional()
+  yearsInBusiness?: string;
+
+  @ApiPropertyOptional({ example: '6 to 15 Members' })
+  @IsString()
+  @IsOptional()
+  teamSize?: string;
+
+  @ApiPropertyOptional({ example: 'Manufacturing' })
   @IsString()
   @IsOptional()
   industry?: string;
 
-  @ApiPropertyOptional({ example: '1_to_3_years' })
+  @ApiPropertyOptional({ example: '₹1 Crore to ₹5 Crore' })
   @IsString()
   @IsOptional()
-  yearsInBusiness?: string;
+  annualTurnover?: string;
+
+  @ApiPropertyOptional({ example: 'Offset printing and packaging boxes' })
+  @IsString()
+  @IsOptional()
+  productService?: string;
+
+  @ApiPropertyOptional({ example: 'An Aspiring Business Owner' })
+  @IsString()
+  @IsOptional()
+  currentRole?: string;
+
+  @ApiPropertyOptional({ example: 'Sri Meenakshi Industries' })
+  @IsString()
+  @IsOptional()
+  businessName?: string;
 
   @ApiPropertyOptional({ example: 'More Sales' })
   @IsString()
@@ -68,8 +103,9 @@ export class CreateBusinessFounderDto {
   @IsOptional()
   growthChallenge?: string;
 
-  @ApiPropertyOptional({ example: 'BUSINESS-SEP-16-2026' })
+  @ApiPropertyOptional({ example: 'BUSINESS-OCT-09-2026' })
   @IsString()
   @IsOptional()
   eventId?: string;
 }
+

@@ -21,13 +21,34 @@ export class BusinessFounder {
   email?: string;
 
   @Prop({ default: '', trim: true })
-  businessName?: string;
+  state?: string;
+
+  @Prop({ default: '', trim: true })
+  city?: string;
+
+  @Prop({ default: '', trim: true })
+  isBusinessOwner?: string;
+
+  @Prop({ default: '', trim: true })
+  yearsInBusiness?: string;
+
+  @Prop({ default: '', trim: true })
+  teamSize?: string;
 
   @Prop({ default: '', trim: true })
   industry?: string;
 
   @Prop({ default: '', trim: true })
-  yearsInBusiness?: string;
+  annualTurnover?: string;
+
+  @Prop({ default: '', trim: true })
+  productService?: string;
+
+  @Prop({ default: '', trim: true })
+  currentRole?: string;
+
+  @Prop({ default: '', trim: true })
+  businessName?: string;
 
   @Prop({ default: '', trim: true })
   biggestPriority?: string;
@@ -58,9 +79,9 @@ export class BusinessFounder {
     type: String,
     trim: true,
     uppercase: true,
-    default: 'BUSINESS-SEP-16-2026',
+    default: 'BUSINESS-OCT-09-2026',
   })
-  eventId: string = 'BUSINESS-SEP-16-2026';
+  eventId: string = 'BUSINESS-OCT-09-2026';
 
   @Prop({ default: '' })
   notes?: string;
@@ -73,8 +94,13 @@ BusinessFounderSchema.index({ eventId: 1 });
 BusinessFounderSchema.index({ phone: 1, eventId: 1 });
 BusinessFounderSchema.index({ email: 1 });
 BusinessFounderSchema.index({ email: 1, eventId: 1 });
-BusinessFounderSchema.index({ businessName: 1 });
+BusinessFounderSchema.index({ state: 1 });
+BusinessFounderSchema.index({ city: 1 });
+BusinessFounderSchema.index({ isBusinessOwner: 1 });
 BusinessFounderSchema.index({ industry: 1 });
 BusinessFounderSchema.index({ yearsInBusiness: 1 });
+BusinessFounderSchema.index({ teamSize: 1 });
+BusinessFounderSchema.index({ annualTurnover: 1 });
+BusinessFounderSchema.index({ currentRole: 1 });
 BusinessFounderSchema.index({ status: 1 });
 BusinessFounderSchema.index({ createdAt: -1 });

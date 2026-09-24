@@ -18,20 +18,50 @@ export class QueryBusinessFounderDto {
   @IsOptional()
   limit?: number = 10;
 
-  @ApiPropertyOptional({ description: 'Search name, phone, email, business name, or industry' })
+  @ApiPropertyOptional({ description: 'Search name, phone, email, business name, city, state, product/service, or industry' })
   @IsString()
   @IsOptional()
   search?: string;
 
-  @ApiPropertyOptional({ example: 'manufacturing' })
+  @ApiPropertyOptional({ example: 'Tamil Nadu' })
+  @IsString()
+  @IsOptional()
+  state?: string;
+
+  @ApiPropertyOptional({ example: 'Sivakasi' })
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @ApiPropertyOptional({ example: 'yes' })
+  @IsString()
+  @IsOptional()
+  isBusinessOwner?: string;
+
+  @ApiPropertyOptional({ example: 'Manufacturing' })
   @IsString()
   @IsOptional()
   industry?: string;
 
-  @ApiPropertyOptional({ example: '1_to_3_years' })
+  @ApiPropertyOptional({ example: '6 to 10 Years' })
   @IsString()
   @IsOptional()
   yearsInBusiness?: string;
+
+  @ApiPropertyOptional({ example: '6 to 15 Members' })
+  @IsString()
+  @IsOptional()
+  teamSize?: string;
+
+  @ApiPropertyOptional({ example: '₹1 Crore to ₹5 Crore' })
+  @IsString()
+  @IsOptional()
+  annualTurnover?: string;
+
+  @ApiPropertyOptional({ example: 'An Aspiring Business Owner' })
+  @IsString()
+  @IsOptional()
+  currentRole?: string;
 
   @ApiPropertyOptional({ example: 'More Sales' })
   @IsString()
@@ -73,8 +103,9 @@ export class QueryBusinessFounderDto {
   @IsOptional()
   endDate?: string;
 
-  @ApiPropertyOptional({ example: 'BUSINESS-SEP-16-2026', description: 'Filter by specific event ID' })
+  @ApiPropertyOptional({ example: 'BUSINESS-OCT-09-2026', description: 'Filter by specific event ID' })
   @IsString()
   @IsOptional()
   eventId?: string;
 }
+
