@@ -270,6 +270,35 @@ export class SingPaymentService {
     const email = dto.email ? dto.email.toLowerCase().trim() : 'guest@wegrowbschool.in';
     const eventId = (dto.eventId || 'SINGALONG-SEP-27-2026').trim();
 
+    // Prevent duplicate booking with the same email address
+    const checkEmail = (dto.email || '').toLowerCase().trim();
+    if (checkEmail && checkEmail !== 'guest@wegrowbschool.in') {
+      const existingBooking = await this.bookingModel
+        .findOne({
+          email: {
+            $regex: new RegExp(
+              `^${checkEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+              'i',
+            ),
+          },
+          status: {
+            $in: [
+              SingAlongBookingStatus.CONFIRMED,
+              SingAlongBookingStatus.ATTENDED,
+            ],
+          },
+          isActive: { $ne: false },
+        })
+        .select('bookingId email status fullName')
+        .lean();
+
+      if (existingBooking) {
+        throw new BadRequestException(
+          `This email address (${checkEmail}) is already registered for Sing Along. Duplicate registrations with the same email ID are not allowed.`,
+        );
+      }
+    }
+
     // 1. High-speed atomic booking ID generation
     const bookingId = await this.singAlongService.generateBookingId();
     const orderId = `order_SA26_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
@@ -1000,6 +1029,30 @@ export class SingPaymentService {
         ? Number(dto.amount)
         : ticketQty * 254;
     const unitPrice = Math.round(totalAmount / ticketQty);
+
+    const email = dto.email ? dto.email.trim().toLowerCase() : '';
+    if (email && email !== 'guest@wegrowbschool.in') {
+      const existingBooking = await this.bookingModel
+        .findOne({
+          email: {
+            $regex: new RegExp(
+              `^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+              'i',
+            ),
+          },
+          status: { $ne: SingAlongBookingStatus.CANCELLED },
+          isActive: { $ne: false },
+        })
+        .select('bookingId email status fullName')
+        .lean();
+
+      if (existingBooking) {
+        throw new BadRequestException(
+          `This email address (${email}) is already registered for Sing Along. Duplicate registrations with the same email ID are not allowed.`,
+        );
+      }
+    }
+
     const bookingId = await this.singAlongService.generateBookingId();
 
     const booking = await this.bookingModel.create({

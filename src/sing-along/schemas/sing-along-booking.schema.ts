@@ -99,6 +99,8 @@ SingAlongBookingSchema.index({ bookingId: 1 }, { unique: true });
 SingAlongBookingSchema.index({ bookingId: 1, isActive: 1 });
 SingAlongBookingSchema.index({ orderId: 1, isActive: 1 });
 SingAlongBookingSchema.index({ phone: 1 });
+SingAlongBookingSchema.index({ email: 1 });
+SingAlongBookingSchema.index({ email: 1, status: 1 });
 SingAlongBookingSchema.index({ eventId: 1, isActive: 1 });
 SingAlongBookingSchema.index({ status: 1 });
 SingAlongBookingSchema.index({ utr: 1 });
