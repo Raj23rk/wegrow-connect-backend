@@ -2137,6 +2137,332 @@ export class SingAlongService {
                 ],
               },
             },
+            paidCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      {
+                        $in: [
+                          '$status',
+                          [
+                            SingAlongBookingStatus.CONFIRMED,
+                            SingAlongBookingStatus.ATTENDED,
+                          ],
+                        ],
+                      },
+                      { $gt: ['$totalAmount', 0] },
+                      { $ne: ['$isFree', true] },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            paidTicketCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      {
+                        $in: [
+                          '$status',
+                          [
+                            SingAlongBookingStatus.CONFIRMED,
+                            SingAlongBookingStatus.ATTENDED,
+                          ],
+                        ],
+                      },
+                      { $gt: ['$totalAmount', 0] },
+                      { $ne: ['$isFree', true] },
+                    ],
+                  },
+                  '$ticketQty',
+                  0,
+                ],
+              },
+            },
+            sponsorCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      {
+                        $in: [
+                          '$status',
+                          [
+                            SingAlongBookingStatus.CONFIRMED,
+                            SingAlongBookingStatus.ATTENDED,
+                          ],
+                        ],
+                      },
+                      {
+                        $or: [
+                          { $eq: ['$isFree', true] },
+                          { $lte: ['$totalAmount', 0] },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$passType', ''] },
+                              regex: 'SPONSOR|PROMO|COMPLIMENTARY',
+                              options: 'i',
+                            },
+                          },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$code', ''] },
+                              regex: 'SP|PO',
+                              options: 'i',
+                            },
+                          },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$sponsorCode', ''] },
+                              regex: 'SP|PO',
+                              options: 'i',
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            sponsorTicketCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      {
+                        $in: [
+                          '$status',
+                          [
+                            SingAlongBookingStatus.CONFIRMED,
+                            SingAlongBookingStatus.ATTENDED,
+                          ],
+                        ],
+                      },
+                      {
+                        $or: [
+                          { $eq: ['$isFree', true] },
+                          { $lte: ['$totalAmount', 0] },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$passType', ''] },
+                              regex: 'SPONSOR|PROMO|COMPLIMENTARY',
+                              options: 'i',
+                            },
+                          },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$code', ''] },
+                              regex: 'SP|PO',
+                              options: 'i',
+                            },
+                          },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$sponsorCode', ''] },
+                              regex: 'SP|PO',
+                              options: 'i',
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  '$ticketQty',
+                  0,
+                ],
+              },
+            },
+            vipSponsorCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      {
+                        $in: [
+                          '$status',
+                          [
+                            SingAlongBookingStatus.CONFIRMED,
+                            SingAlongBookingStatus.ATTENDED,
+                          ],
+                        ],
+                      },
+                      {
+                        $or: [
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$passType', ''] },
+                              regex: 'SPONSOR',
+                              options: 'i',
+                            },
+                          },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$code', ''] },
+                              regex: 'SP',
+                              options: 'i',
+                            },
+                          },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$sponsorCode', ''] },
+                              regex: 'SP',
+                              options: 'i',
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            vipSponsorTickets: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      {
+                        $in: [
+                          '$status',
+                          [
+                            SingAlongBookingStatus.CONFIRMED,
+                            SingAlongBookingStatus.ATTENDED,
+                          ],
+                        ],
+                      },
+                      {
+                        $or: [
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$passType', ''] },
+                              regex: 'SPONSOR',
+                              options: 'i',
+                            },
+                          },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$code', ''] },
+                              regex: 'SP',
+                              options: 'i',
+                            },
+                          },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$sponsorCode', ''] },
+                              regex: 'SP',
+                              options: 'i',
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  '$ticketQty',
+                  0,
+                ],
+              },
+            },
+            promoCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      {
+                        $in: [
+                          '$status',
+                          [
+                            SingAlongBookingStatus.CONFIRMED,
+                            SingAlongBookingStatus.ATTENDED,
+                          ],
+                        ],
+                      },
+                      {
+                        $or: [
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$passType', ''] },
+                              regex: 'PROMO',
+                              options: 'i',
+                            },
+                          },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$code', ''] },
+                              regex: 'PO',
+                              options: 'i',
+                            },
+                          },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$sponsorCode', ''] },
+                              regex: 'PO',
+                              options: 'i',
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            promoTickets: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      {
+                        $in: [
+                          '$status',
+                          [
+                            SingAlongBookingStatus.CONFIRMED,
+                            SingAlongBookingStatus.ATTENDED,
+                          ],
+                        ],
+                      },
+                      {
+                        $or: [
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$passType', ''] },
+                              regex: 'PROMO',
+                              options: 'i',
+                            },
+                          },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$code', ''] },
+                              regex: 'PO',
+                              options: 'i',
+                            },
+                          },
+                          {
+                            $regexMatch: {
+                              input: { $ifNull: ['$sponsorCode', ''] },
+                              regex: 'PO',
+                              options: 'i',
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  '$ticketQty',
+                  0,
+                ],
+              },
+            },
           },
         },
       ]),
@@ -2149,6 +2475,16 @@ export class SingAlongService {
     const paymentCount = stats.paymentCount || confirmedCount;
     const totalTickets = stats.totalTickets || 0;
     const pendingCount = stats.pendingCount || 0;
+    const paidCount = stats.paidCount || 0;
+    const paidTickets = stats.paidTicketCount || 0;
+    const paidTicketCount = paidTickets;
+    const sponsorCount = stats.sponsorCount || 0;
+    const sponsorTickets = stats.sponsorTicketCount || 0;
+    const sponsorTicketCount = sponsorTickets;
+    const vipSponsorCount = stats.vipSponsorCount || 0;
+    const vipSponsorTickets = stats.vipSponsorTickets || 0;
+    const promoCount = stats.promoCount || 0;
+    const promoTickets = stats.promoTickets || 0;
 
     const totalRevenueFormatted = `₹${totalRevenue.toLocaleString('en-IN', {
       minimumFractionDigits: 2,
@@ -2168,6 +2504,16 @@ export class SingAlongService {
       paymentCount,
       totalTickets,
       pendingCount,
+      paidCount,
+      paidTicketCount,
+      paidTickets,
+      sponsorCount,
+      sponsorTicketCount,
+      sponsorTickets,
+      vipSponsorCount,
+      vipSponsorTickets,
+      promoCount,
+      promoTickets,
       summary: {
         total,
         totalRevenue,
@@ -2176,6 +2522,16 @@ export class SingAlongService {
         paymentCount,
         totalTickets,
         pendingCount,
+        paidCount,
+        paidTicketCount,
+        paidTickets,
+        sponsorCount,
+        sponsorTicketCount,
+        sponsorTickets,
+        vipSponsorCount,
+        vipSponsorTickets,
+        promoCount,
+        promoTickets,
       },
     };
   }
@@ -2201,11 +2557,342 @@ export class SingAlongService {
           },
           totalTickets: { $sum: '$ticketQty' },
           totalRevenue: { $sum: '$totalAmount' },
+          paidCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    {
+                      $in: [
+                        '$status',
+                        [
+                          SingAlongBookingStatus.CONFIRMED,
+                          SingAlongBookingStatus.ATTENDED,
+                        ],
+                      ],
+                    },
+                    { $gt: ['$totalAmount', 0] },
+                    { $ne: ['$isFree', true] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          paidTicketCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    {
+                      $in: [
+                        '$status',
+                        [
+                          SingAlongBookingStatus.CONFIRMED,
+                          SingAlongBookingStatus.ATTENDED,
+                        ],
+                      ],
+                    },
+                    { $gt: ['$totalAmount', 0] },
+                    { $ne: ['$isFree', true] },
+                  ],
+                },
+                '$ticketQty',
+                0,
+              ],
+            },
+          },
+          sponsorCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    {
+                      $in: [
+                        '$status',
+                        [
+                          SingAlongBookingStatus.CONFIRMED,
+                          SingAlongBookingStatus.ATTENDED,
+                        ],
+                      ],
+                    },
+                    {
+                      $or: [
+                        { $eq: ['$isFree', true] },
+                        { $lte: ['$totalAmount', 0] },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$passType', ''] },
+                            regex: 'SPONSOR|PROMO|COMPLIMENTARY',
+                            options: 'i',
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$code', ''] },
+                            regex: 'SP|PO',
+                            options: 'i',
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$sponsorCode', ''] },
+                            regex: 'SP|PO',
+                            options: 'i',
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          sponsorTicketCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    {
+                      $in: [
+                        '$status',
+                        [
+                          SingAlongBookingStatus.CONFIRMED,
+                          SingAlongBookingStatus.ATTENDED,
+                        ],
+                      ],
+                    },
+                    {
+                      $or: [
+                        { $eq: ['$isFree', true] },
+                        { $lte: ['$totalAmount', 0] },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$passType', ''] },
+                            regex: 'SPONSOR|PROMO|COMPLIMENTARY',
+                            options: 'i',
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$code', ''] },
+                            regex: 'SP|PO',
+                            options: 'i',
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$sponsorCode', ''] },
+                            regex: 'SP|PO',
+                            options: 'i',
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                },
+                '$ticketQty',
+                0,
+              ],
+            },
+          },
+          vipSponsorCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    {
+                      $in: [
+                        '$status',
+                        [
+                          SingAlongBookingStatus.CONFIRMED,
+                          SingAlongBookingStatus.ATTENDED,
+                        ],
+                      ],
+                    },
+                    {
+                      $or: [
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$passType', ''] },
+                            regex: 'SPONSOR',
+                            options: 'i',
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$code', ''] },
+                            regex: 'SP',
+                            options: 'i',
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$sponsorCode', ''] },
+                            regex: 'SP',
+                            options: 'i',
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          vipSponsorTickets: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    {
+                      $in: [
+                        '$status',
+                        [
+                          SingAlongBookingStatus.CONFIRMED,
+                          SingAlongBookingStatus.ATTENDED,
+                        ],
+                      ],
+                    },
+                    {
+                      $or: [
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$passType', ''] },
+                            regex: 'SPONSOR',
+                            options: 'i',
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$code', ''] },
+                            regex: 'SP',
+                            options: 'i',
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$sponsorCode', ''] },
+                            regex: 'SP',
+                            options: 'i',
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                },
+                '$ticketQty',
+                0,
+              ],
+            },
+          },
+          promoCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    {
+                      $in: [
+                        '$status',
+                        [
+                          SingAlongBookingStatus.CONFIRMED,
+                          SingAlongBookingStatus.ATTENDED,
+                        ],
+                      ],
+                    },
+                    {
+                      $or: [
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$passType', ''] },
+                            regex: 'PROMO',
+                            options: 'i',
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$code', ''] },
+                            regex: 'PO',
+                            options: 'i',
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$sponsorCode', ''] },
+                            regex: 'PO',
+                            options: 'i',
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          promoTickets: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    {
+                      $in: [
+                        '$status',
+                        [
+                          SingAlongBookingStatus.CONFIRMED,
+                          SingAlongBookingStatus.ATTENDED,
+                        ],
+                      ],
+                    },
+                    {
+                      $or: [
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$passType', ''] },
+                            regex: 'PROMO',
+                            options: 'i',
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$code', ''] },
+                            regex: 'PO',
+                            options: 'i',
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $ifNull: ['$sponsorCode', ''] },
+                            regex: 'PO',
+                            options: 'i',
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                },
+                '$ticketQty',
+                0,
+              ],
+            },
+          },
         },
       },
     ]);
 
     const totalRevenue = Number(statsResult?.totalRevenue || 0);
+    const paidTickets = Number(statsResult?.paidTicketCount || 0);
+    const sponsorTickets = Number(statsResult?.sponsorTicketCount || 0);
+    const vipSponsorTickets = Number(statsResult?.vipSponsorTickets || 0);
+    const promoTickets = Number(statsResult?.promoTickets || 0);
+
     const stats = {
       totalBookings: statsResult?.totalBookings || 0,
       totalTickets: statsResult?.totalTickets || 0,
@@ -2215,6 +2902,16 @@ export class SingAlongService {
         maximumFractionDigits: 2,
       })}`,
       attendedCount: statsResult?.attendedCount || 0,
+      paidCount: statsResult?.paidCount || 0,
+      paidTicketCount: paidTickets,
+      paidTickets,
+      sponsorCount: statsResult?.sponsorCount || 0,
+      sponsorTicketCount: sponsorTickets,
+      sponsorTickets,
+      vipSponsorCount: statsResult?.vipSponsorCount || 0,
+      vipSponsorTickets,
+      promoCount: statsResult?.promoCount || 0,
+      promoTickets,
     };
 
     this.statsCache = {
