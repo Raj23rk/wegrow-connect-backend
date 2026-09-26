@@ -141,27 +141,6 @@ export class SingAlongService {
     const eventId = (dto.eventId || 'SINGALONG-SEP-27-2026').trim();
     const email = dto.email ? dto.email.toLowerCase().trim() : '';
 
-    if (email) {
-      const existingBooking = await this.bookingModel
-        .findOne({
-          email: {
-            $regex: new RegExp(
-              `^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
-              'i',
-            ),
-          },
-          status: { $ne: SingAlongBookingStatus.CANCELLED },
-          isActive: { $ne: false },
-        })
-        .select('bookingId email status fullName')
-        .lean();
-
-      if (existingBooking) {
-        throw new BadRequestException(
-          `This email address (${email}) is already registered for Sing Along. Duplicate registrations with the same email ID are not allowed.`,
-        );
-      }
-    }
 
     let bookingId = (dto.bookingId || '').trim().toUpperCase();
     if (!bookingId) {
