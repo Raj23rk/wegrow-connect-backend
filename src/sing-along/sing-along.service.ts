@@ -19,7 +19,7 @@ import {
 import { CreateSingAlongBookingDto } from './dto/create-sing-along-booking.dto';
 import { QuerySingAlongBookingDto } from './dto/query-sing-along-booking.dto';
 import { ScanSingAlongDto } from './dto/scan-sing-along.dto';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { NotificationsService } from '../notifications/notifications.service';
 import * as QRCode from 'qrcode';
 
@@ -1360,8 +1360,8 @@ export class SingAlongService {
 
       <!-- STATS STRIP -->
       <div class="stats-strip">
-        <div class="stats-item">Session Checked In: <strong id="stat-count">0</strong></div>
-        <div class="stats-item">Status: <span style="color:#22c55e; font-weight:700;">● Active</span></div>
+        <div class="stats-item">Session: <strong id="stat-count">0</strong> Passes (<span id="stat-bookings">0</span> Bkgs)</div>
+        <div class="stats-item">Gate Total: <strong id="stat-gate-total" style="color:#22c55e;">0</strong> Passes</div>
       </div>
 
       <!-- SCAN RESULT CARD -->
@@ -1404,8 +1404,39 @@ export class SingAlongService {
     let currentFacingMode = 'environment';
     let torchOn = false;
     let soundEnabled = true;
-    let checkedInCount = 0;
+    let checkedInTickets = 0;
+    let checkedInBookings = 0;
+    let gateTotalTickets = 0;
+    let gateTotalBookings = 0;
     let scanCooldown = false;
+
+    function updateStatsUi() {
+      const countEl = document.getElementById('stat-count');
+      const bkgEl = document.getElementById('stat-bookings');
+      const gateEl = document.getElementById('stat-gate-total');
+      if (countEl) countEl.innerText = checkedInTickets;
+      if (bkgEl) bkgEl.innerText = checkedInBookings;
+      if (gateEl) gateEl.innerText = gateTotalTickets + ' Passes (' + gateTotalBookings + ' Bookings)';
+    }
+
+    async function refreshGateStats() {
+      try {
+        const token = localStorage.getItem('admin_token');
+        if (!token) return;
+        const res = await fetch('/api/v1/sing-along/stats', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const d = json.data || json;
+          gateTotalTickets = Number(d.attendedTicketCount || d.attendedTickets || d.checkedInTickets || 0);
+          gateTotalBookings = Number(d.attendedCount || d.checkedInCount || d.attended || 0);
+          updateStatsUi();
+        }
+      } catch (e) {
+        // silent
+      }
+    }
 
     // AUDIO SYNTHESIZER
     function playSound(type) {
@@ -1455,6 +1486,7 @@ export class SingAlongService {
       document.getElementById('login-card').style.display = 'none';
       document.getElementById('scanner-view').style.display = 'flex';
       document.getElementById('user-badge-container').style.display = 'flex';
+      refreshGateStats();
       startScanner();
     }
 
@@ -1599,30 +1631,42 @@ export class SingAlongService {
         if (isFirstCheckIn) {
           // 1. SUCCESS: FRESH CHECK-IN
           playSound('success');
-          checkedInCount++;
-          document.getElementById('stat-count').innerText = checkedInCount;
+          const passes = Number(attendee.ticketQty) || 1;
+          checkedInTickets += passes;
+          checkedInBookings++;
+          gateTotalTickets += passes;
+          gateTotalBookings++;
+          updateStatsUi();
 
           resCard.classList.add('res-success');
-          resTitle.innerHTML = '✅ ADMISSION GRANTED';
-          resMsg.innerText = payload.message || 'Ticket checked in successfully!';
+          resTitle.innerHTML = '✅ ADMISSION GRANTED (' + passes + ' Passes)';
+          resMsg.innerText = payload.message || ('Ticket checked in successfully! (' + passes + ' ticket(s))');
           resDetails.innerHTML = 
             '<div class="res-row"><span class="lbl">Attendee:</span><span class="val">' + (attendee.fullName || 'Guest') + '</span></div>' +
             '<div class="res-row"><span class="lbl">Booking ID:</span><span class="val">' + (attendee.bookingId || qrData) + '</span></div>' +
-            '<div class="res-row"><span class="lbl">Pass Count:</span><span class="val">' + (attendee.ticketQty || 1) + ' Ticket(s)</span></div>' +
-            '<div class="res-row"><span class="lbl">Amount:</span><span class="val">₹' + (attendee.totalAmount || 199) + '</span></div>' +
+            '<div class="res-row"><span class="lbl">Pass Count:</span><span class="val" style="color:#34d399; font-weight:800;">' + passes + ' Ticket(s) Admitted</span></div>' +
+            '<div class="res-row"><span class="lbl">Amount:</span><span class="val">₹' + (attendee.totalAmount || 0) + '</span></div>' +
             '<div class="res-row"><span class="lbl">Phone:</span><span class="val">' + (attendee.phone || '-') + '</span></div>' +
+            '<div class="res-row"><span class="lbl">Email:</span><span class="val">' + (attendee.email || '-') + '</span></div>' +
             '<div class="res-row"><span class="lbl">Gate Time:</span><span class="val">' + new Date().toLocaleTimeString('en-IN') + '</span></div>';
+          
+          refreshGateStats();
         } else if (isAlreadyAttended) {
           // 2. WARNING: ALREADY CHECKED IN
           playSound('error');
+          const passes = Number(attendee.ticketQty) || 1;
           resCard.classList.add('res-warning');
-          resTitle.innerHTML = '⚠️ ALREADY CHECKED IN';
-          resMsg.innerText = payload.message || '⚠️ DO NOT ADMIT AGAIN! This ticket was already checked in earlier.';
+          resTitle.innerHTML = '⚠️ ALREADY CHECKED IN (' + passes + ' Tickets)';
+          resMsg.innerText = payload.message || ('⚠️ DO NOT ADMIT AGAIN! This booking (' + passes + ' tickets) was already checked in earlier.');
           resDetails.innerHTML = 
             '<div class="res-row"><span class="lbl">Attendee:</span><span class="val">' + (attendee.fullName || '-') + '</span></div>' +
             '<div class="res-row"><span class="lbl">Booking ID:</span><span class="val">' + (attendee.bookingId || qrData) + '</span></div>' +
+            '<div class="res-row"><span class="lbl">Pass Count:</span><span class="val" style="color:#fbbf24; font-weight:800;">' + passes + ' Ticket(s) (Booked)</span></div>' +
+            '<div class="res-row"><span class="lbl">Amount:</span><span class="val">₹' + (attendee.totalAmount || 0) + '</span></div>' +
+            '<div class="res-row"><span class="lbl">Phone:</span><span class="val">' + (attendee.phone || '-') + '</span></div>' +
+            '<div class="res-row"><span class="lbl">Email:</span><span class="val">' + (attendee.email || '-') + '</span></div>' +
             '<div class="res-row"><span class="lbl">Status:</span><span class="val" style="color:#f59e0b; font-weight:800;">ALREADY ATTENDED</span></div>' +
-            '<div class="res-row"><span class="lbl">Original Check-In:</span><span class="val">' + (attendee.attendedAt ? new Date(attendee.attendedAt).toLocaleTimeString('en-IN') : 'Earlier today') + '</span></div>';
+            '<div class="res-row"><span class="lbl">Original Check-In:</span><span class="val">' + (attendee.attendedAt ? new Date(attendee.attendedAt).toLocaleString('en-IN') : 'Earlier today') + '</span></div>';
         } else {
           // 3. ERROR: INACTIVE / CANCELLED / NOT FOUND
           playSound('error');
@@ -1775,7 +1819,7 @@ export class SingAlongService {
         status: 'ALREADY_CHECKED_IN',
         message: `⚠️ Ticket already checked in! Attended at: ${
           booking.attendedAt ? new Date(booking.attendedAt).toLocaleString('en-IN') : 'Earlier today'
-        }.`,
+        }. (Total ${booking.ticketQty || 1} pass${booking.ticketQty > 1 ? 'es' : ''} booked)`,
         attendee: {
           bookingId: booking.bookingId,
           fullName: booking.fullName,
@@ -2109,6 +2153,34 @@ export class SingAlongService {
                         SingAlongBookingStatus.CONFIRMED,
                         SingAlongBookingStatus.ATTENDED,
                       ],
+                    ],
+                  },
+                  '$ticketQty',
+                  0,
+                ],
+              },
+            },
+            attendedCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $or: [
+                      { $eq: ['$attended', true] },
+                      { $eq: ['$status', SingAlongBookingStatus.ATTENDED] },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            attendedTicketCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $or: [
+                      { $eq: ['$attended', true] },
+                      { $eq: ['$status', SingAlongBookingStatus.ATTENDED] },
                     ],
                   },
                   '$ticketQty',
@@ -2464,6 +2536,13 @@ export class SingAlongService {
     const vipSponsorTickets = stats.vipSponsorTickets || 0;
     const promoCount = stats.promoCount || 0;
     const promoTickets = stats.promoTickets || 0;
+    const attendedCount = stats.attendedCount || 0;
+    const attendedTicketCount = stats.attendedTicketCount || 0;
+    const attendedTickets = attendedTicketCount;
+    const checkedInCount = attendedCount;
+    const checkedInTickets = attendedTicketCount;
+    const totalAttended = attendedCount;
+    const totalCheckedIn = attendedCount;
 
     const totalRevenueFormatted = `₹${totalRevenue.toLocaleString('en-IN', {
       minimumFractionDigits: 2,
@@ -2493,6 +2572,16 @@ export class SingAlongService {
       vipSponsorTickets,
       promoCount,
       promoTickets,
+      attendedCount,
+      attendedTicketCount,
+      attendedTickets,
+      checkedInCount,
+      checkedInTickets,
+      totalAttended,
+      totalCheckedIn,
+      attended: attendedCount,
+      attend: attendedCount,
+      checkedIn: attendedCount,
       summary: {
         total,
         totalRevenue,
@@ -2511,6 +2600,16 @@ export class SingAlongService {
         vipSponsorTickets,
         promoCount,
         promoTickets,
+        attendedCount,
+        attendedTicketCount,
+        attendedTickets,
+        checkedInCount,
+        checkedInTickets,
+        totalAttended,
+        totalCheckedIn,
+        attended: attendedCount,
+        attend: attendedCount,
+        checkedIn: attendedCount,
       },
     };
   }
@@ -2532,7 +2631,32 @@ export class SingAlongService {
           _id: null,
           totalBookings: { $sum: 1 },
           attendedCount: {
-            $sum: { $cond: [{ $eq: ['$attended', true] }, 1, 0] },
+            $sum: {
+              $cond: [
+                {
+                  $or: [
+                    { $eq: ['$attended', true] },
+                    { $eq: ['$status', SingAlongBookingStatus.ATTENDED] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          attendedTicketCount: {
+            $sum: {
+              $cond: [
+                {
+                  $or: [
+                    { $eq: ['$attended', true] },
+                    { $eq: ['$status', SingAlongBookingStatus.ATTENDED] },
+                  ],
+                },
+                '$ticketQty',
+                0,
+              ],
+            },
           },
           totalTickets: { $sum: '$ticketQty' },
           totalRevenue: { $sum: '$totalAmount' },
@@ -2872,6 +2996,9 @@ export class SingAlongService {
     const vipSponsorTickets = Number(statsResult?.vipSponsorTickets || 0);
     const promoTickets = Number(statsResult?.promoTickets || 0);
 
+    const attendedCount = Number(statsResult?.attendedCount || 0);
+    const attendedTicketCount = Number(statsResult?.attendedTicketCount || 0);
+
     const stats = {
       totalBookings: statsResult?.totalBookings || 0,
       totalTickets: statsResult?.totalTickets || 0,
@@ -2880,7 +3007,16 @@ export class SingAlongService {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}`,
-      attendedCount: statsResult?.attendedCount || 0,
+      attendedCount,
+      attendedTicketCount,
+      attendedTickets: attendedTicketCount,
+      checkedInCount: attendedCount,
+      checkedInTickets: attendedTicketCount,
+      totalAttended: attendedCount,
+      totalCheckedIn: attendedCount,
+      attended: attendedCount,
+      attend: attendedCount,
+      checkedIn: attendedCount,
       paidCount: statsResult?.paidCount || 0,
       paidTicketCount: paidTickets,
       paidTickets,
