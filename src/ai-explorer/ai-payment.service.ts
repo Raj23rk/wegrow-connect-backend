@@ -111,64 +111,40 @@ export class AiPaymentService {
   /**
    * 1. CREATE PAYMENT ORDER (Cashfree PG Order API)
    */
+  /**
+   * 1. CREATE PAYMENT ORDER (Cashfree PG Order API) - Ultra-Fast Optimized
+   */
   async createOrder(dto: CreateAiPaymentOrderDto) {
-    const studentName = (dto.studentName || dto.name || '').trim();
+    const studentName = (
+      dto.studentName ||
+      dto.name ||
+      dto.fullName ||
+      dto.customerName ||
+      ''
+    ).trim();
     if (!studentName) throw new BadRequestException('Student name is required.');
 
-    const email = (dto.email || '').trim().toLowerCase();
+    const email = (
+      dto.email ||
+      dto.mailId ||
+      dto.customerEmail ||
+      ''
+    ).trim().toLowerCase();
     if (!email) throw new BadRequestException('Email address is required.');
 
-    const fatherPhone = (dto.fatherPhone || '').trim().replace(/\D/g, '').slice(-10);
-    const motherPhone = (dto.motherPhone || '').trim().replace(/\D/g, '').slice(-10);
-    const phone = fatherPhone || motherPhone;
+    const rawFatherPhone = (dto.fatherPhone || dto.phone || dto.customerPhone || '').trim().replace(/\D/g, '').slice(-10);
+    const rawMotherPhone = (dto.motherPhone || '').trim().replace(/\D/g, '').slice(-10);
+    const phone = rawFatherPhone || rawMotherPhone;
 
     if (!phone || !/^[6-9]\d{9}$/.test(phone)) {
       throw new BadRequestException('A valid 10-digit mobile number is required.');
     }
 
-    const planInfo = this.resolveFeePlan(dto.feePlan || dto.plan, dto.amount);
+    const planInfo = this.resolveFeePlan(dto.feePlan || dto.plan, dto.amount || dto.orderAmount);
     const totalAmount = planInfo.amount;
 
     const enrollmentId = await this.aiExplorerService.generateEnrollmentId();
     const orderId = `order_AIE26_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
-
-    // Pre-create enrollment document with PENDING_PAYMENT status
-    const enrollment = await this.enrollmentModel.create({
-      enrollmentId,
-      studentName,
-      email,
-      standard: (dto.standard || '').trim(),
-      school: (dto.school || '').trim(),
-      fatherName: (dto.fatherName || '').trim(),
-      motherName: (dto.motherName || '').trim(),
-      fatherPhone,
-      motherPhone,
-      address: (dto.address || '').trim(),
-      courseName: 'AI Explorer',
-      feePlan: planInfo.feePlan,
-      planName: planInfo.planName,
-      amount: totalAmount,
-      totalCourseFee: planInfo.totalCourseFee,
-      paymentMethod: dto.paymentMethod || 'UPI',
-      paymentStatus: AiPaymentStatus.PENDING,
-      orderId,
-      status: AiEnrollmentStatus.PENDING_PAYMENT,
-      adminNotes: dto.notes || `Pending payment order: ${orderId}`,
-      isActive: true,
-    });
-
-    // Create payment tracking record
-    await this.paymentModel.create({
-      orderId,
-      enrollmentId,
-      amount: totalAmount,
-      currency: 'INR',
-      status: AiExplorerPaymentTxnStatus.INITIALIZED,
-      studentName,
-      phone,
-      email,
-      feePlan: planInfo.feePlan,
-    });
 
     const frontendUrl =
       this.configService.get<string>('FRONTEND_URL') ||
@@ -187,7 +163,6 @@ export class AiPaymentService {
 
     if (appId && secretKey) {
       try {
-        this.logger.log(`Creating Cashfree order ${orderId} for ₹${totalAmount} (${studentName})`);
         const response = await fetch(`${baseUrl}/orders`, {
           method: 'POST',
           headers: {
@@ -195,6 +170,7 @@ export class AiPaymentService {
             'x-client-secret': secretKey,
             'x-api-version': apiVersion,
             'Content-Type': 'application/json',
+            'Connection': 'keep-alive',
           },
           body: JSON.stringify({
             order_id: orderId,
@@ -212,35 +188,68 @@ export class AiPaymentService {
             },
             order_note: `AI Explorer Enrollment (${enrollmentId})`,
           }),
-          signal: AbortSignal.timeout(8000),
+          signal: AbortSignal.timeout(5000),
         });
 
-        if (!response.ok) {
-          const errJson = await response.json();
-          this.logger.error('Cashfree order creation response error:', errJson);
-        } else {
+        if (response.ok) {
           cfOrder = await response.json();
-          this.logger.log(`Cashfree order created successfully: ${cfOrder.order_id}`);
+        } else {
+          const errJson = await response.json();
+          this.logger.error('Cashfree order creation error:', errJson);
         }
       } catch (err) {
-        this.logger.error('Error connecting to Cashfree PG:', err);
+        this.logger.error('Cashfree PG connection error:', err);
       }
     }
 
     const paymentSessionId = cfOrder?.payment_session_id || `sim_session_${Date.now()}`;
     const cfOrderId = cfOrder?.cf_order_id ? String(cfOrder.cf_order_id) : '';
 
-    await this.paymentModel.updateOne(
-      { orderId },
-      { $set: { paymentSessionId, cfOrderId } },
-    );
-    await this.enrollmentModel.updateOne(
-      { enrollmentId },
-      { $set: { paymentSessionId } },
-    );
+    // Parallel DB writes in background / single pass
+    await Promise.all([
+      this.enrollmentModel.create({
+        enrollmentId,
+        studentName,
+        email,
+        standard: (dto.standard || '').trim(),
+        school: (dto.school || '').trim(),
+        fatherName: (dto.fatherName || '').trim(),
+        motherName: (dto.motherName || '').trim(),
+        fatherPhone: phone,
+        motherPhone: rawMotherPhone || phone,
+        address: (dto.address || '').trim(),
+        courseName: 'AI Explorer',
+        feePlan: planInfo.feePlan,
+        planName: planInfo.planName,
+        amount: totalAmount,
+        totalCourseFee: planInfo.totalCourseFee,
+        paymentMethod: dto.paymentMethod || 'Cashfree',
+        paymentStatus: AiPaymentStatus.PENDING,
+        orderId,
+        paymentSessionId,
+        cfOrderId,
+        status: AiEnrollmentStatus.PENDING_PAYMENT,
+        adminNotes: dto.notes || dto.orderNote || `Pending payment order: ${orderId}`,
+        isActive: true,
+      }),
+      this.paymentModel.create({
+        orderId,
+        enrollmentId,
+        cfOrderId,
+        paymentSessionId,
+        amount: totalAmount,
+        currency: 'INR',
+        status: AiExplorerPaymentTxnStatus.INITIALIZED,
+        studentName,
+        phone,
+        email,
+        feePlan: planInfo.feePlan,
+      }),
+    ]);
 
     return {
       orderId,
+      txnid: orderId,
       cfOrderId,
       paymentSessionId,
       enrollmentId,
@@ -252,6 +261,12 @@ export class AiPaymentService {
       feePlan: planInfo.feePlan,
       planName: planInfo.planName,
       environment: this.getCashfreeEnv(),
+      paymentLink: `https://payments.cashfree.com/order/#${paymentSessionId}`,
+      customer: {
+        name: studentName,
+        phone,
+        email,
+      },
     };
   }
 

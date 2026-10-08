@@ -321,6 +321,7 @@ export class SingPaymentService {
           'x-client-secret': secretKey,
           'x-api-version': apiVersion,
           'Content-Type': 'application/json',
+          'Connection': 'keep-alive',
         },
         body: JSON.stringify({
           order_id: orderId,
@@ -338,7 +339,7 @@ export class SingPaymentService {
           },
           order_note: `Sing Along ${ticketQty} Pass (${bookingId})`,
         }),
-        signal: AbortSignal.timeout(8000), // 8s timeout to prevent hanging connections
+        signal: AbortSignal.timeout(5000), // 5s timeout to prevent hanging connections
       });
 
       if (!response.ok) {

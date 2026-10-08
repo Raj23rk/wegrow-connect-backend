@@ -89,6 +89,9 @@ export class AiExplorerEnrollment {
   orderId?: string; // Gateway / Cashfree Order ID
 
   @Prop({ default: '', trim: true })
+  cfOrderId?: string;
+
+  @Prop({ default: '', trim: true })
   paymentSessionId?: string;
 
   @Prop({ default: '', trim: true })
