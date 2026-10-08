@@ -630,7 +630,9 @@ export class BusinessDependencyService {
     ).trim();
     const keyTakeaways = (dto.keyTakeaways || dto.key_takeaways || '').trim();
     const eventTitle = (
-      dto.eventTitle || 'Business Transformation Meetup'
+      dto.eventTitle ||
+      dto.eventName ||
+      'Business Transformation Meetup'
     ).trim();
 
     const created = await this.feedbackModel.create({

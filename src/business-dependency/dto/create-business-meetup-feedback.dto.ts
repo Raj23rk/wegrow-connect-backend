@@ -105,6 +105,25 @@ export class CreateBusinessMeetupFeedbackDto {
   @IsString()
   eventTitle?: string;
 
+  @ApiPropertyOptional({ description: 'Alias for eventTitle' })
+  @IsOptional()
+  @IsString()
+  eventName?: string;
+
+  @ApiPropertyOptional({ description: 'Event date' })
+  @IsOptional()
+  @IsString()
+  eventDate?: string;
+
+  @ApiPropertyOptional({ description: 'Submission timestamp' })
+  @IsOptional()
+  submittedAt?: any;
+
+  @ApiPropertyOptional({ description: 'Optional custom ID' })
+  @IsOptional()
+  @IsString()
+  id?: string;
+
   // Honeypot field (must be empty)
   @ApiPropertyOptional({ description: 'Spam honeypot field' })
   @IsOptional()
