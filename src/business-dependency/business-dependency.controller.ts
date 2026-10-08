@@ -31,165 +31,8 @@ export class BusinessDependencyController {
     private readonly dependencyService: BusinessDependencyService,
   ) {}
 
-  // =====================================================
-  // 1. SUBMIT TEST API (PUBLIC)
-  // =====================================================
-  @Post('test')
-  @ApiOperation({
-    summary: 'Submit Business Dependency Test (Public)',
-    description: 'Accepts Your name, Business name, Phone number, score',
-  })
-  async createTest(@Body() dto: CreateBusinessDependencyTestDto) {
-    const data = await this.dependencyService.createTest(dto);
-    return {
-      success: true,
-      message: 'Business Dependency test submitted successfully',
-      data,
-    };
-  }
-
-  // =====================================================
-  // 2. BOOK DIAGNOSTIC API (PUBLIC)
-  // =====================================================
-  @Post('diagnostic')
-  @ApiOperation({
-    summary: 'Book Free Business Diagnostic (Public)',
-    description:
-      'Accepts Full name, Company, Designation, Industry, Phone, Email, Business size, Biggest challenge, Notes, Score',
-  })
-  async createDiagnostic(@Body() dto: CreateBusinessDependencyDiagnosticDto) {
-    const data = await this.dependencyService.createDiagnostic(dto);
-    return {
-      success: true,
-      message: 'Free Diagnostic booked successfully',
-      data,
-    };
-  }
-
-  // =====================================================
-  // 3. UNIVERSAL CREATE / CRUD CREATE (PUBLIC)
-  // =====================================================
-  @Post()
-  @ApiOperation({
-    summary: 'Create Business Dependency Entry (General CRUD API)',
-  })
-  async create(@Body() dto: CreateBusinessDependencyDto) {
-    const data = await this.dependencyService.create(dto);
-    return {
-      success: true,
-      message: 'Business dependency entry created successfully',
-      data,
-    };
-  }
-
-  // =====================================================
-  // 4. ADMIN: GET ALL WITH PAGINATION, FILTERS & COUNTS
-  // =====================================================
-  @Get()
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary:
-      'Get all submissions with pagination, filter for test/diagnostic, and summary counts (Admin)',
-  })
-  async findAll(@Query() query: QueryBusinessDependencyDto) {
-    const result = await this.dependencyService.findAll(query);
-    return {
-      success: true,
-      message: 'Submissions fetched successfully',
-      data: result.items,
-      pagination: result.pagination,
-      counts: result.counts,
-    };
-  }
-
-  // =====================================================
-  // 5. ADMIN: GET STATS & BREAKDOWN
-  // =====================================================
-  @Get('stats')
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary:
-      'Get aggregate statistics, test vs diagnostic counts, and breakdown (Admin)',
-  })
-  async getStats() {
-    const stats = await this.dependencyService.getStats();
-    return {
-      success: true,
-      message: 'Stats retrieved successfully',
-      data: stats,
-    };
-  }
-
-  // =====================================================
-  // 6. ADMIN: EXPORT CSV
-  // =====================================================
-  @Get('export')
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Export submissions as CSV (Admin)' })
-  async exportCsv(
-    @Query() query: QueryBusinessDependencyDto,
-    @Res() res: Response,
-  ) {
-    const csvData = await this.dependencyService.exportCsv(query);
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="business_dependency_${Date.now()}.csv"`,
-    );
-    return res.status(200).send(csvData);
-  }
-
-  // =====================================================
-  // 7. ADMIN: GET ONE BY ID
-  // =====================================================
-  @Get(':id')
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get submission details by ID (Admin)' })
-  async findOne(@Param('id') id: string) {
-    const data = await this.dependencyService.findOne(id);
-    return {
-      success: true,
-      message: 'Submission fetched successfully',
-      data,
-    };
-  }
-
-  // =====================================================
-  // 8. ADMIN: UPDATE BY ID
-  // =====================================================
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update submission by ID (Admin)' })
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateBusinessDependencyDto,
-  ) {
-    const data = await this.dependencyService.update(id, dto);
-    return {
-      success: true,
-      message: 'Submission updated successfully',
-      data,
-    };
-  }
-
-  // =====================================================
-  // 9. ADMIN: DELETE BY ID
-  // =====================================================
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Delete submission by ID (Admin)' })
-  async remove(@Param('id') id: string) {
-    return this.dependencyService.remove(id);
-  }
-
   // =========================================================================
-  // 10. BUSINESS TRANSFORMATION MEETUP: SUBMIT FEEDBACK (PUBLIC)
+  // 1. PUBLIC: SUBMIT BUSINESS TRANSFORMATION MEETUP FEEDBACK
   // =========================================================================
   @Post(['feedback', 'meetup-feedback'])
   @ApiOperation({
@@ -207,27 +50,58 @@ export class BusinessDependencyController {
   }
 
   // =========================================================================
-  // 11. ADMIN API 1: GET ALL FEEDBACK WITH FILTERS, SEARCH & SUMMARY (ADMIN)
+  // 2. PUBLIC: SUBMIT BUSINESS DEPENDENCY TEST
   // =========================================================================
-  @Get(['feedback', 'meetup-feedback'])
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  @ApiBearerAuth()
+  @Post('test')
   @ApiOperation({
-    summary: 'Get all Meetup Feedback with pagination, search, filters & counts (Admin API 1)',
+    summary: 'Submit Business Dependency Test (Public)',
+    description: 'Accepts Your name, Business name, Phone number, score',
   })
-  async findAllFeedback(@Query() query: QueryBusinessMeetupFeedbackDto) {
-    const result = await this.dependencyService.findAllFeedback(query);
+  async createTest(@Body() dto: CreateBusinessDependencyTestDto) {
+    const data = await this.dependencyService.createTest(dto);
     return {
       success: true,
-      message: 'Meetup feedback fetched successfully',
-      data: result.items,
-      pagination: result.pagination,
-      counts: result.counts,
+      message: 'Business Dependency test submitted successfully',
+      data,
     };
   }
 
   // =========================================================================
-  // 12. ADMIN API 2: GET FEEDBACK STATS & BREAKDOWN (ADMIN)
+  // 3. PUBLIC: BOOK FREE BUSINESS DIAGNOSTIC
+  // =========================================================================
+  @Post('diagnostic')
+  @ApiOperation({
+    summary: 'Book Free Business Diagnostic (Public)',
+    description:
+      'Accepts Full name, Company, Designation, Industry, Phone, Email, Business size, Biggest challenge, Notes, Score',
+  })
+  async createDiagnostic(@Body() dto: CreateBusinessDependencyDiagnosticDto) {
+    const data = await this.dependencyService.createDiagnostic(dto);
+    return {
+      success: true,
+      message: 'Free Diagnostic booked successfully',
+      data,
+    };
+  }
+
+  // =========================================================================
+  // 4. PUBLIC: UNIVERSAL CREATE (GENERAL CRUD)
+  // =========================================================================
+  @Post()
+  @ApiOperation({
+    summary: 'Create Business Dependency Entry (General CRUD API)',
+  })
+  async create(@Body() dto: CreateBusinessDependencyDto) {
+    const data = await this.dependencyService.create(dto);
+    return {
+      success: true,
+      message: 'Business dependency entry created successfully',
+      data,
+    };
+  }
+
+  // =========================================================================
+  // 5. ADMIN API: GET FEEDBACK STATS & BREAKDOWN
   // =========================================================================
   @Get(['feedback/stats', 'meetup-feedback/stats'])
   @UseGuards(JwtAuthGuard, AdminGuard)
@@ -245,7 +119,7 @@ export class BusinessDependencyController {
   }
 
   // =========================================================================
-  // 13. ADMIN: EXPORT FEEDBACK CSV (ADMIN)
+  // 6. ADMIN API: EXPORT FEEDBACK CSV
   // =========================================================================
   @Get(['feedback/export', 'meetup-feedback/export'])
   @UseGuards(JwtAuthGuard, AdminGuard)
@@ -265,7 +139,27 @@ export class BusinessDependencyController {
   }
 
   // =========================================================================
-  // 14. ADMIN: GET SINGLE FEEDBACK BY ID (ADMIN)
+  // 7. ADMIN API: GET ALL MEETUP FEEDBACK (WITH PAGINATION, SEARCH, FILTER)
+  // =========================================================================
+  @Get(['feedback', 'meetup-feedback'])
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get all Meetup Feedback with pagination, search, filters & counts (Admin API 1)',
+  })
+  async findAllFeedback(@Query() query: QueryBusinessMeetupFeedbackDto) {
+    const result = await this.dependencyService.findAllFeedback(query);
+    return {
+      success: true,
+      message: 'Meetup feedback fetched successfully',
+      data: result.items,
+      pagination: result.pagination,
+      counts: result.counts,
+    };
+  }
+
+  // =========================================================================
+  // 8. ADMIN API: GET SINGLE FEEDBACK BY ID
   // =========================================================================
   @Get(['feedback/:id', 'meetup-feedback/:id'])
   @UseGuards(JwtAuthGuard, AdminGuard)
@@ -281,7 +175,7 @@ export class BusinessDependencyController {
   }
 
   // =========================================================================
-  // 15. ADMIN: UPDATE FEEDBACK STATUS / NOTES (ADMIN)
+  // 9. ADMIN API: UPDATE FEEDBACK STATUS / NOTES
   // =========================================================================
   @Patch(['feedback/:id', 'meetup-feedback/:id'])
   @UseGuards(JwtAuthGuard, AdminGuard)
@@ -300,7 +194,7 @@ export class BusinessDependencyController {
   }
 
   // =========================================================================
-  // 16. ADMIN: DELETE FEEDBACK BY ID (ADMIN)
+  // 10. ADMIN API: DELETE FEEDBACK BY ID
   // =========================================================================
   @Delete(['feedback/:id', 'meetup-feedback/:id'])
   @UseGuards(JwtAuthGuard, AdminGuard)
@@ -308,5 +202,111 @@ export class BusinessDependencyController {
   @ApiOperation({ summary: 'Delete Meetup Feedback record by ID (Admin)' })
   async removeFeedback(@Param('id') id: string) {
     return this.dependencyService.deleteFeedback(id);
+  }
+
+  // =========================================================================
+  // 11. ADMIN API: GET TEST & DIAGNOSTIC STATS & BREAKDOWN
+  // =========================================================================
+  @Get('stats')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Get aggregate statistics, test vs diagnostic counts, and breakdown (Admin)',
+  })
+  async getStats() {
+    const stats = await this.dependencyService.getStats();
+    return {
+      success: true,
+      message: 'Stats retrieved successfully',
+      data: stats,
+    };
+  }
+
+  // =========================================================================
+  // 12. ADMIN API: EXPORT TEST & DIAGNOSTIC SUBMISSIONS CSV
+  // =========================================================================
+  @Get('export')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Export submissions as CSV (Admin)' })
+  async exportCsv(
+    @Query() query: QueryBusinessDependencyDto,
+    @Res() res: Response,
+  ) {
+    const csvData = await this.dependencyService.exportCsv(query);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="business_dependency_${Date.now()}.csv"`,
+    );
+    return res.status(200).send(csvData);
+  }
+
+  // =========================================================================
+  // 13. ADMIN API: GET ALL TEST & DIAGNOSTIC SUBMISSIONS
+  // =========================================================================
+  @Get()
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      'Get all submissions with pagination, filter for test/diagnostic, and summary counts (Admin)',
+  })
+  async findAll(@Query() query: QueryBusinessDependencyDto) {
+    const result = await this.dependencyService.findAll(query);
+    return {
+      success: true,
+      message: 'Submissions fetched successfully',
+      data: result.items,
+      pagination: result.pagination,
+      counts: result.counts,
+    };
+  }
+
+  // =========================================================================
+  // 14. ADMIN API: GET TEST/DIAGNOSTIC SUBMISSION BY ID (WILDCARD :id MUST BE AT END)
+  // =========================================================================
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get submission details by ID (Admin)' })
+  async findOne(@Param('id') id: string) {
+    const data = await this.dependencyService.findOne(id);
+    return {
+      success: true,
+      message: 'Submission fetched successfully',
+      data,
+    };
+  }
+
+  // =========================================================================
+  // 15. ADMIN API: UPDATE TEST/DIAGNOSTIC SUBMISSION BY ID
+  // =========================================================================
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update submission by ID (Admin)' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateBusinessDependencyDto,
+  ) {
+    const data = await this.dependencyService.update(id, dto);
+    return {
+      success: true,
+      message: 'Submission updated successfully',
+      data,
+    };
+  }
+
+  // =========================================================================
+  // 16. ADMIN API: DELETE TEST/DIAGNOSTIC SUBMISSION BY ID
+  // =========================================================================
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete submission by ID (Admin)' })
+  async remove(@Param('id') id: string) {
+    return this.dependencyService.remove(id);
   }
 }
