@@ -3919,4 +3919,304 @@ export class NotificationsService {
       html,
     );
   }
+
+  // ============================================================
+  // AI EXPLORER STUDENT ENROLLMENT WELCOME & CONFIRMATION EMAIL
+  // ============================================================
+  async sendAiExplorerStudentWelcomeEmail(data: {
+    email: string;
+    studentName: string;
+    enrollmentId: string;
+    standard: string;
+    school: string;
+    fatherName: string;
+    motherName: string;
+    fatherPhone: string;
+    motherPhone: string;
+    feePlan: string;
+    planName: string;
+    amount: number;
+    totalCourseFee: number;
+    paymentMethod: string;
+    paymentStatus: string;
+    utr?: string;
+    orderId?: string;
+    createdAt?: Date;
+  }): Promise<boolean> {
+    if (!data.email) return false;
+
+    const formattedDate = new Date(data.createdAt || Date.now()).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    const formattedAmount = `₹${(data.amount || 0).toLocaleString('en-IN')}`;
+    const formattedTotalFee = `₹${(data.totalCourseFee || data.amount || 0).toLocaleString('en-IN')}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to WeGrow AI Explorer!</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #f3f0fc; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #16204a; }
+    .wrapper { width: 100%; background-color: #f3f0fc; padding: 30px 12px; }
+    .card { max-width: 620px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 12px 36px rgba(123, 77, 255, 0.14); border: 1px solid #e2d9fc; }
+    
+    /* GRADIENT HERO HEADER */
+    .header { background: linear-gradient(135deg, #0f1f5c 0%, #1846c4 55%, #7b4dff 100%); padding: 36px 24px; text-align: center; color: #ffffff; position: relative; }
+    .badge { display: inline-block; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.35); color: #ffd644; font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; padding: 5px 16px; border-radius: 9999px; margin-bottom: 12px; }
+    .header h1 { margin: 6px 0 4px 0; font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; }
+    .header p { margin: 0; font-size: 15px; color: #d5dfff; font-weight: 600; }
+    
+    .content { padding: 32px 28px; }
+    .welcome-text { font-size: 16px; line-height: 1.65; color: #334155; margin-bottom: 24px; }
+    
+    /* ENROLLMENT ID CARD */
+    .id-card { background: linear-gradient(135deg, #fff7ee 0%, #f7f3ff 100%); border: 2px dashed #ff9cc6; border-radius: 18px; padding: 22px; margin-bottom: 26px; }
+    .id-badge { display: inline-block; background: #0f1f5c; color: #ffffff; font-family: monospace; font-size: 15px; font-weight: 800; padding: 5px 12px; border-radius: 8px; letter-spacing: 1px; }
+    
+    .table-details { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    .table-details td { padding: 7px 4px; font-size: 14px; color: #334155; vertical-align: top; }
+    .table-details td.label { width: 38%; font-weight: 600; color: #64748b; }
+    .table-details td.value { width: 62%; font-weight: 700; color: #0f1f5c; }
+    
+    /* CURRICULUM HIGHLIGHTS */
+    .tracks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+    .track-item { background: #f8faff; border: 1px solid #e0e7ff; border-radius: 12px; padding: 12px 14px; font-size: 13px; font-weight: 700; color: #1e3a8a; }
+    
+    /* FEE & PAYMENT SUMMARY */
+    .fee-box { background: #0f1f5c; color: #ffffff; border-radius: 16px; padding: 20px; margin: 22px 0; }
+    .fee-box table { width: 100%; border-collapse: collapse; }
+    .fee-box td { padding: 4px 0; font-size: 14px; color: #cbd5e1; }
+    .fee-box td.amount-total { font-size: 26px; font-weight: 800; color: #ffd644; text-align: right; }
+    
+    .status-pill { display: inline-block; background: #10b981; color: #ffffff; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; }
+    
+    .footer { background: #fbfbfe; border-top: 1px solid #ede8fc; padding: 24px 20px; text-align: center; font-size: 12px; color: #64748b; line-height: 1.6; }
+    .footer strong { color: #0f1f5c; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <!-- HEADER -->
+      <div class="header">
+        <div class="badge">🚀 OFFICIAL ENROLLMENT CONFIRMATION</div>
+        <h1>Welcome to AI Explorer! 🤖</h1>
+        <p>WeGrow Skill Campus &bull; School Innovators Program</p>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="content">
+        <p class="welcome-text">
+          Dear <strong>${data.fatherName || data.motherName || 'Parents'} &amp; ${data.studentName}</strong>,<br><br>
+          Congratulations and a hearty welcome to <strong>WeGrow Skill Campus</strong>! We are thrilled to confirm ${data.studentName}'s enrollment in the <strong>AI Explorer</strong> program.
+        </p>
+
+        <!-- STUDENT PROFILE & ID CARD -->
+        <div class="id-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-size: 13px; font-weight: 800; color: #7b4dff; text-transform: uppercase; letter-spacing: 0.5px;">Student Enrollment Pass</span>
+            <span class="id-badge">${data.enrollmentId}</span>
+          </div>
+
+          <table class="table-details">
+            <tr>
+              <td class="label">Student Name</td>
+              <td class="value">${data.studentName}</td>
+            </tr>
+            <tr>
+              <td class="label">Standard / Grade</td>
+              <td class="value">${data.standard}</td>
+            </tr>
+            <tr>
+              <td class="label">School</td>
+              <td class="value">${data.school}</td>
+            </tr>
+            <tr>
+              <td class="label">Parents</td>
+              <td class="value">${data.fatherName} &amp; ${data.motherName}</td>
+            </tr>
+            <tr>
+              <td class="label">Registered Mobile</td>
+              <td class="value">${data.fatherPhone} / ${data.motherPhone}</td>
+            </tr>
+            <tr>
+              <td class="label">Enrollment Date</td>
+              <td class="value">${formattedDate}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- WHAT THEY WILL LEARN -->
+        <h4 style="margin: 22px 0 10px; color: #0f1f5c; font-size: 16px;">✨ What ${data.studentName} will master in AI Explorer:</h4>
+        <div style="margin-bottom: 22px;">
+          <div style="margin-bottom: 6px; font-size: 13px; color: #334155;">🤖 <strong>Robotics &amp; Smart Devices:</strong> Hands-on robotics kits and sensors</div>
+          <div style="margin-bottom: 6px; font-size: 13px; color: #334155;">🧠 <strong>Machine Learning Foundations:</strong> Train real AI vision &amp; speech models</div>
+          <div style="margin-bottom: 6px; font-size: 13px; color: #334155;">💻 <strong>Coding &amp; Algorithm Building:</strong> Logic building and game design</div>
+          <div style="margin-bottom: 6px; font-size: 13px; color: #334155;">🎓 <strong>WeGrow Young Creator Certificate:</strong> Showcase smart projects</div>
+        </div>
+
+        <!-- PAYMENT DETAILS -->
+        <div class="fee-box">
+          <table>
+            <tr>
+              <td>Course Program:</td>
+              <td align="right" style="color:#ffffff; font-weight:700;">AI Explorer</td>
+            </tr>
+            <tr>
+              <td>Fee Plan:</td>
+              <td align="right" style="color:#ffffff; font-weight:700;">${data.planName || data.feePlan}</td>
+            </tr>
+            <tr>
+              <td>Payment Method:</td>
+              <td align="right" style="color:#ffffff; font-weight:700;">${data.paymentMethod || 'Online'}</td>
+            </tr>
+            ${data.utr ? `<tr><td>UTR / Ref No:</td><td align="right" style="color:#ffd644; font-family:monospace;">${data.utr}</td></tr>` : ''}
+            ${data.orderId ? `<tr><td>Order ID:</td><td align="right" style="color:#ffd644; font-family:monospace;">${data.orderId}</td></tr>` : ''}
+            <tr>
+              <td style="padding-top: 12px; font-size: 15px; font-weight: 700; color: #ffffff;">Amount Paid:</td>
+              <td class="amount-total" style="padding-top: 12px;">${formattedAmount}</td>
+            </tr>
+            <tr>
+              <td>Payment Status:</td>
+              <td align="right"><span class="status-pill">${data.paymentStatus || 'COMPLETED'}</span></td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- NEXT STEPS -->
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 18px; margin-top: 20px;">
+          <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #166534;">🎉 Next Steps for Batch Onboarding:</h4>
+          <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #15803d; line-height: 1.6;">
+            <li>Our academic counselor will reach out via WhatsApp &amp; Phone call within 24 hours to schedule the student orientation session.</li>
+            <li>Student kit and course access details will be shared prior to the first live lab.</li>
+            <li>For any immediate questions, feel free to contact our campus helpline.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        <strong>WeGrow Skill Campus &amp; B School</strong><br>
+        Empowering Young Innovators &bull; Shaping Future Tech Leaders<br>
+        📞 Helpline: <a href="tel:+919344037331" style="color:#7b4dff; text-decoration:none; font-weight:700;">+91 93440 37331</a> &bull; ✉️ <a href="mailto:enquiry@wegrowcampus.in" style="color:#7b4dff; text-decoration:none; font-weight:700;">enquiry@wegrowcampus.in</a><br>
+        <a href="https://www.wegrowbschool.in" style="color:#0f1f5c; font-weight:700; text-decoration:none;">www.wegrowbschool.in</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    return this.sendEmail(
+      data.email,
+      `🎉 Welcome to WeGrow AI Explorer! Enrollment Confirmed [${data.enrollmentId}] (${data.studentName})`,
+      html,
+    );
+  }
+
+  // ============================================================
+  // AI EXPLORER ADMIN ALERT EMAIL (NEW ENROLLMENT NOTIFICATION)
+  // ============================================================
+  async sendAiExplorerAdminAlertEmail(data: {
+    studentName: string;
+    enrollmentId: string;
+    email: string;
+    standard: string;
+    school: string;
+    fatherName: string;
+    motherName: string;
+    fatherPhone: string;
+    motherPhone: string;
+    address: string;
+    feePlan: string;
+    planName: string;
+    amount: number;
+    paymentMethod: string;
+    paymentStatus: string;
+    orderId?: string;
+    utr?: string;
+    createdAt?: Date;
+  }): Promise<boolean> {
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.MAIL_FROM || 'kumar@wegrowcampus.in';
+    const formattedAmount = `₹${(data.amount || 0).toLocaleString('en-IN')}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>New School Student Enrolled - WeGrow AI Explorer</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f8fafc; padding: 20px; color: #1e293b;">
+  <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    <div style="background: #0f1f5c; color: #ffffff; padding: 16px 20px; border-radius: 8px; margin-bottom: 20px;">
+      <h2 style="margin: 0; font-size: 20px;">🚀 New Student Enrollment Alert</h2>
+      <p style="margin: 4px 0 0 0; font-size: 13px; color: #cbd5e1;">WeGrow Skill Campus &bull; AI Explorer Program</p>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b; width: 40%;">Enrollment ID:</td>
+        <td style="padding: 8px 0; font-weight: bold; color: #7b4dff;">${data.enrollmentId}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Student Name:</td>
+        <td style="padding: 8px 0; font-weight: bold;">${data.studentName}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Email Address:</td>
+        <td style="padding: 8px 0; font-weight: bold;"><a href="mailto:${data.email}">${data.email}</a></td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Standard:</td>
+        <td style="padding: 8px 0; font-weight: bold;">${data.standard}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">School:</td>
+        <td style="padding: 8px 0; font-weight: bold;">${data.school}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Parents:</td>
+        <td style="padding: 8px 0; font-weight: bold;">Father: ${data.fatherName} | Mother: ${data.motherName}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Contact Phones:</td>
+        <td style="padding: 8px 0; font-weight: bold;">Father: <a href="tel:${data.fatherPhone}">${data.fatherPhone}</a> | Mother: <a href="tel:${data.motherPhone}">${data.motherPhone}</a></td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Address:</td>
+        <td style="padding: 8px 0;">${data.address}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Fee Plan:</td>
+        <td style="padding: 8px 0; font-weight: bold;">${data.planName || data.feePlan} (${formattedAmount})</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Payment Method & Status:</td>
+        <td style="padding: 8px 0; font-weight: bold;">${data.paymentMethod} &bull; <span style="color: #10b981;">${data.paymentStatus}</span></td>
+      </tr>
+      ${data.orderId ? `<tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #64748b;">Order ID:</td><td style="padding: 8px 0; font-family: monospace;">${data.orderId}</td></tr>` : ''}
+      ${data.utr ? `<tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #64748b;">UTR Reference:</td><td style="padding: 8px 0; font-family: monospace;">${data.utr}</td></tr>` : ''}
+    </table>
+
+    <div style="margin-top: 20px; padding: 12px; background: #f8fafc; border-radius: 6px; font-size: 12px; color: #64748b; text-align: center;">
+      Notification generated by WeGrow Connect AI Explorer Module
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    return this.sendEmail(
+      adminEmail,
+      `🚨 New AI Explorer Enrollment: ${data.studentName} (${data.standard}, ${data.school}) - ${formattedAmount}`,
+      html,
+    );
+  }
 }
+

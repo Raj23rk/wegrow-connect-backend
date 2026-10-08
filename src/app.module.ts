@@ -27,6 +27,7 @@ import { SingAlongModule } from './sing-along/sing-along.module';
 import { PaymentsModule } from './payments/payments.module';
 import { BusinessDependencyModule } from './business-dependency/business-dependency.module';
 import { EventTeaserModule } from './event-teaser/event-teaser.module';
+import { AiExplorerModule } from './ai-explorer/ai-explorer.module';
 
 @Module({
   imports: [
@@ -105,6 +106,7 @@ import { EventTeaserModule } from './event-teaser/event-teaser.module';
     PaymentsModule,
     BusinessDependencyModule,
     EventTeaserModule,
+    AiExplorerModule,
   ],
 
   controllers: [AppController],
@@ -112,4 +114,5 @@ import { EventTeaserModule } from './event-teaser/event-teaser.module';
   providers: [AppService],
 })
 export class AppModule {}
+
 
