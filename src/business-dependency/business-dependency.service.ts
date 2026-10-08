@@ -12,11 +12,22 @@ import {
   BusinessDependencyType,
   BusinessDependencyStatus,
 } from './schemas/business-dependency.schema';
+import {
+  BusinessMeetupFeedback,
+  BusinessMeetupFeedbackDocument,
+  MeetupExperienceLevel,
+  MeetupWillingToGrow,
+  MeetupCanRefer,
+  MeetupFeedbackStatus,
+} from './schemas/business-meetup-feedback.schema';
 import { CreateBusinessDependencyTestDto } from './dto/create-business-dependency-test.dto';
 import { CreateBusinessDependencyDiagnosticDto } from './dto/create-business-dependency-diagnostic.dto';
 import { CreateBusinessDependencyDto } from './dto/create-business-dependency.dto';
 import { QueryBusinessDependencyDto } from './dto/query-business-dependency.dto';
 import { UpdateBusinessDependencyDto } from './dto/update-business-dependency.dto';
+import { CreateBusinessMeetupFeedbackDto } from './dto/create-business-meetup-feedback.dto';
+import { QueryBusinessMeetupFeedbackDto } from './dto/query-business-meetup-feedback.dto';
+import { UpdateBusinessMeetupFeedbackDto } from './dto/update-business-meetup-feedback.dto';
 
 @Injectable()
 export class BusinessDependencyService {
@@ -25,6 +36,8 @@ export class BusinessDependencyService {
   constructor(
     @InjectModel(BusinessDependency.name)
     private readonly dependencyModel: Model<BusinessDependencyDocument>,
+    @InjectModel(BusinessMeetupFeedback.name)
+    private readonly feedbackModel: Model<BusinessMeetupFeedbackDocument>,
   ) {}
 
   // Helper to map DB doc to frontend friendly object
@@ -565,4 +578,400 @@ export class BusinessDependencyService {
 
     return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
   }
+
+  // =========================================================================
+  // 10. BUSINESS TRANSFORMATION MEETUP FEEDBACK: CREATE (PUBLIC)
+  // =========================================================================
+  async createFeedback(dto: CreateBusinessMeetupFeedbackDto) {
+    if (dto.website && dto.website.trim().length > 0) {
+      // Honeypot spam hit - silently return success
+      this.logger.warn('Honeypot caught spam submission in meetup feedback');
+      return {
+        id: 'temp_spam_filtered',
+        name: dto.name,
+        experience: dto.experience,
+      };
+    }
+
+    const name = (dto.name || '').trim();
+    if (!name) {
+      throw new BadRequestException('Name is required');
+    }
+
+    const experience = (dto.experience || '').trim();
+    if (!experience) {
+      throw new BadRequestException('Experience rating is required');
+    }
+
+    const willingToGrow = (
+      dto.willingToGrow ||
+      dto.willing_to_grow ||
+      MeetupWillingToGrow.YES
+    ).trim();
+
+    const canRefer = (
+      dto.canRefer ||
+      dto.can_refer ||
+      MeetupCanRefer.NO
+    ).trim();
+
+    const likedMost = (dto.likedMost || dto.liked_most || '').trim();
+    const suggestions = (dto.suggestions || '').trim();
+    const referralName = (dto.referralName || dto.referral_name || '').trim();
+    const referralBusiness = (
+      dto.referralBusiness ||
+      dto.referral_business ||
+      ''
+    ).trim();
+    const referralMobile = (
+      dto.referralMobile ||
+      dto.referral_mobile ||
+      ''
+    ).trim();
+    const keyTakeaways = (dto.keyTakeaways || dto.key_takeaways || '').trim();
+    const eventTitle = (
+      dto.eventTitle || 'Business Transformation Meetup'
+    ).trim();
+
+    const created = await this.feedbackModel.create({
+      name,
+      experience,
+      likedMost,
+      suggestions,
+      willingToGrow,
+      canRefer,
+      referralName: canRefer === 'Yes' ? referralName : '',
+      referralBusiness: canRefer === 'Yes' ? referralBusiness : '',
+      referralMobile: canRefer === 'Yes' ? referralMobile : '',
+      keyTakeaways,
+      eventTitle,
+      status: MeetupFeedbackStatus.NEW,
+      submittedAt: new Date(),
+    });
+
+    return created.toJSON();
+  }
+
+  // =========================================================================
+  // 11. MEETUP FEEDBACK: GET ALL WITH PAGINATION, FILTERS & SEARCH (ADMIN)
+  // =========================================================================
+  async findAllFeedback(query: QueryBusinessMeetupFeedbackDto) {
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.max(1, Math.min(200, Number(query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const filter: any = {};
+
+    if (query.experience && query.experience.trim()) {
+      filter.experience = query.experience.trim();
+    }
+
+    if (query.willingToGrow && query.willingToGrow.trim()) {
+      filter.willingToGrow = query.willingToGrow.trim();
+    }
+
+    if (query.canRefer && query.canRefer.trim()) {
+      filter.canRefer = query.canRefer.trim();
+    }
+
+    if (query.status && query.status.trim()) {
+      filter.status = query.status.trim();
+    }
+
+    if (query.startDate || query.endDate) {
+      filter.submittedAt = {};
+      if (query.startDate) {
+        filter.submittedAt.$gte = new Date(query.startDate);
+      }
+      if (query.endDate) {
+        const end = new Date(query.endDate);
+        end.setHours(23, 59, 59, 999);
+        filter.submittedAt.$lte = end;
+      }
+    }
+
+    if (query.search && query.search.trim()) {
+      const searchRegex = new RegExp(query.search.trim(), 'i');
+      filter.$or = [
+        { name: searchRegex },
+        { referralName: searchRegex },
+        { referralBusiness: searchRegex },
+        { referralMobile: searchRegex },
+        { suggestions: searchRegex },
+        { likedMost: searchRegex },
+        { keyTakeaways: searchRegex },
+      ];
+    }
+
+    const sortField = query.sortBy || 'submittedAt';
+    const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
+    const sortOptions: any = { [sortField]: sortOrder };
+
+    const [items, total, countsAgg] = await Promise.all([
+      this.feedbackModel
+        .find(filter)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.feedbackModel.countDocuments(filter).exec(),
+      this.feedbackModel.aggregate([
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            excellent: {
+              $sum: { $cond: [{ $eq: ['$experience', 'Excellent'] }, 1, 0] },
+            },
+            good: {
+              $sum: { $cond: [{ $eq: ['$experience', 'Good'] }, 1, 0] },
+            },
+            average: {
+              $sum: { $cond: [{ $eq: ['$experience', 'Average'] }, 1, 0] },
+            },
+            needsImprovement: {
+              $sum: {
+                $cond: [{ $eq: ['$experience', 'Needs Improvement'] }, 1, 0],
+              },
+            },
+            willingToGrowYes: {
+              $sum: { $cond: [{ $eq: ['$willingToGrow', 'Yes'] }, 1, 0] },
+            },
+            canReferYes: {
+              $sum: { $cond: [{ $eq: ['$canRefer', 'Yes'] }, 1, 0] },
+            },
+          },
+        },
+      ]),
+    ]);
+
+    const counts = countsAgg[0] || {
+      total: 0,
+      excellent: 0,
+      good: 0,
+      average: 0,
+      needsImprovement: 0,
+      willingToGrowYes: 0,
+      canReferYes: 0,
+    };
+
+    const formattedItems = items.map((doc: any) => ({
+      ...doc,
+      id: doc._id?.toString(),
+    }));
+
+    return {
+      items: formattedItems,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 1,
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+      },
+      counts,
+    };
+  }
+
+  // =========================================================================
+  // 12. MEETUP FEEDBACK: STATS & ANALYTICS (ADMIN)
+  // =========================================================================
+  async getFeedbackStats() {
+    const [total, experienceAgg, willingAgg, referAgg, recent] =
+      await Promise.all([
+        this.feedbackModel.countDocuments().exec(),
+        this.feedbackModel.aggregate([
+          { $group: { _id: '$experience', count: { $sum: 1 } } },
+        ]),
+        this.feedbackModel.aggregate([
+          { $group: { _id: '$willingToGrow', count: { $sum: 1 } } },
+        ]),
+        this.feedbackModel.aggregate([
+          { $match: { canRefer: 'Yes' } },
+          {
+            $project: {
+              name: 1,
+              referralName: 1,
+              referralBusiness: 1,
+              referralMobile: 1,
+              submittedAt: 1,
+            },
+          },
+          { $sort: { submittedAt: -1 } },
+          { $limit: 20 },
+        ]),
+        this.feedbackModel
+          .find()
+          .sort({ submittedAt: -1 })
+          .limit(5)
+          .lean()
+          .exec(),
+      ]);
+
+    const experienceBreakdown: Record<string, number> = {
+      Excellent: 0,
+      Good: 0,
+      Average: 0,
+      'Needs Improvement': 0,
+    };
+    let positiveCount = 0;
+    experienceAgg.forEach((item) => {
+      if (item._id) {
+        experienceBreakdown[item._id] = item.count;
+        if (item._id === 'Excellent' || item._id === 'Good') {
+          positiveCount += item.count;
+        }
+      }
+    });
+
+    const willingBreakdown: Record<string, number> = {
+      Yes: 0,
+      No: 0,
+      Maybe: 0,
+    };
+    willingAgg.forEach((item) => {
+      if (item._id) {
+        willingBreakdown[item._id] = item.count;
+      }
+    });
+
+    const totalReferrals = referAgg.length;
+    const satisfactionRate =
+      total > 0 ? Math.round((positiveCount / total) * 100) : 0;
+
+    return {
+      totalFeedback: total,
+      satisfactionRate: `${satisfactionRate}%`,
+      experienceBreakdown,
+      willingToGrowBreakdown: willingBreakdown,
+      referralStats: {
+        totalReferrals,
+        referralPercentage:
+          total > 0 ? `${Math.round((totalReferrals / total) * 100)}%` : '0%',
+        recentReferrals: referAgg.map((r: any) => ({
+          ...r,
+          id: r._id?.toString(),
+        })),
+      },
+      recentSubmissions: recent.map((d: any) => ({
+        ...d,
+        id: d._id?.toString(),
+      })),
+    };
+  }
+
+  // =========================================================================
+  // 13. MEETUP FEEDBACK: EXPORT CSV (ADMIN)
+  // =========================================================================
+  async exportFeedbackCsv(
+    query: QueryBusinessMeetupFeedbackDto,
+  ): Promise<string> {
+    const result = await this.findAllFeedback({
+      ...query,
+      page: 1,
+      limit: 10000,
+    });
+
+    const headers = [
+      'ID',
+      'Event Title',
+      'Participant Name',
+      'Experience Rating',
+      'Liked Most',
+      'Suggestions',
+      'Willing to Grow',
+      'Can Refer',
+      'Referral Name',
+      'Referral Business',
+      'Referral Mobile',
+      'Key Takeaways',
+      'Status',
+      'Submitted At',
+    ];
+
+    const escapeCsv = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = result.items.map((doc: any) => [
+      escapeCsv(doc.id || doc._id),
+      escapeCsv(doc.eventTitle || 'Business Transformation Meetup'),
+      escapeCsv(doc.name),
+      escapeCsv(doc.experience),
+      escapeCsv(doc.likedMost || ''),
+      escapeCsv(doc.suggestions || ''),
+      escapeCsv(doc.willingToGrow || ''),
+      escapeCsv(doc.canRefer || ''),
+      escapeCsv(doc.referralName || ''),
+      escapeCsv(doc.referralBusiness || ''),
+      escapeCsv(doc.referralMobile || ''),
+      escapeCsv(doc.keyTakeaways || ''),
+      escapeCsv(doc.status || 'new'),
+      escapeCsv(doc.submittedAt ? new Date(doc.submittedAt).toISOString() : ''),
+    ]);
+
+    return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+  }
+
+  // =========================================================================
+  // 14. MEETUP FEEDBACK: GET SINGLE (ADMIN)
+  // =========================================================================
+  async findFeedbackById(id: string) {
+    const doc = await this.feedbackModel.findById(id).lean().exec();
+    if (!doc) {
+      throw new NotFoundException(`Feedback with ID "${id}" not found`);
+    }
+    return {
+      ...doc,
+      id: doc._id?.toString(),
+    };
+  }
+
+  // =========================================================================
+  // 15. MEETUP FEEDBACK: UPDATE (ADMIN)
+  // =========================================================================
+  async updateFeedback(id: string, dto: UpdateBusinessMeetupFeedbackDto) {
+    const doc = await this.feedbackModel
+      .findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            ...(dto.status ? { status: dto.status } : {}),
+            ...(dto.notes !== undefined ? { notes: dto.notes.trim() } : {}),
+          },
+        },
+        { new: true },
+      )
+      .lean()
+      .exec();
+
+    if (!doc) {
+      throw new NotFoundException(`Feedback with ID "${id}" not found`);
+    }
+
+    return {
+      ...doc,
+      id: doc._id?.toString(),
+    };
+  }
+
+  // =========================================================================
+  // 16. MEETUP FEEDBACK: DELETE (ADMIN)
+  // =========================================================================
+  async deleteFeedback(id: string) {
+    const res = await this.feedbackModel.findByIdAndDelete(id).exec();
+    if (!res) {
+      throw new NotFoundException(`Feedback with ID "${id}" not found`);
+    }
+    return {
+      success: true,
+      message: 'Feedback deleted successfully',
+      deletedId: id,
+    };
+  }
 }
+

@@ -6,11 +6,19 @@ import {
   BusinessDependency,
   BusinessDependencySchema,
 } from './schemas/business-dependency.schema';
+import {
+  BusinessMeetupFeedback,
+  BusinessMeetupFeedbackSchema,
+} from './schemas/business-meetup-feedback.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: BusinessDependency.name, schema: BusinessDependencySchema },
+      {
+        name: BusinessMeetupFeedback.name,
+        schema: BusinessMeetupFeedbackSchema,
+      },
     ]),
   ],
   controllers: [BusinessDependencyController],
