@@ -1,29 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
-  IsEmail,
-  IsEnum,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
-  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import {
-  AiEnrollmentStatus,
-  AiFeePlan,
-  AiPaymentStatus,
-} from '../schemas/ai-explorer-enrollment.schema';
 
 export class CreateAiExplorerEnrollmentDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Aarav Sharma',
     description: 'Full name of the student',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'Student name is required' })
-  studentName!: string;
+  studentName?: string;
 
   @ApiPropertyOptional({
     example: 'Aarav Sharma',
@@ -33,75 +24,117 @@ export class CreateAiExplorerEnrollmentDto {
   @IsString()
   name?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
+    example: 'Aarav Sharma',
+    description: 'Alias for studentName',
+  })
+  @IsOptional()
+  @IsString()
+  fullName?: string;
+
+  @ApiPropertyOptional({
+    example: 'Aarav Sharma',
+    description: 'Alias for studentName',
+  })
+  @IsOptional()
+  @IsString()
+  customerName?: string;
+
+  @ApiPropertyOptional({
     example: 'parent@example.com',
     description: 'Parent / Student Email address for notifications & receipts',
   })
-  @IsEmail({}, { message: 'Please provide a valid email address' })
-  @IsNotEmpty({ message: 'Email address is required' })
-  email!: string;
+  @IsOptional()
+  @IsString()
+  email?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
+    example: 'parent@example.com',
+    description: 'Alias for email',
+  })
+  @IsOptional()
+  @IsString()
+  mailId?: string;
+
+  @ApiPropertyOptional({
+    example: 'parent@example.com',
+    description: 'Alias for email',
+  })
+  @IsOptional()
+  @IsString()
+  customerEmail?: string;
+
+  @ApiPropertyOptional({
     example: '7th Standard',
     description: 'Standard / Grade of the student (5th to 12th Standard)',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'Standard is required' })
-  standard!: string;
+  standard?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Delhi Public School',
     description: 'School name',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'School name is required' })
-  school!: string;
+  school?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Ramesh Sharma',
     description: "Father's name",
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "Father's name is required" })
-  fatherName!: string;
+  fatherName?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Sunita Sharma',
     description: "Mother's name",
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "Mother's name is required" })
-  motherName!: string;
+  motherName?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: '9876543210',
     description: "Father's 10-digit mobile number",
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "Father's phone number is required" })
-  @Matches(/^(?:\+?91[\s-]?)?[6-9]\d{9}$/, {
-    message: "Please enter a valid 10-digit mobile number for Father's phone",
-  })
-  fatherPhone!: string;
+  fatherPhone?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
+    example: '9876543210',
+    description: 'Customer phone alias',
+  })
+  @IsOptional()
+  @IsString()
+  customerPhone?: string;
+
+  @ApiPropertyOptional({
+    example: '9876543210',
+    description: 'Phone alias',
+  })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiPropertyOptional({
     example: '9876543211',
     description: "Mother's 10-digit mobile number",
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "Mother's phone number is required" })
-  @Matches(/^(?:\+?91[\s-]?)?[6-9]\d{9}$/, {
-    message: "Please enter a valid 10-digit mobile number for Mother's phone",
-  })
-  motherPhone!: string;
+  motherPhone?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: '12, Gandhi Road, Chennai - 600001',
     description: 'Residential address',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'Residential address is required' })
-  address!: string;
+  address?: string;
 
   @ApiPropertyOptional({
     example: 'AI Explorer',
@@ -114,7 +147,6 @@ export class CreateAiExplorerEnrollmentDto {
 
   @ApiPropertyOptional({
     example: 'full',
-    enum: AiFeePlan,
     description: "Selected fee plan: 'full' (₹43,000), 'half' (₹22,500), 'term' (₹45,000/₹15,000)",
   })
   @IsOptional()
@@ -140,6 +172,15 @@ export class CreateAiExplorerEnrollmentDto {
 
   @ApiPropertyOptional({
     example: 43000,
+    description: 'Alias for amount',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  orderAmount?: number;
+
+  @ApiPropertyOptional({
+    example: 43000,
     description: 'Total fee for the full course in INR',
   })
   @IsOptional()
@@ -158,12 +199,11 @@ export class CreateAiExplorerEnrollmentDto {
 
   @ApiPropertyOptional({
     example: 'COMPLETED',
-    enum: AiPaymentStatus,
-    description: 'Payment status',
+    description: 'Payment status: PAID, COMPLETED, PENDING, FAILED',
   })
   @IsOptional()
-  @IsEnum(AiPaymentStatus)
-  paymentStatus?: AiPaymentStatus;
+  @IsString()
+  paymentStatus?: string;
 
   @ApiPropertyOptional({
     example: 'order_AIE26_1728392812_123',
@@ -180,6 +220,30 @@ export class CreateAiExplorerEnrollmentDto {
   @IsOptional()
   @IsString()
   paymentId?: string;
+
+  @ApiPropertyOptional({
+    example: 'ORD_61004836',
+    description: 'Transaction ID / Payment ID alias',
+  })
+  @IsOptional()
+  @IsString()
+  transactionId?: string;
+
+  @ApiPropertyOptional({
+    example: 'ORD_61004836',
+    description: 'Txnid alias',
+  })
+  @IsOptional()
+  @IsString()
+  txnid?: string;
+
+  @ApiPropertyOptional({
+    example: 'cf_123456',
+    description: 'Cashfree Payment ID',
+  })
+  @IsOptional()
+  @IsString()
+  cfPaymentId?: string;
 
   @ApiPropertyOptional({
     example: '123456789012',
@@ -199,11 +263,10 @@ export class CreateAiExplorerEnrollmentDto {
 
   @ApiPropertyOptional({
     example: 'ENROLLED',
-    enum: AiEnrollmentStatus,
   })
   @IsOptional()
-  @IsEnum(AiEnrollmentStatus)
-  status?: AiEnrollmentStatus;
+  @IsString()
+  status?: string;
 
   @ApiPropertyOptional({
     example: 'Batch A - Weekend Lab',

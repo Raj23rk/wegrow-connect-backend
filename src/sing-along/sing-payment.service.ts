@@ -249,25 +249,28 @@ export class SingPaymentService {
   // Frontend receives paymentSessionId and opens Cashfree Checkout SDK
   // =========================================================================
   async createOrder(dto: CreateSingPaymentOrderDto) {
-    const fullName = (dto.fullName || '').trim();
+    const fullName = (dto.fullName || dto.customerName || '').trim();
     if (!fullName) {
       throw new BadRequestException('Full name is required.');
     }
 
-    const phone = (dto.phone || '').trim();
-    if (!phone || !/^[6-9]\d{9}$/.test(phone)) {
+    const rawPhone = (dto.phone || dto.customerPhone || '').trim().replace(/\D/g, '').slice(-10);
+    if (!rawPhone || !/^[6-9]\d{9}$/.test(rawPhone)) {
       throw new BadRequestException(
         'A valid 10-digit Indian mobile number is required.',
       );
     }
+    const phone = rawPhone;
 
     const ticketQty = Math.max(1, Math.min(10, Number(dto.ticketQty) || 1));
+    const inputAmt = dto.orderAmount || dto.amount;
     const totalAmount =
-      dto.amount && Number(dto.amount) > 0
-        ? Number(dto.amount)
+      inputAmt && Number(inputAmt) > 0
+        ? Number(inputAmt)
         : ticketQty * 254;
     const unitPrice = Math.round(totalAmount / ticketQty);
-    const email = dto.email ? dto.email.toLowerCase().trim() : 'guest@wegrowbschool.in';
+    const rawEmail = (dto.email || dto.customerEmail || '').toLowerCase().trim();
+    const email = rawEmail || 'guest@wegrowbschool.in';
     const eventId = (dto.eventId || 'SINGALONG-SEP-27-2026').trim();
 
 
@@ -290,7 +293,7 @@ export class SingPaymentService {
       attended: false,
       isActive: true,
       paymentMethod: 'CASHFREE',
-      notes: dto.notes || `Pending Cashfree payment for ${orderId}`,
+      notes: dto.notes || dto.orderNote || `Pending Cashfree payment for ${orderId}`,
     });
 
     // 3. Callback URLs

@@ -1,70 +1,92 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsEmail,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
-  Matches,
 } from 'class-validator';
 
 export class CreateAiPaymentOrderDto {
-  @ApiProperty({ example: 'Aarav Sharma' })
+  @ApiPropertyOptional({ example: 'Aarav Sharma' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'Student name is required' })
-  studentName!: string;
+  studentName?: string;
 
   @ApiPropertyOptional({ example: 'Aarav Sharma' })
   @IsOptional()
   @IsString()
   name?: string;
 
-  @ApiProperty({ example: 'parent@example.com' })
-  @IsEmail({}, { message: 'Valid email is required' })
-  @IsNotEmpty({ message: 'Email is required' })
-  email!: string;
-
-  @ApiProperty({ example: '7th Standard' })
+  @ApiPropertyOptional({ example: 'Aarav Sharma' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'Standard is required' })
-  standard!: string;
+  fullName?: string;
 
-  @ApiProperty({ example: 'Delhi Public School' })
+  @ApiPropertyOptional({ example: 'Aarav Sharma' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'School name is required' })
-  school!: string;
+  customerName?: string;
 
-  @ApiProperty({ example: 'Ramesh Sharma' })
+  @ApiPropertyOptional({ example: 'parent@example.com' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "Father's name is required" })
-  fatherName!: string;
+  email?: string;
 
-  @ApiProperty({ example: 'Sunita Sharma' })
+  @ApiPropertyOptional({ example: 'parent@example.com' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "Mother's name is required" })
-  motherName!: string;
+  mailId?: string;
 
-  @ApiProperty({ example: '9876543210' })
+  @ApiPropertyOptional({ example: 'parent@example.com' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "Father's phone number is required" })
-  @Matches(/^(?:\+?91[\s-]?)?[6-9]\d{9}$/, {
-    message: 'Valid 10-digit mobile number required',
-  })
-  fatherPhone!: string;
+  customerEmail?: string;
 
-  @ApiProperty({ example: '9876543211' })
+  @ApiPropertyOptional({ example: '7th Standard' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: "Mother's phone number is required" })
-  @Matches(/^(?:\+?91[\s-]?)?[6-9]\d{9}$/, {
-    message: 'Valid 10-digit mobile number required',
-  })
-  motherPhone!: string;
+  standard?: string;
 
-  @ApiProperty({ example: '12 Gandhi Road, Chennai' })
+  @ApiPropertyOptional({ example: 'Delhi Public School' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'Address is required' })
-  address!: string;
+  school?: string;
+
+  @ApiPropertyOptional({ example: 'Ramesh Sharma' })
+  @IsOptional()
+  @IsString()
+  fatherName?: string;
+
+  @ApiPropertyOptional({ example: 'Sunita Sharma' })
+  @IsOptional()
+  @IsString()
+  motherName?: string;
+
+  @ApiPropertyOptional({ example: '9876543210' })
+  @IsOptional()
+  @IsString()
+  fatherPhone?: string;
+
+  @ApiPropertyOptional({ example: '9876543210' })
+  @IsOptional()
+  @IsString()
+  customerPhone?: string;
+
+  @ApiPropertyOptional({ example: '9876543210' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiPropertyOptional({ example: '9876543211' })
+  @IsOptional()
+  @IsString()
+  motherPhone?: string;
+
+  @ApiPropertyOptional({ example: '12 Gandhi Road, Chennai' })
+  @IsOptional()
+  @IsString()
+  address?: string;
 
   @ApiPropertyOptional({ example: 'full' })
   @IsOptional()
@@ -82,6 +104,12 @@ export class CreateAiPaymentOrderDto {
   @IsNumber()
   amount?: number;
 
+  @ApiPropertyOptional({ example: 43000 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  orderAmount?: number;
+
   @ApiPropertyOptional({ example: 'UPI' })
   @IsOptional()
   @IsString()
@@ -91,6 +119,11 @@ export class CreateAiPaymentOrderDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  orderNote?: string;
 }
 
 export class VerifyAiPaymentDto {

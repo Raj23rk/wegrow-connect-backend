@@ -87,12 +87,23 @@ export class AiExplorerService {
    * Enroll Student (Public submission)
    */
   async enrollStudent(dto: CreateAiExplorerEnrollmentDto) {
-    const studentName = (dto.studentName || dto.name || '').trim();
+    const studentName = (
+      dto.studentName ||
+      dto.name ||
+      dto.fullName ||
+      dto.customerName ||
+      ''
+    ).trim();
     if (!studentName) {
       throw new BadRequestException('Student name is required');
     }
 
-    const email = (dto.email || '').trim().toLowerCase();
+    const email = (
+      dto.email ||
+      dto.mailId ||
+      dto.customerEmail ||
+      ''
+    ).trim().toLowerCase();
     if (!email) {
       throw new BadRequestException('Email address is required');
     }
@@ -101,19 +112,29 @@ export class AiExplorerService {
     const school = (dto.school || '').trim();
     const fatherName = (dto.fatherName || '').trim();
     const motherName = (dto.motherName || '').trim();
-    const fatherPhone = (dto.fatherPhone || '').trim().replace(/\D/g, '').slice(-10);
-    const motherPhone = (dto.motherPhone || '').trim().replace(/\D/g, '').slice(-10);
+    const rawFatherPhone = (dto.fatherPhone || dto.phone || dto.customerPhone || '').trim().replace(/\D/g, '').slice(-10);
+    const rawMotherPhone = (dto.motherPhone || '').trim().replace(/\D/g, '').slice(-10);
+    const fatherPhone = rawFatherPhone || rawMotherPhone;
+    const motherPhone = rawMotherPhone || rawFatherPhone;
     const address = (dto.address || '').trim();
 
     if (!standard || !school || !fatherName || !motherName || !fatherPhone || !motherPhone || !address) {
       throw new BadRequestException('All student and parent details are required');
     }
 
-    const planInfo = this.resolveFeePlan(dto.feePlan || dto.plan, dto.amount);
+    const planInfo = this.resolveFeePlan(dto.feePlan || dto.plan, dto.amount || dto.orderAmount);
     const enrollmentId = await this.generateEnrollmentId();
 
-    const paymentStatus = dto.paymentStatus || AiPaymentStatus.COMPLETED;
-    const status = dto.status || AiEnrollmentStatus.ENROLLED;
+    let paymentStatus = AiPaymentStatus.COMPLETED;
+    if (dto.paymentStatus) {
+      const ps = dto.paymentStatus.toUpperCase().trim();
+      if (ps.includes('PENDING')) paymentStatus = AiPaymentStatus.PENDING;
+      else if (ps.includes('FAIL')) paymentStatus = AiPaymentStatus.FAILED;
+      else if (ps.includes('REFUND')) paymentStatus = AiPaymentStatus.REFUNDED;
+      else paymentStatus = AiPaymentStatus.COMPLETED; // Handles 'PAID', 'SUCCESS', 'COMPLETED'
+    }
+
+    const status = dto.status === 'PENDING_PAYMENT' ? AiEnrollmentStatus.PENDING_PAYMENT : AiEnrollmentStatus.ENROLLED;
 
     const enrollment = new this.enrollmentModel({
       enrollmentId,
@@ -133,9 +154,9 @@ export class AiExplorerService {
       totalCourseFee: dto.totalCourseFee || planInfo.totalCourseFee,
       paymentMethod: dto.paymentMethod || 'UPI',
       paymentStatus,
-      orderId: dto.orderId || '',
-      paymentId: dto.paymentId || '',
-      utr: dto.utr || '',
+      orderId: dto.orderId || dto.transactionId || dto.txnid || '',
+      paymentId: dto.paymentId || dto.cfPaymentId || dto.transactionId || '',
+      utr: dto.utr || dto.transactionId || '',
       declarationAccepted: dto.declarationAccepted !== false,
       status,
       adminNotes: dto.adminNotes || '',

@@ -12,24 +12,37 @@ import {
 import { Type } from 'class-transformer';
 
 export class CreateSingPaymentOrderDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Raj Kumar',
     description: 'Full name of the attendee',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'Full name is required' })
-  fullName!: string;
+  fullName?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
+    example: 'Raj Kumar',
+    description: 'Alias for fullName',
+  })
+  @IsOptional()
+  @IsString()
+  customerName?: string;
+
+  @ApiPropertyOptional({
     example: '9876543210',
     description: '10-digit Indian mobile or WhatsApp number',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'Phone number is required' })
-  @Matches(/^[6-9]\d{9}$/, {
-    message: 'Please provide a valid 10-digit Indian mobile number',
+  phone?: string;
+
+  @ApiPropertyOptional({
+    example: '9876543210',
+    description: 'Alias for phone',
   })
-  phone!: string;
+  @IsOptional()
+  @IsString()
+  customerPhone?: string;
 
   @ApiPropertyOptional({
     example: 'raj@example.com',
@@ -39,11 +52,20 @@ export class CreateSingPaymentOrderDto {
   @IsEmail({}, { message: 'Invalid email address' })
   email?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
+    example: 'raj@example.com',
+    description: 'Alias for email',
+  })
+  @IsOptional()
+  @IsEmail({}, { message: 'Invalid email address' })
+  customerEmail?: string;
+
+  @ApiPropertyOptional({
     example: 2,
     description: 'Number of tickets to book (1-10)',
     default: 1,
   })
+  @IsOptional()
   @IsInt({ message: 'Ticket quantity must be an integer' })
   @Min(1, { message: 'At least 1 ticket must be booked' })
   @Max(10, { message: 'Maximum 10 tickets per booking allowed' })
@@ -67,12 +89,28 @@ export class CreateSingPaymentOrderDto {
   amount?: number;
 
   @ApiPropertyOptional({
+    example: 254,
+    description: 'Alias for amount',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  orderAmount?: number;
+
+  @ApiPropertyOptional({
     example: 'Seating preference or notes',
     description: 'Additional notes or remarks',
   })
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({
+    example: 'AI Explorer Enrollment',
+    description: 'Alias for notes',
+  })
+  @IsOptional()
+  @IsString()
+  orderNote?: string;
 }
 
 export class VerifySingPaymentDto {
