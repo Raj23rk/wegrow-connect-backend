@@ -59,7 +59,7 @@ export class AiPaymentController {
   // =====================================================
   // 3. CHECK PAYMENT STATUS (Real-time polling)
   // =====================================================
-  @Get('payment/status/:orderId')
+  @Get(['status/:orderId', 'payment/status/:orderId', 'order/status/:orderId'])
   @ApiOperation({ summary: 'Get payment status of an order in real-time' })
   async getStatus(@Param('orderId') orderId: string) {
     return this.aiPaymentService.getPaymentStatus(orderId);

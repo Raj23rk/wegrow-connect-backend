@@ -369,7 +369,13 @@ export class AiPaymentService {
    */
   async getPaymentStatus(orderId: string) {
     const cleanOrderId = (orderId || '').trim();
-    const enrollment = await this.enrollmentModel.findOne({ orderId: cleanOrderId });
+    const enrollment = await this.enrollmentModel.findOne({
+      $or: [
+        { orderId: cleanOrderId },
+        { enrollmentId: cleanOrderId.toUpperCase() },
+        { cfOrderId: cleanOrderId },
+      ],
+    });
     if (!enrollment) {
       throw new NotFoundException(`No enrollment found for order ID: ${cleanOrderId}`);
     }
