@@ -4083,7 +4083,7 @@ export class NotificationsService {
             </tr>
             <tr>
               <td>Payment Status:</td>
-              <td align="right"><span class="status-pill">${data.paymentStatus || 'COMPLETED'}</span></td>
+              <td align="right"><span class="status-pill" style="display:inline-block; background:${(data.paymentStatus || '').toUpperCase() === 'COMPLETED' ? '#10b981' : (data.paymentStatus || '').toUpperCase() === 'PENDING' ? '#f59e0b' : '#ef4444'}; color:#ffffff; font-size:12px; font-weight:800; padding:4px 10px; border-radius:9999px; text-transform:uppercase;">${data.paymentStatus || 'COMPLETED'}</span></td>
             </tr>
           </table>
         </div>

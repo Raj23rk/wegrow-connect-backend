@@ -217,6 +217,14 @@ export class AiExplorerService {
   async sendNotificationEmails(enrollment: AiExplorerEnrollmentDocument) {
     if (!enrollment.email) return;
 
+    // Only dispatch student confirmation email if payment is actually COMPLETED
+    if (enrollment.paymentStatus !== AiPaymentStatus.COMPLETED) {
+      this.logger.log(
+        `Skipping student welcome email for ${enrollment.enrollmentId} because paymentStatus is ${enrollment.paymentStatus}. Email will be dispatched upon payment completion.`,
+      );
+      return;
+    }
+
     try {
       // 1. Send Student / Parent Confirmation Email
       const studentEmailSuccess = await this.notificationsService.sendAiExplorerStudentWelcomeEmail({

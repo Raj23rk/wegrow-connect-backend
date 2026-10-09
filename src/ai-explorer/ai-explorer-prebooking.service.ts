@@ -524,6 +524,14 @@ export class AiExplorerPrebookingService {
   async sendNotificationEmails(prebooking: AiExplorerPrebookingDocument) {
     if (!prebooking.email) return;
 
+    // Only send confirmation email if payment is COMPLETED
+    if (prebooking.paymentStatus !== AiPrebookingPaymentStatus.COMPLETED) {
+      this.logger.log(
+        `Skipping pre-booking confirmation email for ${prebooking.prebookingId} because paymentStatus is ${prebooking.paymentStatus}. Email will be dispatched once payment succeeds.`,
+      );
+      return;
+    }
+
     try {
       // 1. Send Parent / Family Confirmation Email
       const emailSuccess = await this.notificationsService.sendAiExplorerPrebookingConfirmationEmail({
