@@ -193,51 +193,69 @@ export class AiPaymentService {
     const apiVersion = this.getCashfreeApiVersion();
     const baseUrl = this.getCashfreeBaseUrl();
 
-    let cfOrder: any = null;
-
-    if (appId && secretKey) {
-      try {
-        const response = await fetch(`${baseUrl}/orders`, {
-          method: 'POST',
-          headers: {
-            'x-client-id': appId,
-            'x-client-secret': secretKey,
-            'x-api-version': apiVersion,
-            'Content-Type': 'application/json',
-            'Connection': 'keep-alive',
-          },
-          body: JSON.stringify({
-            order_id: orderId,
-            order_amount: totalAmount,
-            order_currency: 'INR',
-            customer_details: {
-              customer_id: `cust_${phone}`,
-              customer_name: studentName,
-              customer_email: email,
-              customer_phone: phone,
-            },
-            order_meta: {
-              return_url: returnUrl,
-              notify_url: notifyUrl,
-            },
-            order_note: `AI Explorer Enrollment (${enrollmentId})`,
-          }),
-          signal: AbortSignal.timeout(5000),
-        });
-
-        if (response.ok) {
-          cfOrder = await response.json();
-        } else {
-          const errJson = await response.json();
-          this.logger.error('Cashfree order creation error:', errJson);
-        }
-      } catch (err) {
-        this.logger.error('Cashfree PG connection error:', err);
-      }
+    if (!appId || !secretKey) {
+      throw new BadRequestException('Cashfree API credentials are not configured on server.');
     }
 
-    const paymentSessionId = cfOrder?.payment_session_id || `sim_session_${Date.now()}`;
-    const cfOrderId = cfOrder?.cf_order_id ? String(cfOrder.cf_order_id) : '';
+    const customerDisplayName = (
+      dto.customerName ||
+      dto.fatherName ||
+      students[0]?.studentName ||
+      students[0]?.name ||
+      studentName ||
+      'Student'
+    ).replace(/[^a-zA-Z0-9\s.-]/g, ' ').trim().slice(0, 80) || 'Parent';
+
+    let cfOrder: any = null;
+    try {
+      this.logger.log(`Creating Cashfree order ${orderId} for ₹${totalAmount} (${phone})`);
+      const response = await fetch(`${baseUrl}/orders`, {
+        method: 'POST',
+        headers: {
+          'x-client-id': appId,
+          'x-client-secret': secretKey,
+          'x-api-version': apiVersion,
+          'Content-Type': 'application/json',
+          'Connection': 'keep-alive',
+        },
+        body: JSON.stringify({
+          order_id: orderId,
+          order_amount: totalAmount,
+          order_currency: 'INR',
+          customer_details: {
+            customer_id: `cust_${phone.replace(/\D/g, '')}`,
+            customer_name: customerDisplayName,
+            customer_email: email,
+            customer_phone: phone,
+          },
+          order_meta: {
+            return_url: returnUrl,
+            notify_url: notifyUrl,
+          },
+          order_note: (dto.orderNote || `AI Explorer Enrollment (${enrollmentId})`).slice(0, 150),
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (!response.ok) {
+        const errJson = await response.json();
+        this.logger.error('Cashfree order creation error response:', errJson);
+        throw new InternalServerErrorException(
+          errJson?.message || 'Failed to create order on Cashfree',
+        );
+      }
+
+      cfOrder = await response.json();
+      this.logger.log(`Cashfree order created successfully: ${cfOrder.order_id}, cfOrderId: ${cfOrder.cf_order_id}`);
+    } catch (err: any) {
+      this.logger.error('Failed to communicate with Cashfree PG:', err?.message || err);
+      throw new InternalServerErrorException(
+        err?.message || 'Unable to connect to Cashfree payment gateway',
+      );
+    }
+
+    const paymentSessionId = cfOrder.payment_session_id;
+    const cfOrderId = cfOrder.cf_order_id ? String(cfOrder.cf_order_id) : '';
 
     try {
       await Promise.all([
@@ -369,7 +387,7 @@ export class AiPaymentService {
    */
   async getPaymentStatus(orderId: string) {
     const cleanOrderId = (orderId || '').trim();
-    const enrollment = await this.enrollmentModel.findOne({
+    let enrollment = await this.enrollmentModel.findOne({
       $or: [
         { orderId: cleanOrderId },
         { enrollmentId: cleanOrderId.toUpperCase() },
@@ -378,6 +396,82 @@ export class AiPaymentService {
     });
     if (!enrollment) {
       throw new NotFoundException(`No enrollment found for order ID: ${cleanOrderId}`);
+    }
+
+    // If still pending, query Cashfree in real-time to check if payment succeeded
+    if (enrollment.paymentStatus !== AiPaymentStatus.COMPLETED && enrollment.orderId) {
+      const appId = this.getCashfreeAppId();
+      const secretKey = this.getCashfreeSecretKey();
+      const apiVersion = this.getCashfreeApiVersion();
+      const baseUrl = this.getCashfreeBaseUrl();
+
+      if (appId && secretKey) {
+        try {
+          const cfOrderRes = await fetch(`${baseUrl}/orders/${enrollment.orderId}`, {
+            headers: {
+              'x-client-id': appId,
+              'x-client-secret': secretKey,
+              'x-api-version': apiVersion,
+            },
+            signal: AbortSignal.timeout(5000),
+          });
+
+          if (cfOrderRes.ok) {
+            const cfOrder = await cfOrderRes.json();
+            if (cfOrder?.order_status === 'PAID') {
+              this.logger.log(`Cashfree Order ${enrollment.orderId} verified as PAID via status check`);
+              let cfPaymentId = '';
+              let bankRef = '';
+
+              try {
+                const cfPayRes = await fetch(`${baseUrl}/orders/${enrollment.orderId}/payments`, {
+                  headers: {
+                    'x-client-id': appId,
+                    'x-client-secret': secretKey,
+                    'x-api-version': apiVersion,
+                  },
+                  signal: AbortSignal.timeout(4000),
+                });
+                if (cfPayRes.ok) {
+                  const payments = await cfPayRes.json();
+                  const successPay = Array.isArray(payments)
+                    ? payments.find((p: any) => p.payment_status === 'SUCCESS')
+                    : null;
+                  if (successPay) {
+                    cfPaymentId = String(successPay.cf_payment_id || '');
+                    bankRef = String(successPay.bank_reference || cfPaymentId);
+                  }
+                }
+              } catch (pErr) {
+                this.logger.warn(`Could not fetch payment details: ${pErr}`);
+              }
+
+              enrollment.paymentStatus = AiPaymentStatus.COMPLETED;
+              enrollment.status = AiEnrollmentStatus.ENROLLED;
+              enrollment.paymentId = cfPaymentId;
+              enrollment.utr = bankRef;
+              await enrollment.save();
+
+              await this.paymentModel.updateOne(
+                { orderId: enrollment.orderId },
+                {
+                  $set: {
+                    status: AiExplorerPaymentTxnStatus.SUCCESS,
+                    cfPaymentId,
+                    bankReference: bankRef,
+                  },
+                },
+              );
+
+              this.aiExplorerService.sendNotificationEmails(enrollment).catch((e) =>
+                this.logger.error('Error sending confirmation email after status check:', e),
+              );
+            }
+          }
+        } catch (err: any) {
+          this.logger.warn(`Failed to query Cashfree status for order ${enrollment.orderId}: ${err?.message}`);
+        }
+      }
     }
 
     return {

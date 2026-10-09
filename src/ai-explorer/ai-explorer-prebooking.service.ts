@@ -209,54 +209,68 @@ export class AiExplorerPrebookingService {
     const apiVersion = this.getCashfreeApiVersion();
     const baseUrl = this.getCashfreeBaseUrl();
 
-    let cfOrder: any = null;
-
-    const firstStudentName = students[0]?.studentName || 'Student';
-    const customerDisplayName = (dto.fatherName || firstStudentName).trim();
-
-    if (appId && secretKey) {
-      try {
-        const response = await fetch(`${baseUrl}/orders`, {
-          method: 'POST',
-          headers: {
-            'x-client-id': appId,
-            'x-client-secret': secretKey,
-            'x-api-version': apiVersion,
-            'Content-Type': 'application/json',
-            'Connection': 'keep-alive',
-          },
-          body: JSON.stringify({
-            order_id: orderId,
-            order_amount: totalAmount,
-            order_currency: 'INR',
-            customer_details: {
-              customer_id: `cust_${fatherPhone}`,
-              customer_name: customerDisplayName,
-              customer_email: email,
-              customer_phone: fatherPhone,
-            },
-            order_meta: {
-              return_url: returnUrl,
-              notify_url: notifyUrl,
-            },
-            order_note: `AI Explorer Pre-Booking (${totalStudents} Student(s) - ${prebookingId})`,
-          }),
-          signal: AbortSignal.timeout(5000),
-        });
-
-        if (response.ok) {
-          cfOrder = await response.json();
-        } else {
-          const errJson = await response.json();
-          this.logger.error('Cashfree prebooking order error:', errJson);
-        }
-      } catch (err) {
-        this.logger.error('Cashfree PG connection error:', err);
-      }
+    if (!appId || !secretKey) {
+      throw new BadRequestException('Cashfree API credentials are not configured on server.');
     }
 
-    const paymentSessionId = cfOrder?.payment_session_id || `sim_prebook_${Date.now()}`;
-    const cfOrderId = cfOrder?.cf_order_id ? String(cfOrder.cf_order_id) : '';
+    const firstStudentName = students[0]?.studentName || students[0]?.name || 'Student';
+    const customerDisplayName = (
+      dto.fatherName ||
+      dto.motherName ||
+      dto.customerName ||
+      firstStudentName
+    ).replace(/[^a-zA-Z0-9\s.-]/g, ' ').trim().slice(0, 80) || 'Parent';
+
+    let cfOrder: any = null;
+    try {
+      this.logger.log(`Creating Cashfree Prebooking order ${orderId} for ₹${totalAmount} (${fatherPhone})`);
+      const response = await fetch(`${baseUrl}/orders`, {
+        method: 'POST',
+        headers: {
+          'x-client-id': appId,
+          'x-client-secret': secretKey,
+          'x-api-version': apiVersion,
+          'Content-Type': 'application/json',
+          'Connection': 'keep-alive',
+        },
+        body: JSON.stringify({
+          order_id: orderId,
+          order_amount: totalAmount,
+          order_currency: 'INR',
+          customer_details: {
+            customer_id: `cust_${fatherPhone.replace(/\D/g, '')}`,
+            customer_name: customerDisplayName,
+            customer_email: email,
+            customer_phone: fatherPhone,
+          },
+          order_meta: {
+            return_url: returnUrl,
+            notify_url: notifyUrl,
+          },
+          order_note: (dto.orderNote || `AI Explorer Pre-Booking (${totalStudents} Student(s) - ${prebookingId})`).slice(0, 150),
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (!response.ok) {
+        const errJson = await response.json();
+        this.logger.error('Cashfree prebooking order creation error response:', errJson);
+        throw new InternalServerErrorException(
+          errJson?.message || 'Failed to create order on Cashfree',
+        );
+      }
+
+      cfOrder = await response.json();
+      this.logger.log(`Cashfree prebooking order created: ${cfOrder.order_id}, cfOrderId: ${cfOrder.cf_order_id}`);
+    } catch (err: any) {
+      this.logger.error('Failed to communicate with Cashfree PG for prebooking:', err?.message || err);
+      throw new InternalServerErrorException(
+        err?.message || 'Unable to connect to Cashfree payment gateway',
+      );
+    }
+
+    const paymentSessionId = cfOrder.payment_session_id;
+    const cfOrderId = cfOrder.cf_order_id ? String(cfOrder.cf_order_id) : '';
 
     // Parallel DB writes
     await Promise.all([
@@ -376,9 +390,91 @@ export class AiExplorerPrebookingService {
   // =========================================================================
   async getPaymentStatus(orderId: string) {
     const cleanOrderId = (orderId || '').trim();
-    const prebooking = await this.prebookingModel.findOne({ orderId: cleanOrderId });
+    let prebooking = await this.prebookingModel.findOne({
+      $or: [
+        { orderId: cleanOrderId },
+        { prebookingId: cleanOrderId.toUpperCase() },
+        { cfOrderId: cleanOrderId },
+      ],
+    });
     if (!prebooking) {
       throw new NotFoundException(`No pre-booking found for order ID: ${cleanOrderId}`);
+    }
+
+    // If still pending, query Cashfree in real-time
+    if (prebooking.paymentStatus !== AiPrebookingPaymentStatus.COMPLETED && prebooking.orderId) {
+      const appId = this.getCashfreeAppId();
+      const secretKey = this.getCashfreeSecretKey();
+      const apiVersion = this.getCashfreeApiVersion();
+      const baseUrl = this.getCashfreeBaseUrl();
+
+      if (appId && secretKey) {
+        try {
+          const cfOrderRes = await fetch(`${baseUrl}/orders/${prebooking.orderId}`, {
+            headers: {
+              'x-client-id': appId,
+              'x-client-secret': secretKey,
+              'x-api-version': apiVersion,
+            },
+            signal: AbortSignal.timeout(5000),
+          });
+
+          if (cfOrderRes.ok) {
+            const cfOrder = await cfOrderRes.json();
+            if (cfOrder?.order_status === 'PAID') {
+              this.logger.log(`Cashfree Prebooking Order ${prebooking.orderId} verified as PAID via status check`);
+              let cfPaymentId = '';
+              let bankRef = '';
+
+              try {
+                const cfPayRes = await fetch(`${baseUrl}/orders/${prebooking.orderId}/payments`, {
+                  headers: {
+                    'x-client-id': appId,
+                    'x-client-secret': secretKey,
+                    'x-api-version': apiVersion,
+                  },
+                  signal: AbortSignal.timeout(4000),
+                });
+                if (cfPayRes.ok) {
+                  const payments = await cfPayRes.json();
+                  const successPay = Array.isArray(payments)
+                    ? payments.find((p: any) => p.payment_status === 'SUCCESS')
+                    : null;
+                  if (successPay) {
+                    cfPaymentId = String(successPay.cf_payment_id || '');
+                    bankRef = String(successPay.bank_reference || cfPaymentId);
+                  }
+                }
+              } catch (pErr) {
+                this.logger.warn(`Could not fetch prebooking payment details: ${pErr}`);
+              }
+
+              prebooking.paymentStatus = AiPrebookingPaymentStatus.COMPLETED;
+              prebooking.status = AiPrebookingStatus.CONFIRMED;
+              prebooking.paymentId = cfPaymentId;
+              prebooking.utr = bankRef;
+              await prebooking.save();
+
+              await this.prebookingPaymentModel.updateOne(
+                { orderId: prebooking.orderId },
+                {
+                  $set: {
+                    status: AiExplorerPrebookingTxnStatus.SUCCESS,
+                    cfPaymentId,
+                    bankReference: bankRef,
+                  },
+                },
+              );
+
+              this.sendNotificationEmails(prebooking).catch((err) =>
+                this.logger.error('Error dispatching confirmation emails after prebooking status verification:', err),
+              );
+            }
+          }
+        } catch (err: any) {
+          this.logger.warn(`Failed to query Cashfree status for prebooking order ${prebooking.orderId}: ${err?.message}`);
+        }
+      }
     }
 
     return {
