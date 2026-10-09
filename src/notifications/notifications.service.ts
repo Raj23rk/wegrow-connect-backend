@@ -4218,5 +4218,275 @@ export class NotificationsService {
       html,
     );
   }
+
+  // ============================================================
+  // AI EXPLORER PRE-BOOKING STUDENT & FAMILY CONFIRMATION EMAIL
+  // ============================================================
+  async sendAiExplorerPrebookingConfirmationEmail(data: {
+    email: string;
+    prebookingId: string;
+    students: Array<{ studentName: string; standard: string; school: string }>;
+    totalStudents: number;
+    amountPerStudent: number;
+    totalAmount: number;
+    fatherName: string;
+    motherName?: string;
+    fatherPhone: string;
+    motherPhone?: string;
+    address?: string;
+    paymentMethod?: string;
+    paymentStatus?: string;
+    utr?: string;
+    orderId?: string;
+    createdAt?: Date;
+  }): Promise<boolean> {
+    const formattedAmount = `₹${(data.totalAmount || (data.totalStudents || 1) * 1000).toLocaleString('en-IN')}`;
+    const studentCount = data.totalStudents || (data.students ? data.students.length : 1);
+    const studentListHtml = (data.students || [])
+      .map(
+        (s, idx) => `
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span style="font-weight:700; color:#0f1f5c; font-size:14px;">${idx + 1}. ${s.studentName}</span>
+            <div style="font-size:12px; color:#64748b; margin-top:2px;">Standard: <strong>${s.standard}</strong> &bull; School: ${s.school}</div>
+          </div>
+          <span style="background:#eef2ff; color:#4f46e5; font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px;">₹1,000 Reserved</span>
+        </div>
+      `,
+      )
+      .join('');
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WeGrow AI Explorer Pre-Booking Confirmed</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    .wrapper { width: 100%; table-layout: fixed; background-color: #f1f5f9; padding: 30px 0; }
+    .card { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(15, 31, 92, 0.08); border: 1px solid #e2e8f0; }
+    .header { background: linear-gradient(135deg, #0f1f5c 0%, #1846c4 50%, #7b4dff 100%); padding: 36px 30px; text-align: center; color: #ffffff; }
+    .badge { display: inline-block; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); border-radius: 999px; padding: 6px 16px; font-size: 12px; font-weight: 700; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase; color: #ffd644; }
+    .body { padding: 32px 30px; color: #1e293b; line-height: 1.6; }
+    .section-title { font-size: 16px; font-weight: 700; color: #0f1f5c; margin: 20px 0 10px; }
+    .fee-box { background: linear-gradient(135deg, #0f1f5c 0%, #1e1b4b 100%); border-radius: 16px; padding: 20px 24px; color: #e2e8f0; margin: 24px 0; }
+    .fee-box table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .fee-box td { padding: 5px 0; }
+    .amount-total { font-size: 26px; font-weight: 800; color: #22c55e; }
+    .status-pill { background: #22c55e; color: #ffffff; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; }
+    .footer { text-align: center; padding: 24px; font-size: 12px; color: #64748b; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="header">
+        <div class="badge">🚀 Official Seat Reservation</div>
+        <h1 style="margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">AI Explorer Pre-Booking Confirmed!</h1>
+        <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 14px;">WeGrow Skill Campus &bull; Batch 2026</p>
+      </div>
+
+      <div class="body">
+        <p style="font-size: 15px; margin-top: 0;">
+          Dear <strong>${data.fatherName || 'Parent'}</strong>,
+        </p>
+        <p style="font-size: 14px; color: #475569;">
+          Congratulations! Your pre-booking for <strong>WeGrow AI Explorer</strong> has been successfully registered and secured. You have reserved priority seats for <strong>${studentCount} student(s)</strong>.
+        </p>
+
+        <!-- PRE-BOOKING BADGE -->
+        <div style="background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 14px; padding: 16px 20px; margin: 20px 0; text-align: center;">
+          <div style="font-size: 12px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 1px;">Pre-Booking Registration ID</div>
+          <div style="font-size: 24px; font-weight: 800; color: #15803d; font-family: monospace; letter-spacing: 2px; margin-top: 4px;">${data.prebookingId}</div>
+          <div style="font-size: 12px; color: #16a34a; margin-top: 4px;">Keep this ID safe for early-bird orientation &amp; final fee adjustment</div>
+        </div>
+
+        <!-- STUDENTS RESERVED -->
+        <div class="section-title">🎓 Registered Students (${studentCount}):</div>
+        <div style="background: #f8fafc; border-radius: 14px; padding: 12px; border: 1px dashed #cbd5e1;">
+          ${studentListHtml}
+        </div>
+
+        <!-- PAYMENT DETAILS -->
+        <div class="fee-box">
+          <table>
+            <tr>
+              <td>Program Name:</td>
+              <td align="right" style="color:#ffffff; font-weight:700;">AI Explorer (Pre-Booking)</td>
+            </tr>
+            <tr>
+              <td>Total Children Enrolled:</td>
+              <td align="right" style="color:#ffffff; font-weight:700;">${studentCount} Child(ren)</td>
+            </tr>
+            <tr>
+              <td>Per Student Pre-booking Fee:</td>
+              <td align="right" style="color:#ffffff; font-weight:700;">₹1,000</td>
+            </tr>
+            <tr>
+              <td>Payment Mode:</td>
+              <td align="right" style="color:#ffffff; font-weight:700;">${data.paymentMethod || 'UPI / Cashfree'}</td>
+            </tr>
+            ${data.utr ? `<tr><td>UTR / Transaction Ref:</td><td align="right" style="color:#ffd644; font-family:monospace;">${data.utr}</td></tr>` : ''}
+            ${data.orderId ? `<tr><td>Order ID:</td><td align="right" style="color:#ffd644; font-family:monospace;">${data.orderId}</td></tr>` : ''}
+            <tr>
+              <td style="padding-top: 12px; font-size: 15px; font-weight: 700; color: #ffffff;">Total Amount Paid:</td>
+              <td class="amount-total" style="padding-top: 12px;">${formattedAmount}</td>
+            </tr>
+            <tr>
+              <td>Payment Status:</td>
+              <td align="right"><span class="status-pill">${data.paymentStatus || 'COMPLETED'}</span></td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- BENEFITS & NEXT STEPS -->
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 18px; margin-top: 20px;">
+          <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #1e40af;">✨ Pre-Booking Early-Bird Privileges:</h4>
+          <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #1d4ed8; line-height: 1.6;">
+            <li>Guaranteed priority seat in the upcoming AI Explorer weekend / summer batch.</li>
+            <li>₹1,000 pre-booking amount per child will be fully adjusted against your chosen tuition fee plan.</li>
+            <li>Our master mentor will contact you via WhatsApp to guide through course kit &amp; schedule details.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        <strong>WeGrow Skill Campus &amp; B School</strong><br>
+        Empowering Young Innovators &bull; Shaping Future Tech Leaders<br>
+        📞 Helpline: <a href="tel:+919344037331" style="color:#7b4dff; text-decoration:none; font-weight:700;">+91 93440 37331</a> &bull; ✉️ <a href="mailto:enquiry@wegrowcampus.in" style="color:#7b4dff; text-decoration:none; font-weight:700;">enquiry@wegrowcampus.in</a><br>
+        <a href="https://www.wegrowbschool.in" style="color:#0f1f5c; font-weight:700; text-decoration:none;">www.wegrowbschool.in</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    return this.sendEmail(
+      data.email,
+      `🎉 AI Explorer Pre-Booking Confirmed! [${data.prebookingId}] - ${studentCount} Student(s)`,
+      html,
+    );
+  }
+
+  // ============================================================
+  // AI EXPLORER PRE-BOOKING ADMIN ALERT EMAIL
+  // ============================================================
+  async sendAiExplorerPrebookingAdminAlertEmail(data: {
+    prebookingId: string;
+    students: Array<{ studentName: string; standard: string; school: string }>;
+    totalStudents: number;
+    totalAmount: number;
+    email: string;
+    fatherName: string;
+    motherName?: string;
+    fatherPhone: string;
+    motherPhone?: string;
+    address?: string;
+    paymentMethod?: string;
+    paymentStatus?: string;
+    orderId?: string;
+    utr?: string;
+    createdAt?: Date;
+  }): Promise<boolean> {
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.MAIL_FROM || 'kumar@wegrowcampus.in';
+    const formattedAmount = `₹${(data.totalAmount || (data.totalStudents || 1) * 1000).toLocaleString('en-IN')}`;
+    const studentCount = data.totalStudents || (data.students ? data.students.length : 1);
+
+    const studentRows = (data.students || [])
+      .map(
+        (s, idx) => `
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+          <td style="padding: 6px 0; color: #0f1f5c; font-weight: 600;">#${idx + 1} ${s.studentName}</td>
+          <td style="padding: 6px 0; color: #475569;">${s.standard}</td>
+          <td style="padding: 6px 0; color: #475569;">${s.school}</td>
+        </tr>
+      `,
+      )
+      .join('');
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>New AI Explorer Pre-Booking - ${studentCount} Student(s)</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f8fafc; padding: 20px; color: #1e293b;">
+  <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    <div style="background: #0f1f5c; color: #ffffff; padding: 16px 20px; border-radius: 8px; margin-bottom: 20px;">
+      <h2 style="margin: 0; font-size: 20px;">🚀 New AI Explorer Pre-Booking</h2>
+      <p style="margin: 4px 0 0 0; font-size: 13px; color: #cbd5e1;">WeGrow Skill Campus &bull; ₹1000/student Advance Reservation</p>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b; width: 40%;">Pre-Booking ID:</td>
+        <td style="padding: 8px 0; font-weight: bold; color: #7b4dff;">${data.prebookingId}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Total Students:</td>
+        <td style="padding: 8px 0; font-weight: bold;">${studentCount} Student(s)</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Parent Contact:</td>
+        <td style="padding: 8px 0; font-weight: bold;">${data.fatherName}${data.motherName ? ' & ' + data.motherName : ''}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Email:</td>
+        <td style="padding: 8px 0; font-weight: bold;"><a href="mailto:${data.email}">${data.email}</a></td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Phone:</td>
+        <td style="padding: 8px 0; font-weight: bold;"><a href="tel:${data.fatherPhone}">${data.fatherPhone}</a> ${data.motherPhone ? ' / ' + data.motherPhone : ''}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Address:</td>
+        <td style="padding: 8px 0;">${data.address || 'N/A'}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Total Amount Paid:</td>
+        <td style="padding: 8px 0; font-weight: bold; color: #16a34a; font-size: 16px;">${formattedAmount}</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 8px 0; color: #64748b;">Payment Method & Status:</td>
+        <td style="padding: 8px 0; font-weight: bold;">${data.paymentMethod || 'UPI'} &bull; <span style="color: #10b981;">${data.paymentStatus || 'COMPLETED'}</span></td>
+      </tr>
+      ${data.orderId ? `<tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #64748b;">Order ID:</td><td style="padding: 8px 0; font-family: monospace;">${data.orderId}</td></tr>` : ''}
+      ${data.utr ? `<tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 8px 0; color: #64748b;">UTR Reference:</td><td style="padding: 8px 0; font-family: monospace;">${data.utr}</td></tr>` : ''}
+    </table>
+
+    <div style="margin-top: 18px;">
+      <strong style="color: #0f1f5c; font-size: 14px;">Students List:</strong>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px;">
+        <thead>
+          <tr style="border-bottom: 2px solid #e2e8f0; text-align: left; color: #64748b; font-size: 12px;">
+            <th style="padding: 4px 0;">Student Name</th>
+            <th style="padding: 4px 0;">Standard</th>
+            <th style="padding: 4px 0;">School</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${studentRows}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top: 20px; padding: 12px; background: #f8fafc; border-radius: 6px; font-size: 12px; color: #64748b; text-align: center;">
+      Notification generated by WeGrow Connect AI Explorer Pre-Booking Service
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    return this.sendEmail(
+      adminEmail,
+      `🚨 New AI Explorer Pre-Booking: ${data.fatherName} (${studentCount} Students) - ${formattedAmount}`,
+      html,
+    );
+  }
 }
 

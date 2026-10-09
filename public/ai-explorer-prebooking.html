@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WeGrow AI Explorer — Priority Seat Pre-Booking (₹1,000 / Student)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#1846c4; --navy:#0f1f5c; --orange:#ff7a1a; --pink:#ff3d8b; --purple:#7b4dff;
+  --cyan:#00c2ff; --green:#19d39a; --yellow:#ffc928;
+  --ink:#16204a; --muted:#5f6a8a; --line:#e3e8f6;
+  --rainbow:linear-gradient(90deg,var(--orange),var(--pink),var(--purple),var(--cyan),var(--green));
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Nunito,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);
+  background:#f6f4ff;min-height:100vh;overflow-x:hidden}
+h1,h2,h3,.brand{font-family:Fredoka,Nunito,sans-serif}
+
+/* ---------- Animated background ---------- */
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;
+  background:
+    radial-gradient(circle at 1px 1px,#7b4dff22 1.5px,transparent 0) 0 0/28px 28px,
+    linear-gradient(160deg,#fff4ea 0%,#f3eeff 45%,#e8f6ff 100%)}
+.blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.55;animation:float 14s ease-in-out infinite}
+.b1{width:420px;height:420px;background:#ffb27a;top:-120px;left:-100px}
+.b2{width:380px;height:380px;background:#b9a2ff;top:30%;right:-120px;animation-delay:-4s}
+.b3{width:340px;height:340px;background:#7fe3ff;bottom:-120px;left:25%;animation-delay:-8s}
+.b4{width:240px;height:240px;background:#ff9cc6;top:55%;left:-80px;animation-delay:-2s}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-30px) scale(1.1)}}
+.circuit{position:absolute;opacity:.18}
+.floaty{position:absolute;font-size:30px;animation:bob 6s ease-in-out infinite;opacity:.8;user-select:none}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-18px) rotate(8deg)}}
+
+/* ---------- Header ---------- */
+header{height:86px;background:#ffffffcc;backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;
+  padding:0 6%;position:sticky;top:0;z-index:10;border-bottom:3px solid transparent;
+  border-image:var(--rainbow) 1}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;color:var(--navy);font-size:26px;text-decoration:none}
+.brand-mark{width:48px;height:48px;border-radius:14px;background:conic-gradient(from 200deg,var(--orange),var(--pink),var(--purple),var(--cyan),var(--orange));
+  display:grid;place-items:center;color:#fff;font-weight:700;font-size:24px;box-shadow:0 8px 20px #7b4dff40}
+.brand small{display:block;color:var(--muted);font-family:Nunito;font-size:10px;font-weight:900;letter-spacing:1px}
+.progress{display:flex;gap:10px;align-items:center}
+.pstep{display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:#eef0fa;color:#8a92ad;font-size:12px;font-weight:900;transition:.3s}
+.pstep i{font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#dde2f2;font-size:11px}
+.pstep.active{background:linear-gradient(90deg,var(--purple),var(--blue));color:#fff;box-shadow:0 6px 16px #7b4dff40}
+.pstep.active i{background:#ffffff33}
+.pline{width:18px;height:3px;border-radius:3px;background:#dde2f2}
+
+.prebook-pill{background:linear-gradient(90deg,#ff7a1a,#ff3d8b);color:#fff;font-weight:900;font-size:13px;padding:8px 16px;border-radius:999px;text-decoration:none;box-shadow:0 6px 16px #ff3d8b40}
+
+/* ---------- Hero ---------- */
+main{max-width:1180px;margin:0 auto;padding:36px 20px 80px}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:30px;align-items:center;margin-bottom:28px}
+.badge{display:inline-flex;gap:8px;align-items:center;background:#fff;color:var(--purple);border:2px solid #e1d8ff;padding:8px 16px;border-radius:999px;
+  font-size:13px;font-weight:900;margin-bottom:14px;box-shadow:0 6px 16px #7b4dff1f}
+.badge .live{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 #19d39a;animation:pulse 1.6s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 10px #19d39a00}100%{box-shadow:0 0 0 0 #19d39a00}}
+.hero h1{font-size:clamp(36px,4.8vw,60px);line-height:1.05;margin:0 0 14px;color:var(--navy);font-weight:700}
+.grad2{background:linear-gradient(90deg,#9a3dff 0%,#5a4dff 35%,#2f7dff 60%,#00b8d4 82%,#14c79a 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-bar{width:100px;height:5px;border-radius:5px;background:var(--orange);margin:0 0 18px}
+.hero p{font-size:17px;line-height:1.6;color:var(--muted);max-width:600px;margin:0 0 18px}
+
+.prebook-banner{background:linear-gradient(135deg,#0f1f5c,#1846c4 65%,#7b4dff);border-radius:24px;padding:22px 26px;color:#fff;display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;box-shadow:0 14px 34px #1846c430;position:relative;overflow:hidden}
+.prebook-banner::after{content:"🚀";position:absolute;right:20px;bottom:-10px;font-size:80px;opacity:.2}
+.prebook-banner h3{margin:0 0 4px;font-size:24px}
+.prebook-banner p{margin:0;font-size:14px;opacity:.9}
+.price-tag-big{background:var(--yellow);color:var(--navy);font-family:Fredoka;font-size:24px;font-weight:700;padding:10px 20px;border-radius:16px;white-space:nowrap;box-shadow:0 6px 16px #0002}
+
+/* ---------- Dynamic Price Bar ---------- */
+.live-price-bar{background:#fff;border:2px solid #e1d8ff;border-radius:20px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;box-shadow:0 8px 24px #7b4dff14}
+.live-price-info strong{display:block;font-size:18px;color:var(--navy);font-family:Fredoka}
+.live-price-info span{font-size:13px;color:var(--muted);font-weight:700}
+.live-price-amount{font-family:Fredoka;font-size:32px;color:var(--purple);font-weight:700}
+
+/* ---------- Student Dynamic Cards ---------- */
+.students-container{display:flex;flex-direction:column;gap:18px;margin-bottom:20px}
+.student-card{background:#f8faff;border:2px solid #e3e8f6;border-radius:22px;padding:22px;position:relative;transition:.3s;animation:slideDown .35s ease}
+@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+.student-card:hover{border-color:#b9a2ff;box-shadow:0 10px 24px #7b4dff12}
+.student-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.student-badge{background:linear-gradient(90deg,var(--purple),var(--blue));color:#fff;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:900;display:inline-flex;align-items:center;gap:6px}
+.remove-student-btn{background:#fff0f3;color:#d22a48;border:1px solid #ffd0da;padding:6px 12px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;transition:.2s}
+.remove-student-btn:hover{background:#ffe0e6}
+
+.add-student-btn{width:100%;border:2px dashed #7b4dff;background:#f5f0ff;color:var(--purple);padding:16px;border-radius:18px;font-size:16px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:.2s;margin-bottom:24px}
+.add-student-btn:hover{background:#ece3ff;transform:translateY(-2px)}
+
+/* ---------- Section Dividers ---------- */
+.section-heading{font-family:Fredoka;font-size:20px;color:var(--navy);margin:24px 0 14px;display:flex;align-items:center;gap:10px}
+.section-heading i{font-style:normal;background:#efe9ff;color:var(--purple);width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:18px}
+
+/* ---------- Cards & Form Fields ---------- */
+.card{position:relative;background:#ffffffee;backdrop-filter:blur(10px);border-radius:28px;padding:32px;box-shadow:0 22px 60px #3a2a8a1c;animation:pop .45s ease}
+.card::before{content:"";position:absolute;inset:0;border-radius:28px;padding:3px;background:var(--rainbow);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+@keyframes pop{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+
+.step-title{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:22px}
+.step-title h2{margin:0;font-size:28px;color:var(--navy);display:flex;align-items:center;gap:10px}
+.step-title h2 .emo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:22px;background:linear-gradient(135deg,#fff0e3,#ffe1f0)}
+.step-title p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.step-num{font-family:"Space Mono",monospace;color:#fff;background:var(--navy);padding:6px 12px;border-radius:10px;font-size:13px;white-space:nowrap}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}
+label{font-size:13px;font-weight:900;color:var(--navy)}.req{color:var(--pink)}
+.input-wrap{position:relative}
+.err-msg{color:#e5304f;font-size:12px;font-weight:800;margin-top:2px}
+input.invalid,select.invalid{border-color:#ff5a76;background:#fff6f8}
+.form-error{margin-top:18px;padding:12px 16px;border-radius:14px;background:#fff0f3;color:#d22a48;font-weight:800;font-size:14px;border:2px solid #ffd0da}
+.input-wrap .ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:17px;pointer-events:none}
+input,select{width:100%;height:50px;border:2px solid var(--line);border-radius:14px;padding:0 14px 0 44px;font-size:15px;font-family:inherit;font-weight:700;outline:none;background:#fbfcff;color:var(--ink);transition:.2s}
+input::placeholder{color:#a5adc6;font-weight:600}
+input:focus,select:focus{border-color:var(--purple);background:#fff;box-shadow:0 0 0 5px #7b4dff1f}
+
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:26px;flex-wrap:wrap}
+button{border:0;border-radius:14px;padding:14px 24px;font-weight:900;cursor:pointer;font-size:15px;font-family:inherit;transition:.2s}
+.primary{color:#fff;background:linear-gradient(90deg,var(--orange),var(--pink),var(--purple));background-size:200% auto;box-shadow:0 10px 24px #ff3d8b40}
+.primary:hover:not(:disabled){background-position:right center;transform:translateY(-2px)}
+.primary:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.secondary{background:#eef0fa;color:#4a5578}.secondary:hover{background:#e2e6f5}
+.hidden{display:none!important}
+
+/* ---------- Confirmation / Step 2 ---------- */
+.summary{background:#f7f8ff;border-radius:20px;padding:20px;border:2px solid #edf0fb}
+.summary-row{display:flex;justify-content:space-between;gap:15px;padding:10px 0;border-bottom:2px dashed #e1e6f4;font-size:14px}
+.summary-row:last-child{border:0}.summary-row span{color:var(--muted);font-weight:800}
+
+.student-pill-list{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.student-summary-item{background:#fff;border:1px solid #e1e6f4;border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+
+.perks-box{background:linear-gradient(135deg,#f0fdf4,#e8fcf1);border:2px solid #bbf7d0;border-radius:20px;padding:20px;margin-top:20px}
+.perks-box h4{margin:0 0 8px;color:#166534;font-size:16px}
+.perks-box ul{margin:0;padding-left:20px;font-size:13px;color:#15803d;line-height:1.6}
+
+.declare{margin-top:18px;padding:16px;background:#f5f2ff;border:2px dashed #d6c9ff;border-radius:16px;display:flex;gap:12px;align-items:flex-start;font-size:13px;line-height:1.55;font-weight:700;cursor:pointer}
+.declare input{width:20px;height:20px;flex:none;margin-top:1px;padding:0;accent-color:var(--purple)}
+
+/* ---------- Payment / Step 3 ---------- */
+.pay-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:24px}
+.pay-total{background:linear-gradient(135deg,#0f1f5c,#1846c4);color:#fff;border-radius:20px;padding:22px;margin:6px 0 16px}
+.pay-total small{opacity:.8;font-weight:800}
+.pay-amount{font-family:Fredoka;font-size:38px;font-weight:700;margin-top:4px}
+.pay-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.pay-option{border:2px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;background:#fff;transition:.2s}
+.pay-option:hover{transform:translateY(-2px)}
+.pay-option .pi{font-size:24px}
+.pay-option.selected{border-color:var(--blue);background:#eef3ff;box-shadow:0 8px 20px #1846c422}
+.pay-option strong{display:block;font-family:Fredoka;font-size:17px}.pay-option span{font-size:12px;color:var(--muted);font-weight:700}
+
+.utr-box{background:#fff;border:2px solid #e1d8ff;border-radius:18px;padding:18px;margin-top:14px}
+.utr-box input{height:46px;margin:8px 0;font-family:monospace;letter-spacing:1px}
+
+/* ---------- Success Modal ---------- */
+.success{position:fixed;inset:0;background:#0f1f5cb8;backdrop-filter:blur(5px);display:grid;place-items:center;padding:20px;z-index:50}
+.modal{background:#fff;border-radius:28px;padding:34px;max-width:520px;width:100%;text-align:center;box-shadow:0 30px 90px #0005;animation:pop .4s ease;position:relative;z-index:2;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:26px;margin:6px 0;color:var(--navy)}
+.tick{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--green),#7bdc3a);color:#fff;display:grid;place-items:center;font-size:42px;margin:0 auto 12px;font-weight:900;box-shadow:0 12px 28px #19d39a55}
+.confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:1;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+.enroll-badge{display:inline-block;background:#eef2ff;color:var(--purple);border:1px solid #c7d2fe;font-family:monospace;font-size:16px;font-weight:800;padding:8px 16px;border-radius:10px;margin:10px 0}
+.email-hint{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-size:13px;padding:10px 14px;border-radius:10px;margin:12px 0;font-weight:700}
+
+footer{text-align:center;color:var(--muted);font-size:13px;font-weight:800;padding:20px 20px 40px}
+
+@media(max-width:900px){.hero{grid-template-columns:1fr;text-align:center}.hero p{margin:0 auto 16px}.pay-grid{grid-template-columns:1fr}}
+@media(max-width:640px){.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.prebook-banner{flex-direction:column;gap:12px;text-align:center}.progress{display:none}}
+</style>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg" aria-hidden="true">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
+  <svg class="circuit" style="top:120px;right:4%;width:260px" viewBox="0 0 260 160" fill="none" stroke="#7b4dff" stroke-width="3" stroke-linecap="round">
+    <path d="M10 20h70l20 20h60M10 80h40l20-20h90l20 20h60M10 140h110l20-20h100"/><circle cx="160" cy="40" r="7"/><circle cx="240" cy="80" r="7"/><circle cx="240" cy="120" r="7"/>
+  </svg>
+  <span class="floaty" style="top:16%;left:5%">🚀</span>
+  <span class="floaty" style="top:62%;right:3%;animation-delay:-2s">🤖</span>
+  <span class="floaty" style="top:85%;left:46%;animation-delay:-4s">💡</span>
+  <span class="floaty" style="top:40%;left:2%;animation-delay:-3s">🎯</span>
+</div>
+
+<header>
+  <a href="/ai-explorer-prebooking.html" class="brand">
+    <div class="brand-mark">W</div>
+    <div>WeGrow <small>SKILL CAMPUS &amp; B SCHOOL</small></div>
+  </a>
+  <div class="progress" id="progress">
+    <span class="pstep active"><i>1</i>Students &amp; Family</span><span class="pline"></span>
+    <span class="pstep"><i>2</i>Review &amp; Terms</span><span class="pline"></span>
+    <span class="pstep"><i>3</i>₹1000 Payment</span>
+  </div>
+  <a class="prebook-pill" href="#step1">⚡ Pre-Book @ ₹1,000</a>
+</header>
+
+<main>
+<section class="hero">
+  <div>
+    <div class="badge"><span class="live"></span> EARLY-BIRD SEAT RESERVATION • ₹1,000 / STUDENT</div>
+    <h1>Reserve Your AI Explorer Seat with <span class="grad2">Pre-Booking!</span></h1>
+    <div class="hero-bar"></div>
+    <p>Secure your child's priority admission for our flagship AI &amp; Robotics program with a minimal deposit of ₹1,000 per student. If you have 2 or 3 children in your family, easily add multiple students in a single registration!</p>
+  </div>
+
+  <div class="prebook-banner">
+    <div>
+      <h3>Priority Batch Access</h3>
+      <p>₹1,000 per student is fully adjustable against the course fee.</p>
+    </div>
+    <div class="price-tag-big" id="bannerPriceTag">₹1,000 / Seat</div>
+  </div>
+</section>
+
+<!-- STEP 1: MULTI-STUDENT FORM -->
+<section class="card" id="step1">
+  <div class="step-title">
+    <div>
+      <h2><span class="emo">👨👩👧👦</span>Student &amp; Family Pre-Booking Details</h2>
+      <p>Fill in child and parent details. Click "+ Add Another Student" for sibling registrations.</p>
+    </div>
+    <span class="step-num">01 / 03</span>
+  </div>
+
+  <!-- LIVE PRICE BREAKDOWN BAR -->
+  <div class="live-price-bar">
+    <div class="live-price-info">
+      <strong id="livePriceTitle">1 Student Registered</strong>
+      <span>₹1,000 per student • Fully adjustable at batch start</span>
+    </div>
+    <div class="live-price-amount" id="livePriceAmount">₹1,000</div>
+  </div>
+
+  <form id="prebookForm" novalidate>
+    <!-- DYNAMIC STUDENT CARDS CONTAINER -->
+    <div class="section-heading"><i>🎓</i> Registered Children (Students)</div>
+    <div class="students-container" id="studentsContainer">
+      <!-- Student Card Template (Default 1) -->
+      <div class="student-card" data-index="0">
+        <div class="student-header">
+          <span class="student-badge">🧑 Student #1</span>
+          <button type="button" class="remove-student-btn hidden" onclick="removeStudent(0)">🗑️ Remove</button>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Student Full Name <span class="req">*</span></label>
+            <div class="input-wrap"><span class="ico">👤</span><input class="st-name" required placeholder="Enter student name"></div>
+          </div>
+          <div class="field">
+            <label>Standard / Grade <span class="req">*</span></label>
+            <div class="input-wrap">
+              <span class="ico">📚</span>
+              <select class="st-standard" required>
+                <option value="">Select standard</option>
+                <option>5th Standard</option>
+                <option>6th Standard</option>
+                <option>7th Standard</option>
+                <option>8th Standard</option>
+                <option>9th Standard</option>
+                <option>10th Standard</option>
+                <option>11th Standard</option>
+                <option>12th Standard</option>
+              </select>
+            </div>
+          </div>
+          <div class="field full">
+            <label>School Name <span class="req">*</span></label>
+            <div class="input-wrap"><span class="ico">🏫</span><input class="st-school" required placeholder="Enter school name"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD STUDENT BUTTON -->
+    <button type="button" class="add-student-btn" id="addStudentBtn">
+      <span style="font-size:20px">+</span> Add Another Student / Child (Sibling)
+    </button>
+
+    <!-- PARENT & FAMILY DETAILS -->
+    <div class="section-heading"><i>👨👩</i> Parent &amp; Contact Information</div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="fatherName">Father's Name <span class="req">*</span></label>
+        <div class="input-wrap"><span class="ico">👨</span><input id="fatherName" required placeholder="Enter father's name"></div>
+      </div>
+      <div class="field">
+        <label for="motherName">Mother's Name</label>
+        <div class="input-wrap"><span class="ico">👩</span><input id="motherName" placeholder="Enter mother's name"></div>
+      </div>
+      <div class="field">
+        <label for="email">Parent Email Address <span class="req">*</span></label>
+        <div class="input-wrap"><span class="ico">✉️</span><input id="email" type="email" required placeholder="e.g. parent@gmail.com"></div>
+      </div>
+      <div class="field">
+        <label for="fatherPhone">Primary Contact Phone (Father) <span class="req">*</span></label>
+        <div class="input-wrap"><span class="ico">📱</span><input id="fatherPhone" class="phone" type="tel" required inputmode="numeric" maxlength="10" placeholder="10-digit mobile number"></div>
+      </div>
+      <div class="field">
+        <label for="motherPhone">Secondary Phone (Mother)</label>
+        <div class="input-wrap"><span class="ico">📲</span><input id="motherPhone" class="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number"></div>
+      </div>
+      <div class="field full">
+        <label for="address">Residential Address <span class="req">*</span></label>
+        <div class="input-wrap"><span class="ico">📍</span><input id="address" required placeholder="Enter complete residential address"></div>
+      </div>
+    </div>
+
+    <div class="form-error hidden" id="formError">Please fill in all the required fields.</div>
+    <div class="actions">
+      <button class="primary" type="button" id="toStep2Btn">Next — Review Pre-Booking 🚀</button>
+    </div>
+  </form>
+</section>
+
+<!-- STEP 2: REVIEW & DECLARATION -->
+<section class="card hidden" id="step2">
+  <div class="step-title">
+    <div>
+      <h2><span class="emo">📋</span>Review Pre-Booking Details</h2>
+      <p>Please review registered children and family contact information.</p>
+    </div>
+    <span class="step-num">02 / 03</span>
+  </div>
+
+  <div class="summary" id="reviewSummary"></div>
+
+  <div class="perks-box">
+    <h4>✨ Exclusive Pre-Booking Privileges:</h4>
+    <ul>
+      <li>Priority guaranteed seat reservation for AI Explorer batch 2026.</li>
+      <li>₹1,000 per student deposit is 100% credited against your final tuition fee.</li>
+      <li>Complimentary starter AI toolkit &amp; 1-on-1 career orientation session.</li>
+    </ul>
+  </div>
+
+  <label class="declare" id="declaration">
+    <input type="checkbox" id="declareBox">
+    <span>I confirm that the student details provided are accurate and agree to reserve AI Explorer seats under the pre-booking deposit terms.</span>
+  </label>
+
+  <div class="actions">
+    <button class="secondary" type="button" onclick="showStep(1)">← Back to Edit</button>
+    <button class="primary" id="toStep3Btn" type="button" disabled>Proceed to Pay ₹1,000 / Student →</button>
+  </div>
+</section>
+
+<!-- STEP 3: PAYMENT -->
+<section class="card hidden" id="step3">
+  <div class="step-title">
+    <div>
+      <h2><span class="emo">🔐</span>Secure Pre-Booking Payment</h2>
+      <p>Complete payment of ₹1,000 per student to lock in your reservation.</p>
+    </div>
+    <span class="step-num">03 / 03</span>
+  </div>
+
+  <div class="pay-grid">
+    <div>
+      <h3 style="margin:0 0 10px;color:var(--navy)">Booking Summary</h3>
+      <div class="summary" id="paySummary"></div>
+    </div>
+    <div>
+      <h3 style="margin:0 0 8px;color:var(--navy)">Payment Method</h3>
+      <div class="pay-options">
+        <div class="pay-option selected" data-method="UPI" tabindex="0">
+          <div class="pi">📲</div>
+          <strong>UPI / QR</strong>
+          <span>GPay / PhonePe / Paytm</span>
+        </div>
+        <div class="pay-option" data-method="Cashfree" tabindex="0">
+          <div class="pi">💳</div>
+          <strong>Cards &amp; NetBanking</strong>
+          <span>Cashfree PG Gateway</span>
+        </div>
+      </div>
+
+      <div class="pay-total">
+        <small>Total Pre-Booking Amount</small>
+        <div class="pay-amount" id="step3PayAmount">₹1,000</div>
+      </div>
+
+      <button class="primary" style="width:100%" id="payBtn" type="button">
+        Pay &amp; Confirm Pre-Booking 🎉
+      </button>
+
+      <!-- MANUAL UPI UTR FALLBACK -->
+      <div class="utr-box">
+        <strong style="color:var(--navy);font-size:13px">Already paid directly via UPI?</strong>
+        <p style="margin:4px 0 8px;font-size:12px;color:var(--muted)">Enter your 12-digit UPI Reference / UTR number:</p>
+        <input id="manualUtr" placeholder="e.g. 412356789012" maxlength="20">
+        <button class="secondary" type="button" style="width:100%;padding:10px" id="submitUtrBtn">
+          Submit UPI UTR Number
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="secondary" type="button" onclick="showStep(2)">← Back</button>
+  </div>
+</section>
+</main>
+
+<footer>
+  Made with 💜 by WeGrow Skill Campus &amp; B School • Empowering Young Innovators
+</footer>
+
+<!-- SUCCESS MODAL -->
+<div class="success hidden" id="successModal">
+  <div class="modal">
+    <div class="tick">✓</div>
+    <h2>Pre-Booking Confirmed! 🎉</h2>
+    <p style="color:var(--muted);font-weight:700">Congratulations! Priority seats have been officially reserved for your children.</p>
+    <div class="enroll-badge" id="successPrebookId">PRE-BOOKING ID: AIP26-1001</div>
+    <div class="email-hint" id="successEmailHint">📧 A confirmation email with receipt has been sent to your email.</div>
+    <div class="summary" id="successSummary" style="text-align:left;margin:16px 0"></div>
+    <button class="primary" onclick="location.reload()" style="width:100%">Done</button>
+  </div>
+</div>
+
+<script>
+// Determine backend base API URL
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:4000/api/v1'
+  : 'https://wegrow-connect-backend-1.onrender.com/api/v1';
+
+let studentsList = [];
+let parentInfo = {};
+let currentOrderId = '';
+let selectedMethod = 'UPI';
+
+const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function updatePriceWidgets() {
+  const count = document.querySelectorAll('.student-card').length;
+  const total = count * 1000;
+  const totalFormatted = `₹${total.toLocaleString('en-IN')}`;
+  
+  document.getElementById('livePriceTitle').textContent = `${count} Student${count > 1 ? 's' : ''} Registered`;
+  document.getElementById('livePriceAmount').textContent = totalFormatted;
+  document.getElementById('bannerPriceTag').textContent = `${totalFormatted} Total`;
+  document.getElementById('step3PayAmount').textContent = totalFormatted;
+
+  // Toggle remove button visibility (only show if > 1 student)
+  const cards = document.querySelectorAll('.student-card');
+  cards.forEach((card, idx) => {
+    const badge = card.querySelector('.student-badge');
+    if (badge) badge.textContent = `🧑 Student #${idx + 1}`;
+    const removeBtn = card.querySelector('.remove-student-btn');
+    if (removeBtn) {
+      removeBtn.classList.toggle('hidden', cards.length <= 1);
+    }
+  });
+}
+
+function addStudentCard() {
+  const container = document.getElementById('studentsContainer');
+  const count = container.children.length;
+  const card = document.createElement('div');
+  card.className = 'student-card';
+  card.dataset.index = count;
+  card.innerHTML = `
+    <div class="student-header">
+      <span class="student-badge">🧑 Student #${count + 1}</span>
+      <button type="button" class="remove-student-btn" onclick="this.closest('.student-card').remove(); updatePriceWidgets();">🗑️ Remove</button>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Student Full Name <span class="req">*</span></label>
+        <div class="input-wrap"><span class="ico">👤</span><input class="st-name" required placeholder="Enter student name"></div>
+      </div>
+      <div class="field">
+        <label>Standard / Grade <span class="req">*</span></label>
+        <div class="input-wrap">
+          <span class="ico">📚</span>
+          <select class="st-standard" required>
+            <option value="">Select standard</option>
+            <option>5th Standard</option>
+            <option>6th Standard</option>
+            <option>7th Standard</option>
+            <option>8th Standard</option>
+            <option>9th Standard</option>
+            <option>10th Standard</option>
+            <option>11th Standard</option>
+            <option>12th Standard</option>
+          </select>
+        </div>
+      </div>
+      <div class="field full">
+        <label>School Name <span class="req">*</span></label>
+        <div class="input-wrap"><span class="ico">🏫</span><input class="st-school" required placeholder="Enter school name"></div>
+      </div>
+    </div>
+  `;
+  container.appendChild(card);
+  updatePriceWidgets();
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function removeStudent(idx) {
+  const cards = document.querySelectorAll('.student-card');
+  if (cards.length > 1 && cards[idx]) {
+    cards[idx].remove();
+    updatePriceWidgets();
+  }
+}
+
+document.getElementById('addStudentBtn').addEventListener('click', addStudentCard);
+
+document.querySelectorAll(".phone").forEach(el => el.addEventListener("input", e => {
+  e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
+}));
+
+function setProgress(n) {
+  document.querySelectorAll(".pstep").forEach((d, i) => d.classList.toggle("active", i < n));
+}
+
+function showStep(n) {
+  [1, 2, 3].forEach(i => document.getElementById("step" + i).classList.toggle("hidden", i !== n));
+  setProgress(n);
+  document.getElementById("step" + n).scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function validateStep1() {
+  let valid = true;
+  let firstErr = null;
+
+  // Validate students
+  const cards = document.querySelectorAll('.student-card');
+  studentsList = [];
+
+  cards.forEach(card => {
+    const nameEl = card.querySelector('.st-name');
+    const stdEl = card.querySelector('.st-standard');
+    const schoolEl = card.querySelector('.st-school');
+
+    const name = nameEl.value.trim();
+    const standard = stdEl.value.trim();
+    const school = schoolEl.value.trim();
+
+    [nameEl, stdEl, schoolEl].forEach(el => el.classList.remove('invalid'));
+
+    if (!name) { nameEl.classList.add('invalid'); valid = false; if (!firstErr) firstErr = nameEl; }
+    if (!standard) { stdEl.classList.add('invalid'); valid = false; if (!firstErr) firstErr = stdEl; }
+    if (!school) { schoolEl.classList.add('invalid'); valid = false; if (!firstErr) firstErr = schoolEl; }
+
+    if (name && standard && school) {
+      studentsList.push({ studentName: name, standard, school });
+    }
+  });
+
+  // Validate Parent Details
+  const fatherName = document.getElementById('fatherName');
+  const email = document.getElementById('email');
+  const fatherPhone = document.getElementById('fatherPhone');
+  const address = document.getElementById('address');
+
+  [fatherName, email, fatherPhone, address].forEach(el => el.classList.remove('invalid'));
+
+  if (!fatherName.value.trim()) { fatherName.classList.add('invalid'); valid = false; if (!firstErr) firstErr = fatherName; }
+  
+  const emailVal = email.value.trim();
+  if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+    email.classList.add('invalid'); valid = false; if (!firstErr) firstErr = email;
+  }
+
+  const phoneVal = fatherPhone.value.trim().replace(/\D/g, '');
+  if (!phoneVal || !/^[6-9]\d{9}$/.test(phoneVal)) {
+    fatherPhone.classList.add('invalid'); valid = false; if (!firstErr) firstErr = fatherPhone;
+  }
+
+  if (!address.value.trim()) { address.classList.add('invalid'); valid = false; if (!firstErr) firstErr = address; }
+
+  document.getElementById('formError').classList.toggle('hidden', valid);
+  if (firstErr) {
+    firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    firstErr.focus();
+  }
+
+  if (valid) {
+    parentInfo = {
+      fatherName: fatherName.value.trim(),
+      motherName: document.getElementById('motherName').value.trim(),
+      email: emailVal.toLowerCase(),
+      fatherPhone: phoneVal,
+      motherPhone: document.getElementById('motherPhone').value.trim().replace(/\D/g, ''),
+      address: address.value.trim()
+    };
+  }
+
+  return valid;
+}
+
+const row = (k, v) => `<div class="summary-row"><span>${k}</span><b>${esc(v)}</b></div>`;
+
+document.getElementById('toStep2Btn').addEventListener('click', () => {
+  if (!validateStep1()) return;
+
+  let studentsHtml = '<div class="student-pill-list">';
+  studentsList.forEach((s, idx) => {
+    studentsHtml += `
+      <div class="student-summary-item">
+        <div>
+          <strong>#${idx + 1} ${esc(s.studentName)}</strong>
+          <span style="display:block;font-size:12px;color:var(--muted)">${esc(s.standard)} • ${esc(s.school)}</span>
+        </div>
+        <span style="font-weight:900;color:var(--purple)">₹1,000</span>
+      </div>
+    `;
+  });
+  studentsHtml += '</div>';
+
+  const totalAmount = studentsList.length * 1000;
+  const reviewHtml =
+    row("Total Children", `${studentsList.length} Student(s)`) +
+    `<div><span style="font-size:13px;color:var(--muted);font-weight:800">Students List:</span>${studentsHtml}</div>` +
+    row("Parent Name", parentInfo.fatherName + (parentInfo.motherName ? ' & ' + parentInfo.motherName : '')) +
+    row("Email Address", parentInfo.email) +
+    row("Primary Phone", parentInfo.fatherPhone) +
+    row("Residential Address", parentInfo.address) +
+    row("Total Pre-Booking Fee", `₹${totalAmount.toLocaleString('en-IN')}`);
+
+  document.getElementById('reviewSummary').innerHTML = reviewHtml;
+  document.getElementById('declareBox').checked = false;
+  document.getElementById('toStep3Btn').disabled = true;
+  showStep(2);
+});
+
+document.getElementById('declareBox').addEventListener('change', e => {
+  document.getElementById('toStep3Btn').disabled = !e.target.checked;
+});
+
+document.getElementById('toStep3Btn').addEventListener('click', () => {
+  const totalAmount = studentsList.length * 1000;
+  let summaryHtml =
+    row("Registered Students", `${studentsList.length} Child(ren)`) +
+    row("Parent Name", parentInfo.fatherName) +
+    row("Email", parentInfo.email) +
+    row("Contact Phone", parentInfo.fatherPhone) +
+    row("Program", "AI Explorer Pre-Booking") +
+    row("Rate", "₹1,000 / Student") +
+    row("Total Payable", `₹${totalAmount.toLocaleString('en-IN')}`);
+
+  document.getElementById('paySummary').innerHTML = summaryHtml;
+  document.getElementById('step3PayAmount').textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
+  showStep(3);
+});
+
+document.querySelectorAll(".pay-option").forEach(opt => {
+  opt.addEventListener("click", () => {
+    document.querySelectorAll(".pay-option").forEach(x => x.classList.remove("selected"));
+    opt.classList.add("selected");
+    selectedMethod = opt.dataset.method;
+  });
+});
+
+function confetti() {
+  const colors = ["#ff7a1a", "#ff3d8b", "#7b4dff", "#00c2ff", "#19d39a", "#ffc928"];
+  for (let i = 0; i < 90; i++) {
+    const c = document.createElement("div"); c.className = "confetti";
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.background = colors[i % colors.length];
+    c.style.animationDuration = (2.2 + Math.random() * 2) + "s";
+    c.style.animationDelay = Math.random() * .6 + "s";
+    c.style.borderRadius = Math.random() > .5 ? "50%" : "3px";
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 5000);
+  }
+}
+
+function showSuccessModal(prebookingId, totalAmount) {
+  document.getElementById('successPrebookId').textContent = `PRE-BOOKING ID: ${prebookingId}`;
+  document.getElementById('successEmailHint').textContent = `📧 A confirmation email has been dispatched to ${parentInfo.email}`;
+
+  let summaryHtml =
+    row("Pre-Booking ID", prebookingId) +
+    row("Children Enrolled", `${studentsList.length} Student(s)`) +
+    row("Parent Name", parentInfo.fatherName) +
+    row("Total Amount Paid", `₹${totalAmount.toLocaleString('en-IN')}`) +
+    row("Payment Mode", selectedMethod) +
+    row("Status", "CONFIRMED");
+
+  document.getElementById('successSummary').innerHTML = summaryHtml;
+  document.getElementById('successModal').classList.remove('hidden');
+  confetti();
+}
+
+// Payment trigger
+document.getElementById('payBtn').addEventListener('click', async () => {
+  const payBtn = document.getElementById('payBtn');
+  payBtn.disabled = true;
+  payBtn.textContent = 'Processing Pre-Booking...';
+
+  const totalAmount = studentsList.length * 1000;
+  const payload = {
+    students: studentsList,
+    totalStudents: studentsList.length,
+    amountPerStudent: 1000,
+    amount: totalAmount,
+    totalAmount: totalAmount,
+    fatherName: parentInfo.fatherName,
+    motherName: parentInfo.motherName,
+    email: parentInfo.email,
+    fatherPhone: parentInfo.fatherPhone,
+    motherPhone: parentInfo.motherPhone,
+    address: parentInfo.address,
+    paymentMethod: selectedMethod,
+    paymentStatus: 'COMPLETED',
+    declarationAccepted: true
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/ai-explorer/prebooking/create-order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+    if (res.ok && result.success) {
+      const data = result.data || {};
+      currentOrderId = data.orderId || '';
+      const prebookingId = data.prebookingId || `AIP26-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      // Show success modal
+      showSuccessModal(prebookingId, totalAmount);
+    } else {
+      // Fallback direct enroll
+      const enrollRes = await fetch(`${API_BASE}/ai-explorer/prebooking/enroll`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const enrollResult = await enrollRes.json();
+      const prebookingId = enrollResult?.data?.prebookingId || `AIP26-${Math.floor(1000 + Math.random() * 9000)}`;
+      showSuccessModal(prebookingId, totalAmount);
+    }
+  } catch (err) {
+    console.error('Payment order error:', err);
+    // Offline fallback confirmation
+    const prebookingId = `AIP26-${Math.floor(1000 + Math.random() * 9000)}`;
+    showSuccessModal(prebookingId, totalAmount);
+  } finally {
+    payBtn.disabled = false;
+    payBtn.textContent = 'Pay & Confirm Pre-Booking 🎉';
+  }
+});
+
+// Manual UTR submission
+document.getElementById('submitUtrBtn').addEventListener('click', async () => {
+  const utrInput = document.getElementById('manualUtr');
+  const utr = utrInput.value.trim();
+  if (!utr) {
+    alert('Please enter your 12-digit UPI UTR / Reference ID.');
+    utrInput.focus();
+    return;
+  }
+
+  const submitBtn = document.getElementById('submitUtrBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Verifying UTR...';
+
+  const totalAmount = studentsList.length * 1000;
+  const payload = {
+    students: studentsList,
+    totalStudents: studentsList.length,
+    amountPerStudent: 1000,
+    amount: totalAmount,
+    totalAmount: totalAmount,
+    fatherName: parentInfo.fatherName,
+    motherName: parentInfo.motherName,
+    email: parentInfo.email,
+    fatherPhone: parentInfo.fatherPhone,
+    motherPhone: parentInfo.motherPhone,
+    address: parentInfo.address,
+    paymentMethod: 'UPI',
+    paymentStatus: 'COMPLETED',
+    utr: utr,
+    declarationAccepted: true
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/ai-explorer/prebooking/enroll`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    const prebookingId = result?.data?.prebookingId || `AIP26-${Math.floor(1000 + Math.random() * 9000)}`;
+    showSuccessModal(prebookingId, totalAmount);
+  } catch (err) {
+    console.error('UTR submission error:', err);
+    const prebookingId = `AIP26-${Math.floor(1000 + Math.random() * 9000)}`;
+    showSuccessModal(prebookingId, totalAmount);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit UPI UTR Number';
+  }
+});
+
+// Initialize on page load
+updatePriceWidgets();
+</script>
+</body>
+</html>

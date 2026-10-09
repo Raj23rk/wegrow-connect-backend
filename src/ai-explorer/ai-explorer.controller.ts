@@ -95,6 +95,22 @@ export class AiExplorerController {
   }
 
   // =====================================================
+  // SERVE PRE-BOOKING LANDING HTML PAGE
+  // =====================================================
+  @Get('prebooking-page')
+  @ApiOperation({ summary: 'Get AI Explorer pre-booking HTML landing page' })
+  async getPrebookingPage(@Res() res: Response) {
+    const fs = await import('fs');
+    const path = await import('path');
+    const htmlPath = path.join(process.cwd(), 'public', 'ai-explorer-prebooking.html');
+    if (fs.existsSync(htmlPath)) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.sendFile(htmlPath);
+    }
+    return res.status(HttpStatus.NOT_FOUND).send('Pre-booking page not found');
+  }
+
+  // =====================================================
   // 3. ADMIN STATS & OVERVIEW (ADMIN ONLY)
   // Static route placed BEFORE dynamic :id routes
   // =====================================================
