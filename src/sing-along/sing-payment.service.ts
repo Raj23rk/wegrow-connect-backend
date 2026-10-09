@@ -468,6 +468,19 @@ export class SingPaymentService {
       return { status: 'IGNORED', message: 'No order_id in webhook payload' };
     }
 
+    // Ignore AI Explorer, AI Pre-booking and other non-SingAlong orders in Sing Along webhook
+    if (
+      orderId.startsWith('order_AIE') ||
+      orderId.startsWith('order_AIPRE') ||
+      orderId.startsWith('AIE') ||
+      orderId.startsWith('AIPRE') ||
+      orderId.startsWith('AI_') ||
+      orderId.startsWith('AI-')
+    ) {
+      this.logger.log(`Ignored non-SingAlong order in Sing-Along webhook: ${orderId}`);
+      return { status: 'IGNORED', message: 'Non-SingAlong order ignored' };
+    }
+
     // Invalidate polling cache for this order
     this.statusPollingCache.delete(orderId);
 
@@ -527,8 +540,19 @@ export class SingPaymentService {
         ).lean();
       }
 
-      // If booking was not found, auto-upsert booking record so no ticket is lost
+      // If booking was not found, ONLY auto-upsert if this is a genuine Sing-Along order
       if (!confirmedBooking) {
+        const isSingAlongOrder =
+          Boolean(updatedPayment) ||
+          orderId.startsWith('SA26-') ||
+          orderId.startsWith('order_SA26_') ||
+          orderId.startsWith('SA_');
+
+        if (!isSingAlongOrder) {
+          this.logger.log(`Order ${orderId} does not belong to Sing-Along. Skipping ticket generation.`);
+          return { status: 'IGNORED', message: 'Order does not belong to Sing-Along' };
+        }
+
         const bId =
           updatedPayment?.bookingId ||
           (orderId.startsWith('SA26-')
