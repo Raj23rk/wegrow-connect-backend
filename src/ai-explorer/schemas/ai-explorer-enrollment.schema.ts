@@ -51,26 +51,26 @@ export class AiExplorerEnrollment {
   @Prop({ required: true, trim: true, lowercase: true })
   email!: string;
 
-  @Prop({ required: true, trim: true })
-  standard!: string; // 5th Standard, 6th Standard, etc.
+  @Prop({ default: '', trim: true })
+  standard: string = ''; // 5th Standard, 6th Standard, etc.
 
-  @Prop({ required: true, trim: true })
-  school!: string;
+  @Prop({ default: '', trim: true })
+  school: string = '';
 
-  @Prop({ required: true, trim: true })
-  fatherName!: string;
+  @Prop({ default: '', trim: true })
+  fatherName: string = '';
 
-  @Prop({ required: true, trim: true })
-  motherName!: string;
+  @Prop({ default: '', trim: true })
+  motherName: string = '';
 
-  @Prop({ required: true, trim: true })
-  fatherPhone!: string;
+  @Prop({ default: '', trim: true })
+  fatherPhone: string = '';
 
-  @Prop({ required: true, trim: true })
-  motherPhone!: string;
+  @Prop({ default: '', trim: true })
+  motherPhone: string = '';
 
-  @Prop({ required: true, trim: true })
-  address!: string;
+  @Prop({ default: '', trim: true })
+  address: string = '';
 
   @Prop({ default: 'AI Explorer', trim: true })
   courseName: string = 'AI Explorer';

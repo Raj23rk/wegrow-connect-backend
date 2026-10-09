@@ -239,52 +239,56 @@ export class AiPaymentService {
     const paymentSessionId = cfOrder?.payment_session_id || `sim_session_${Date.now()}`;
     const cfOrderId = cfOrder?.cf_order_id ? String(cfOrder.cf_order_id) : '';
 
-    // Parallel DB writes in background / single pass
-    await Promise.all([
-      this.enrollmentModel.create({
-        enrollmentId,
-        studentName,
-        students,
-        studentCount: totalStudents,
-        totalStudents,
-        email,
-        standard,
-        school,
-        fatherName: (dto.fatherName || 'Parent').trim(),
-        motherName: (dto.motherName || dto.fatherName || '').trim(),
-        fatherPhone: phone,
-        motherPhone: rawMotherPhone || phone,
-        address: (dto.address || '').trim(),
-        courseName: 'AI Explorer',
-        feePlan: planInfo.feePlan,
-        planName: finalPlanName,
-        selectedTerm: dto.selectedTerm || '',
-        amount: totalAmount,
-        totalCourseFee: finalTotalFee,
-        totalFee: finalTotalFee,
-        paymentMethod: dto.paymentMethod || 'Cashfree',
-        paymentStatus: AiPaymentStatus.PENDING,
-        orderId,
-        paymentSessionId,
-        cfOrderId,
-        status: AiEnrollmentStatus.PENDING_PAYMENT,
-        adminNotes: dto.notes || dto.orderNote || `Pending payment order: ${orderId}`,
-        isActive: true,
-      }),
-      this.paymentModel.create({
-        orderId,
-        enrollmentId,
-        cfOrderId,
-        paymentSessionId,
-        amount: totalAmount,
-        currency: 'INR',
-        status: AiExplorerPaymentTxnStatus.INITIALIZED,
-        studentName,
-        phone,
-        email,
-        feePlan: planInfo.feePlan,
-      }),
-    ]);
+    try {
+      await Promise.all([
+        this.enrollmentModel.create({
+          enrollmentId,
+          studentName,
+          students,
+          studentCount: totalStudents,
+          totalStudents,
+          email,
+          standard: standard || 'School Student',
+          school: school || 'School',
+          fatherName: (dto.fatherName || 'Parent').trim(),
+          motherName: (dto.motherName || dto.fatherName || '').trim(),
+          fatherPhone: phone,
+          motherPhone: rawMotherPhone || phone,
+          address: (dto.address || '').trim(),
+          courseName: 'AI Explorer',
+          feePlan: planInfo.feePlan,
+          planName: finalPlanName,
+          selectedTerm: dto.selectedTerm || '',
+          amount: totalAmount,
+          totalCourseFee: finalTotalFee,
+          totalFee: finalTotalFee,
+          paymentMethod: dto.paymentMethod || 'Cashfree',
+          paymentStatus: AiPaymentStatus.PENDING,
+          orderId,
+          paymentSessionId,
+          cfOrderId,
+          status: AiEnrollmentStatus.PENDING_PAYMENT,
+          adminNotes: dto.notes || dto.orderNote || `Pending payment order: ${orderId}`,
+          isActive: true,
+        }),
+        this.paymentModel.create({
+          orderId,
+          enrollmentId,
+          cfOrderId,
+          paymentSessionId,
+          amount: totalAmount,
+          currency: 'INR',
+          status: AiExplorerPaymentTxnStatus.INITIALIZED,
+          studentName,
+          phone,
+          email,
+          feePlan: planInfo.feePlan,
+        }),
+      ]);
+      this.logger.log(`Created pending enrollment ${enrollmentId} and payment record for ${orderId}`);
+    } catch (dbErr) {
+      this.logger.error('Error saving pending enrollment record to DB:', dbErr);
+    }
 
     return {
       orderId,
