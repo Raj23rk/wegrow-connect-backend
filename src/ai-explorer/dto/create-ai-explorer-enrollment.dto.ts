@@ -29,6 +29,21 @@ export class EnrollmentStudentItemDto {
   @IsString()
   school?: string;
 
+  @ApiPropertyOptional({ example: 'Weekend Batch (Sat & Sun)' })
+  @IsOptional()
+  @IsString()
+  preferredBatch?: string;
+
+  @ApiPropertyOptional({ example: 'Batch A' })
+  @IsOptional()
+  @IsString()
+  batch?: string;
+
+  @ApiPropertyOptional({ example: '10:00 AM - 12:00 PM' })
+  @IsOptional()
+  @IsString()
+  timeSlot?: string;
+
   @ApiPropertyOptional({ example: 'Male' })
   @IsOptional()
   @IsString()
@@ -38,6 +53,15 @@ export class EnrollmentStudentItemDto {
   @IsOptional()
   @IsString()
   dob?: string;
+
+  @ApiPropertyOptional({ example: '11' })
+  @IsOptional()
+  age?: string | number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  remarks?: string;
 }
 
 export class CreateAiExplorerEnrollmentDto {

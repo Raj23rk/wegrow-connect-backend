@@ -18,6 +18,9 @@ export enum AiPrebookingStatus {
 
 @Schema({ _id: false })
 export class PrebookingStudentItem {
+  @Prop({ default: '', trim: true })
+  name?: string;
+
   @Prop({ required: true, trim: true })
   studentName!: string;
 
@@ -28,10 +31,25 @@ export class PrebookingStudentItem {
   school!: string;
 
   @Prop({ default: '', trim: true })
+  preferredBatch?: string;
+
+  @Prop({ default: '', trim: true })
+  batch?: string;
+
+  @Prop({ default: '', trim: true })
+  timeSlot?: string;
+
+  @Prop({ default: '', trim: true })
   gender?: string;
 
   @Prop({ default: '', trim: true })
   dob?: string;
+
+  @Prop({ default: '', trim: true })
+  age?: string;
+
+  @Prop({ default: '', trim: true })
+  remarks?: string;
 }
 
 export const PrebookingStudentItemSchema =

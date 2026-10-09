@@ -125,16 +125,22 @@ export class AiExplorerPrebookingService {
 
     if (Array.isArray(dto.students) && dto.students.length > 0) {
       for (const s of dto.students) {
-        const studentName = (s.studentName || '').trim();
+        const studentName = (s.studentName || s.name || '').trim();
         const standard = (s.standard || '').trim();
         const school = (s.school || '').trim();
         if (studentName) {
           list.push({
+            name: studentName,
             studentName,
             standard: standard || 'School Student',
             school: school || 'School',
+            preferredBatch: (s.preferredBatch || s.batch || '').trim(),
+            batch: (s.batch || '').trim(),
+            timeSlot: (s.timeSlot || '').trim(),
             gender: (s.gender || '').trim(),
             dob: (s.dob || '').trim(),
+            age: s.age ? String(s.age).trim() : '',
+            remarks: (s.remarks || '').trim(),
           });
         }
       }
@@ -145,6 +151,7 @@ export class AiExplorerPrebookingService {
       const singleName = (dto.studentName || dto.name || dto.customerName || '').trim();
       if (singleName) {
         list.push({
+          name: singleName,
           studentName: singleName,
           standard: (dto.standard || 'School Student').trim(),
           school: (dto.school || 'School').trim(),

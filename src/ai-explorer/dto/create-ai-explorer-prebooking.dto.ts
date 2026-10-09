@@ -12,20 +12,40 @@ import {
 } from 'class-validator';
 
 export class StudentItemDto {
-  @ApiProperty({ description: 'Student Full Name', example: 'Aarav Kumar' })
+  @ApiPropertyOptional({ description: 'Student Full Name alias', example: 'Aarav Kumar' })
   @IsString()
-  @IsNotEmpty()
-  studentName!: string;
+  @IsOptional()
+  name?: string;
 
-  @ApiProperty({ description: 'Standard / Grade', example: '6th Standard' })
+  @ApiPropertyOptional({ description: 'Student Full Name', example: 'Aarav Kumar' })
   @IsString()
-  @IsNotEmpty()
-  standard!: string;
+  @IsOptional()
+  studentName?: string;
 
-  @ApiProperty({ description: 'School Name', example: 'Delhi Public School' })
+  @ApiPropertyOptional({ description: 'Standard / Grade', example: '6th Standard' })
   @IsString()
-  @IsNotEmpty()
-  school!: string;
+  @IsOptional()
+  standard?: string;
+
+  @ApiPropertyOptional({ description: 'School Name', example: 'Delhi Public School' })
+  @IsString()
+  @IsOptional()
+  school?: string;
+
+  @ApiPropertyOptional({ description: 'Preferred Batch', example: 'Weekend Batch (Sat & Sun)' })
+  @IsString()
+  @IsOptional()
+  preferredBatch?: string;
+
+  @ApiPropertyOptional({ description: 'Batch', example: 'Batch A' })
+  @IsString()
+  @IsOptional()
+  batch?: string;
+
+  @ApiPropertyOptional({ description: 'Time Slot', example: '10:00 AM - 12:00 PM' })
+  @IsString()
+  @IsOptional()
+  timeSlot?: string;
 
   @ApiPropertyOptional({ description: 'Gender', example: 'Male' })
   @IsString()
@@ -36,6 +56,15 @@ export class StudentItemDto {
   @IsString()
   @IsOptional()
   dob?: string;
+
+  @ApiPropertyOptional({ description: 'Age' })
+  @IsOptional()
+  age?: string | number;
+
+  @ApiPropertyOptional({ description: 'Remarks' })
+  @IsString()
+  @IsOptional()
+  remarks?: string;
 }
 
 export class CreateAiExplorerPrebookingDto {
