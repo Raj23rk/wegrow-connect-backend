@@ -199,6 +199,14 @@ export class CreateAiExplorerEnrollmentDto {
   courseName?: string;
 
   @ApiPropertyOptional({
+    example: 'AI Explorer',
+    description: 'Course title alias',
+  })
+  @IsOptional()
+  @IsString()
+  course?: string;
+
+  @ApiPropertyOptional({
     example: 'full',
     description: "Selected fee plan: 'full' (₹43,000), 'half' (₹22,500), 'term' (₹45,000/₹15,000)",
   })

@@ -107,6 +107,21 @@ export class CreateAiPrebookingOrderDto {
   @IsOptional()
   orderAmount?: number;
 
+  @ApiPropertyOptional({ example: 'AI Explorer' })
+  @IsString()
+  @IsOptional()
+  course?: string;
+
+  @ApiPropertyOptional({ example: 'AI Explorer' })
+  @IsString()
+  @IsOptional()
+  courseName?: string;
+
+  @ApiPropertyOptional({ example: 90000 })
+  @IsNumber()
+  @IsOptional()
+  totalFee?: number;
+
   @ApiPropertyOptional({ description: 'Payment Method', example: 'Cashfree' })
   @IsString()
   @IsOptional()

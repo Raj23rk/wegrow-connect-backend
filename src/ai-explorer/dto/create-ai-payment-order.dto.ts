@@ -154,10 +154,39 @@ export class CreateAiPaymentOrderDto {
   @IsNumber()
   totalCourseFee?: number;
 
+  @ApiPropertyOptional({ example: 'AI Explorer' })
+  @IsOptional()
+  @IsString()
+  course?: string;
+
+  @ApiPropertyOptional({ example: 'AI Explorer' })
+  @IsOptional()
+  @IsString()
+  courseName?: string;
+
   @ApiPropertyOptional({ example: 'UPI' })
   @IsOptional()
   @IsString()
   paymentMethod?: string;
+
+  @ApiPropertyOptional({ example: 'COMPLETED' })
+  @IsOptional()
+  @IsString()
+  paymentStatus?: string;
+
+  @ApiPropertyOptional({ example: 'ORD_123456' })
+  @IsOptional()
+  @IsString()
+  transactionId?: string;
+
+  @ApiPropertyOptional({ example: 'ORD_123456' })
+  @IsOptional()
+  @IsString()
+  txnid?: string;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  declarationAccepted?: boolean;
 
   @ApiPropertyOptional()
   @IsOptional()

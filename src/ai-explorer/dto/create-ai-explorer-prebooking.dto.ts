@@ -154,4 +154,19 @@ export class CreateAiExplorerPrebookingDto {
   @IsString()
   @IsOptional()
   status?: string;
+
+  @ApiPropertyOptional({ example: 'AI Explorer Pre-Booking' })
+  @IsString()
+  @IsOptional()
+  course?: string;
+
+  @ApiPropertyOptional({ example: 'AI Explorer Pre-Booking' })
+  @IsString()
+  @IsOptional()
+  courseName?: string;
+
+  @ApiPropertyOptional({ example: 90000 })
+  @IsNumber()
+  @IsOptional()
+  totalFee?: number;
 }
