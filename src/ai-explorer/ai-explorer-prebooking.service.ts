@@ -171,6 +171,11 @@ export class AiExplorerPrebookingService {
 
     const rawFatherPhone = (dto.fatherPhone || dto.phone || dto.customerPhone || '').trim().replace(/\D/g, '').slice(-10);
     const rawMotherPhone = (dto.motherPhone || '').trim().replace(/\D/g, '').slice(-10);
+
+    if (rawFatherPhone && rawMotherPhone && rawFatherPhone === rawMotherPhone) {
+      throw new BadRequestException("Father's phone number and Mother's phone number cannot be the same. Please provide an alternate contact number.");
+    }
+
     const fatherPhone = rawFatherPhone || rawMotherPhone;
 
     if (!fatherPhone || !/^[6-9]\d{9}$/.test(fatherPhone)) {
@@ -447,8 +452,13 @@ export class AiExplorerPrebookingService {
     const fatherName = (dto.fatherName || '').trim();
     const rawFatherPhone = (dto.fatherPhone || '').trim().replace(/\D/g, '').slice(-10);
     const rawMotherPhone = (dto.motherPhone || '').trim().replace(/\D/g, '').slice(-10);
+
+    if (rawFatherPhone && rawMotherPhone && rawFatherPhone === rawMotherPhone) {
+      throw new BadRequestException("Father's phone number and Mother's phone number cannot be the same. Please provide an alternate contact number.");
+    }
+
     const fatherPhone = rawFatherPhone || rawMotherPhone;
-    const motherPhone = rawMotherPhone || rawFatherPhone;
+    const motherPhone = rawMotherPhone || '';
     const address = (dto.address || '').trim();
 
     if (!fatherName || !fatherPhone || !address) {

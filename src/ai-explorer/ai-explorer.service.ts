@@ -87,13 +87,39 @@ export class AiExplorerService {
    * Enroll Student (Public submission)
    */
   async enrollStudent(dto: CreateAiExplorerEnrollmentDto) {
-    const studentName = (
+    let studentName = (
       dto.studentName ||
       dto.name ||
       dto.fullName ||
       dto.customerName ||
       ''
     ).trim();
+
+    let standard = (dto.standard || '').trim();
+    let school = (dto.school || '').trim();
+
+    const students = Array.isArray(dto.students) ? dto.students : [];
+    if (students.length > 0) {
+      if (!studentName) {
+        studentName = students
+          .map((s) => (s.name || s.studentName || '').trim())
+          .filter(Boolean)
+          .join(', ');
+      }
+      if (!standard) {
+        standard = students
+          .map((s) => (s.standard || '').trim())
+          .filter(Boolean)
+          .join(', ');
+      }
+      if (!school) {
+        school = students
+          .map((s) => (s.school || '').trim())
+          .filter(Boolean)
+          .join(', ');
+      }
+    }
+
     if (!studentName) {
       throw new BadRequestException('Student name is required');
     }
@@ -108,21 +134,25 @@ export class AiExplorerService {
       throw new BadRequestException('Email address is required');
     }
 
-    const standard = (dto.standard || '').trim();
-    const school = (dto.school || '').trim();
     const fatherName = (dto.fatherName || '').trim();
     const motherName = (dto.motherName || '').trim();
     const rawFatherPhone = (dto.fatherPhone || dto.phone || dto.customerPhone || '').trim().replace(/\D/g, '').slice(-10);
     const rawMotherPhone = (dto.motherPhone || '').trim().replace(/\D/g, '').slice(-10);
+
+    if (rawFatherPhone && rawMotherPhone && rawFatherPhone === rawMotherPhone) {
+      throw new BadRequestException("Father's phone number and Mother's phone number cannot be the same. Please provide an alternate contact number.");
+    }
+
     const fatherPhone = rawFatherPhone || rawMotherPhone;
-    const motherPhone = rawMotherPhone || rawFatherPhone;
+    const motherPhone = rawMotherPhone || '';
     const address = (dto.address || '').trim();
 
-    if (!standard || !school || !fatherName || !motherName || !fatherPhone || !motherPhone || !address) {
+    if (!standard || !school || !fatherName || !fatherPhone || !address) {
       throw new BadRequestException('All student and parent details are required');
     }
 
     const planInfo = this.resolveFeePlan(dto.feePlan || dto.plan, dto.amount || dto.orderAmount);
+    const totalStudents = dto.totalStudents || dto.studentCount || (students.length > 0 ? students.length : 1);
     const enrollmentId = await this.generateEnrollmentId();
 
     let paymentStatus = AiPaymentStatus.COMPLETED;
@@ -135,23 +165,31 @@ export class AiExplorerService {
     }
 
     const status = dto.status === 'PENDING_PAYMENT' ? AiEnrollmentStatus.PENDING_PAYMENT : AiEnrollmentStatus.ENROLLED;
+    const finalAmount = dto.amount && dto.amount > 0 ? dto.amount : planInfo.amount;
+    const finalTotalFee = dto.totalFee || dto.totalCourseFee || planInfo.totalCourseFee;
+    const finalPlanName = dto.planName || planInfo.planName;
 
     const enrollment = new this.enrollmentModel({
       enrollmentId,
       studentName,
+      students,
+      studentCount: totalStudents,
+      totalStudents,
       email,
       standard,
       school,
       fatherName,
-      motherName,
+      motherName: motherName || fatherName,
       fatherPhone,
       motherPhone,
       address,
       courseName: dto.courseName || 'AI Explorer',
       feePlan: planInfo.feePlan,
-      planName: planInfo.planName,
-      amount: planInfo.amount,
-      totalCourseFee: dto.totalCourseFee || planInfo.totalCourseFee,
+      planName: finalPlanName,
+      selectedTerm: dto.selectedTerm || '',
+      amount: finalAmount,
+      totalCourseFee: finalTotalFee,
+      totalFee: finalTotalFee,
       paymentMethod: dto.paymentMethod || 'UPI',
       paymentStatus,
       orderId: dto.orderId || dto.transactionId || dto.txnid || '',

@@ -115,13 +115,39 @@ export class AiPaymentService {
    * 1. CREATE PAYMENT ORDER (Cashfree PG Order API) - Ultra-Fast Optimized
    */
   async createOrder(dto: CreateAiPaymentOrderDto) {
-    const studentName = (
+    let studentName = (
       dto.studentName ||
       dto.name ||
       dto.fullName ||
       dto.customerName ||
       ''
     ).trim();
+
+    let standard = (dto.standard || '').trim();
+    let school = (dto.school || '').trim();
+
+    const students = Array.isArray(dto.students) ? dto.students : [];
+    if (students.length > 0) {
+      if (!studentName) {
+        studentName = students
+          .map((s) => (s.name || s.studentName || '').trim())
+          .filter(Boolean)
+          .join(', ');
+      }
+      if (!standard) {
+        standard = students
+          .map((s) => (s.standard || '').trim())
+          .filter(Boolean)
+          .join(', ');
+      }
+      if (!school) {
+        school = students
+          .map((s) => (s.school || '').trim())
+          .filter(Boolean)
+          .join(', ');
+      }
+    }
+
     if (!studentName) throw new BadRequestException('Student name is required.');
 
     const email = (
@@ -134,6 +160,11 @@ export class AiPaymentService {
 
     const rawFatherPhone = (dto.fatherPhone || dto.phone || dto.customerPhone || '').trim().replace(/\D/g, '').slice(-10);
     const rawMotherPhone = (dto.motherPhone || '').trim().replace(/\D/g, '').slice(-10);
+
+    if (rawFatherPhone && rawMotherPhone && rawFatherPhone === rawMotherPhone) {
+      throw new BadRequestException("Father's phone number and Mother's phone number cannot be the same. Please provide an alternate contact number.");
+    }
+
     const phone = rawFatherPhone || rawMotherPhone;
 
     if (!phone || !/^[6-9]\d{9}$/.test(phone)) {
@@ -141,7 +172,10 @@ export class AiPaymentService {
     }
 
     const planInfo = this.resolveFeePlan(dto.feePlan || dto.plan, dto.amount || dto.orderAmount);
-    const totalAmount = planInfo.amount;
+    const totalStudents = dto.totalStudents || dto.studentCount || (students.length > 0 ? students.length : 1);
+    const totalAmount = dto.amount && dto.amount > 0 ? dto.amount : planInfo.amount;
+    const finalTotalFee = dto.totalFee || dto.totalCourseFee || planInfo.totalCourseFee;
+    const finalPlanName = dto.planName || planInfo.planName;
 
     const enrollmentId = await this.aiExplorerService.generateEnrollmentId();
     const orderId = `order_AIE26_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
@@ -210,19 +244,24 @@ export class AiPaymentService {
       this.enrollmentModel.create({
         enrollmentId,
         studentName,
+        students,
+        studentCount: totalStudents,
+        totalStudents,
         email,
-        standard: (dto.standard || '').trim(),
-        school: (dto.school || '').trim(),
-        fatherName: (dto.fatherName || '').trim(),
-        motherName: (dto.motherName || '').trim(),
+        standard,
+        school,
+        fatherName: (dto.fatherName || 'Parent').trim(),
+        motherName: (dto.motherName || dto.fatherName || '').trim(),
         fatherPhone: phone,
         motherPhone: rawMotherPhone || phone,
         address: (dto.address || '').trim(),
         courseName: 'AI Explorer',
         feePlan: planInfo.feePlan,
-        planName: planInfo.planName,
+        planName: finalPlanName,
+        selectedTerm: dto.selectedTerm || '',
         amount: totalAmount,
-        totalCourseFee: planInfo.totalCourseFee,
+        totalCourseFee: finalTotalFee,
+        totalFee: finalTotalFee,
         paymentMethod: dto.paymentMethod || 'Cashfree',
         paymentStatus: AiPaymentStatus.PENDING,
         orderId,

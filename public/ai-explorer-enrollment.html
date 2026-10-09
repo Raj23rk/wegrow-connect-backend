@@ -564,6 +564,18 @@ function validateStep1() {
     setErr(el, msg);
     if (msg && !first) first = el;
   });
+
+  // Check if fatherPhone and motherPhone are identical
+  const fpEl = document.getElementById("fatherPhone");
+  const mpEl = document.getElementById("motherPhone");
+  const fpVal = fpEl.value.trim().replace(/\D/g, "").slice(-10);
+  const mpVal = mpEl.value.trim().replace(/\D/g, "").slice(-10);
+
+  if (fpVal && mpVal && fpVal === mpVal) {
+    setErr(mpEl, "Father's and Mother's phone numbers cannot be the same. Please provide a different number.");
+    if (!first) first = mpEl;
+  }
+
   document.getElementById("formError").classList.toggle("hidden", !first);
   if (first) {
     first.scrollIntoView({ behavior: "smooth", block: "center" });

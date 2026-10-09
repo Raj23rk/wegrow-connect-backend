@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsArray,
   IsBoolean,
   IsNumber,
   IsOptional,
@@ -7,7 +8,59 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+export class EnrollmentStudentItemDto {
+  @ApiPropertyOptional({ example: 'Raja' })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiPropertyOptional({ example: 'Raja' })
+  @IsOptional()
+  @IsString()
+  studentName?: string;
+
+  @ApiPropertyOptional({ example: '5th Standard' })
+  @IsOptional()
+  @IsString()
+  standard?: string;
+
+  @ApiPropertyOptional({ example: 'KVS School' })
+  @IsOptional()
+  @IsString()
+  school?: string;
+
+  @ApiPropertyOptional({ example: 'Male' })
+  @IsOptional()
+  @IsString()
+  gender?: string;
+
+  @ApiPropertyOptional({ example: '2014-05-12' })
+  @IsOptional()
+  @IsString()
+  dob?: string;
+}
+
 export class CreateAiExplorerEnrollmentDto {
+  @ApiPropertyOptional({
+    description: 'Array of student objects for family / sibling enrollment',
+    type: [EnrollmentStudentItemDto],
+  })
+  @IsOptional()
+  @IsArray()
+  students?: EnrollmentStudentItemDto[];
+
+  @ApiPropertyOptional({ example: 2, description: 'Number of students' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  studentCount?: number;
+
+  @ApiPropertyOptional({ example: 2, description: 'Total students count' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  totalStudents?: number;
+
   @ApiPropertyOptional({
     example: 'Aarav Sharma',
     description: 'Full name of the student',
@@ -162,6 +215,22 @@ export class CreateAiExplorerEnrollmentDto {
   plan?: string;
 
   @ApiPropertyOptional({
+    example: 'Term Wise Payment (Term I)',
+    description: 'Plan name description',
+  })
+  @IsOptional()
+  @IsString()
+  planName?: string;
+
+  @ApiPropertyOptional({
+    example: 'Term I',
+    description: 'Selected term identifier',
+  })
+  @IsOptional()
+  @IsString()
+  selectedTerm?: string;
+
+  @ApiPropertyOptional({
     example: 43000,
     description: 'Payment amount for this transaction in INR',
   })
@@ -187,6 +256,15 @@ export class CreateAiExplorerEnrollmentDto {
   @Type(() => Number)
   @IsNumber()
   totalCourseFee?: number;
+
+  @ApiPropertyOptional({
+    example: 90000,
+    description: 'Total fee alias for multiple children or overall course',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  totalFee?: number;
 
   @ApiPropertyOptional({
     example: 'UPI',
@@ -276,3 +354,4 @@ export class CreateAiExplorerEnrollmentDto {
   @IsString()
   adminNotes?: string;
 }
+

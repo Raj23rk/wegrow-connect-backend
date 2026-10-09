@@ -1,13 +1,35 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
+import { EnrollmentStudentItemDto } from './create-ai-explorer-enrollment.dto';
 
 export class CreateAiPaymentOrderDto {
+  @ApiPropertyOptional({
+    description: 'Array of student objects for family / sibling enrollment',
+    type: [EnrollmentStudentItemDto],
+  })
+  @IsOptional()
+  @IsArray()
+  students?: EnrollmentStudentItemDto[];
+
+  @ApiPropertyOptional({ example: 2 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  studentCount?: number;
+
+  @ApiPropertyOptional({ example: 2 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  totalStudents?: number;
+
   @ApiPropertyOptional({ example: 'Aarav Sharma' })
   @IsOptional()
   @IsString()
@@ -98,6 +120,16 @@ export class CreateAiPaymentOrderDto {
   @IsString()
   plan?: string;
 
+  @ApiPropertyOptional({ example: 'Term Wise Payment (Term I)' })
+  @IsOptional()
+  @IsString()
+  planName?: string;
+
+  @ApiPropertyOptional({ example: 'Term I' })
+  @IsOptional()
+  @IsString()
+  selectedTerm?: string;
+
   @ApiPropertyOptional({ example: 43000 })
   @IsOptional()
   @Type(() => Number)
@@ -109,6 +141,18 @@ export class CreateAiPaymentOrderDto {
   @Type(() => Number)
   @IsNumber()
   orderAmount?: number;
+
+  @ApiPropertyOptional({ example: 90000 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  totalFee?: number;
+
+  @ApiPropertyOptional({ example: 43000 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  totalCourseFee?: number;
 
   @ApiPropertyOptional({ example: 'UPI' })
   @IsOptional()

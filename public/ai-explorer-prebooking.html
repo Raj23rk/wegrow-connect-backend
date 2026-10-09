@@ -557,9 +557,10 @@ function validateStep1() {
   const fatherName = document.getElementById('fatherName');
   const email = document.getElementById('email');
   const fatherPhone = document.getElementById('fatherPhone');
+  const motherPhone = document.getElementById('motherPhone');
   const address = document.getElementById('address');
 
-  [fatherName, email, fatherPhone, address].forEach(el => el.classList.remove('invalid'));
+  [fatherName, email, fatherPhone, motherPhone, address].forEach(el => el.classList.remove('invalid'));
 
   if (!fatherName.value.trim()) { fatherName.classList.add('invalid'); valid = false; if (!firstErr) firstErr = fatherName; }
   
@@ -571,6 +572,16 @@ function validateStep1() {
   const phoneVal = fatherPhone.value.trim().replace(/\D/g, '');
   if (!phoneVal || !/^[6-9]\d{9}$/.test(phoneVal)) {
     fatherPhone.classList.add('invalid'); valid = false; if (!firstErr) firstErr = fatherPhone;
+  }
+
+  const motherPhoneVal = motherPhone ? motherPhone.value.trim().replace(/\D/g, '') : '';
+  if (motherPhoneVal) {
+    if (!/^[6-9]\d{9}$/.test(motherPhoneVal)) {
+      motherPhone.classList.add('invalid'); valid = false; if (!firstErr) firstErr = motherPhone;
+    } else if (phoneVal && motherPhoneVal === phoneVal) {
+      motherPhone.classList.add('invalid'); valid = false; if (!firstErr) firstErr = motherPhone;
+      alert("Father's and Mother's phone numbers cannot be the same. Please provide an alternate contact number.");
+    }
   }
 
   if (!address.value.trim()) { address.classList.add('invalid'); valid = false; if (!firstErr) firstErr = address; }

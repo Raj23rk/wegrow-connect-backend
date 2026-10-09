@@ -32,6 +32,22 @@ export class AiExplorerEnrollment {
   @Prop({ required: true, trim: true })
   studentName!: string;
 
+  @Prop({ type: Array, default: [] })
+  students?: Array<{
+    name?: string;
+    studentName?: string;
+    standard?: string;
+    school?: string;
+    gender?: string;
+    dob?: string;
+  }>;
+
+  @Prop({ default: 1 })
+  studentCount?: number;
+
+  @Prop({ default: 1 })
+  totalStudents?: number;
+
   @Prop({ required: true, trim: true, lowercase: true })
   email!: string;
 
@@ -69,11 +85,17 @@ export class AiExplorerEnrollment {
   @Prop({ default: 'Full Payment', trim: true })
   planName: string = 'Full Payment';
 
+  @Prop({ default: '', trim: true })
+  selectedTerm?: string;
+
   @Prop({ required: true, default: 43000 })
   amount!: number; // Current paid/payable amount
 
   @Prop({ required: true, default: 43000 })
   totalCourseFee!: number; // Total fee for course (e.g. 43000 or 45000)
+
+  @Prop({ default: 0 })
+  totalFee?: number;
 
   @Prop({ default: 'UPI', trim: true })
   paymentMethod: string = 'UPI';
