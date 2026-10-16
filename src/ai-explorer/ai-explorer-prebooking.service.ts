@@ -973,10 +973,29 @@ export class AiExplorerPrebookingService {
     }
 
     if (dto.paymentStatus) {
-      prebooking.paymentStatus = dto.paymentStatus.toUpperCase() as AiPrebookingPaymentStatus;
+      const ps = dto.paymentStatus.toUpperCase().trim();
+      if (ps === 'PAID' || ps === 'SUCCESS' || ps === 'COMPLETED') {
+        prebooking.paymentStatus = AiPrebookingPaymentStatus.COMPLETED;
+        if (!dto.status) {
+          prebooking.status = AiPrebookingStatus.CONFIRMED;
+        }
+      } else if (ps.includes('FAIL')) {
+        prebooking.paymentStatus = AiPrebookingPaymentStatus.FAILED;
+      } else if (ps.includes('REFUND')) {
+        prebooking.paymentStatus = AiPrebookingPaymentStatus.REFUNDED;
+      } else {
+        prebooking.paymentStatus = AiPrebookingPaymentStatus.PENDING;
+      }
     }
     if (dto.status) {
-      prebooking.status = dto.status.toUpperCase() as AiPrebookingStatus;
+      const st = dto.status.toUpperCase().trim();
+      if (st === 'CONFIRMED' || st === 'ACTIVE' || st === 'APPROVED' || st === 'PAID') {
+        prebooking.status = AiPrebookingStatus.CONFIRMED;
+      } else if (st.includes('CANCEL')) {
+        prebooking.status = AiPrebookingStatus.CANCELLED;
+      } else {
+        prebooking.status = AiPrebookingStatus.PENDING_PAYMENT;
+      }
     }
     if (dto.adminNotes !== undefined) {
       prebooking.adminNotes = dto.adminNotes;

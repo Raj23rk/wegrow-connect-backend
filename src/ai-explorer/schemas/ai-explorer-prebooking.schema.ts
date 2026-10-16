@@ -6,6 +6,8 @@ export type AiExplorerPrebookingDocument = AiExplorerPrebooking & Document;
 export enum AiPrebookingPaymentStatus {
   PENDING = 'PENDING',
   COMPLETED = 'COMPLETED',
+  PAID = 'PAID',
+  SUCCESS = 'SUCCESS',
   FAILED = 'FAILED',
   REFUNDED = 'REFUNDED',
 }
