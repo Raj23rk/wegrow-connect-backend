@@ -190,7 +190,7 @@ export class AiExplorerPrebookingService {
     }
 
     const totalStudents = students.length;
-    const amountPerStudent = 1000;
+    const amountPerStudent = 2; // Test amount: ₹2 per student (was ₹1000)
     const totalAmount = dto.amount && dto.amount > 0 ? dto.amount : totalStudents * amountPerStudent;
 
     const prebookingId = await this.generatePrebookingId();
@@ -569,7 +569,7 @@ export class AiExplorerPrebookingService {
     }
 
     const totalStudents = students.length;
-    const amountPerStudent = dto.amountPerStudent || 1000;
+    const amountPerStudent = dto.amountPerStudent || 2;
     const totalAmount = dto.totalAmount || dto.amount || totalStudents * amountPerStudent;
     const prebookingId = await this.generatePrebookingId();
 

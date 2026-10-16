@@ -6,6 +6,8 @@ import compression from 'compression';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as express from 'express';
+import * as path from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
@@ -41,10 +43,26 @@ async function bootstrap() {
   });
 
   // =====================================================
+  // STATIC ASSETS
+  // =====================================================
+  app.use(express.static(path.join(process.cwd(), 'public')));
+
+  // =====================================================
   // API PREFIX
   // =====================================================
 
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api/v1', {
+    exclude: [
+      'api/create-order',
+      'api/verify-payment',
+      'api/config',
+      'api/razorpay-config',
+      'create-order',
+      'verify-payment',
+      'checkout',
+      'checkout.html',
+    ],
+  });
 
   // =====================================================
   // INTERCEPTORS & EXCEPTION FILTER

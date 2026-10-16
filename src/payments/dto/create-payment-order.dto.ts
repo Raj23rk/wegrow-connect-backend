@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsNotEmpty,
+  IsBoolean,
   IsNumber,
   IsOptional,
   IsString,
@@ -27,13 +27,30 @@ export class CustomerDetailsDto {
 
 export class CreatePaymentOrderDto {
   @ApiProperty({
-    example: 199,
-    description: 'Amount in INR (Rupees)',
+    example: 50000,
+    description: 'Amount in paise (e.g. 50000 paise = ₹500). Minimum 100 paise (₹1).',
   })
   @IsNumber({}, { message: 'Amount must be a number' })
-  @Min(1, { message: 'Amount must be at least ₹1' })
+  @Min(100, { message: 'Amount must be at least 100 paise' })
   @Type(() => Number)
   amount!: number;
+
+  @ApiPropertyOptional({
+    example: 50000,
+    description: 'Explicit amount in paise',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  amountInPaise?: number;
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Flag if input amount was in Rupees and needs conversion',
+  })
+  @IsOptional()
+  @IsBoolean()
+  inRupees?: boolean;
 
   @ApiPropertyOptional({
     example: 'INR',
@@ -45,7 +62,7 @@ export class CreatePaymentOrderDto {
   currency?: string = 'INR';
 
   @ApiPropertyOptional({
-    example: 'SING_ALONG_TICKET',
+    example: 'GENERAL',
     description: 'Purpose or category of payment',
   })
   @IsOptional()

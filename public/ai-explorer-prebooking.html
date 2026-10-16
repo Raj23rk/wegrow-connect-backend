@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>WeGrow AI Explorer — Priority Seat Pre-Booking (₹1,000 / Student)</title>
+<title>WeGrow AI Explorer — Priority Seat Pre-Booking (₹2 / Student)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
@@ -70,7 +70,28 @@ main{max-width:1180px;margin:0 auto;padding:36px 20px 80px}
 .prebook-banner p{margin:0;font-size:14px;opacity:.9}
 .price-tag-big{background:var(--yellow);color:var(--navy);font-family:Fredoka;font-size:24px;font-weight:700;padding:10px 20px;border-radius:16px;white-space:nowrap;box-shadow:0 6px 16px #0002}
 
-/* ---------- Dynamic Price Bar ---------- */
+/* ---------- Dynamic Price Bar & Mode Switcher ---------- */
+.price-mode-card{background:linear-gradient(135deg,#f8faff 0%,#f1f5fe 100%);border:2px solid #dcd3ff;border-radius:22px;padding:20px 22px;margin-bottom:20px;box-shadow:0 8px 24px #7b4dff14;transition:all .3s ease}
+.price-mode-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.price-mode-title{display:flex;align-items:center;gap:12px}
+.price-mode-title .mode-icon{font-size:22px;background:#efe9ff;width:40px;height:40px;border-radius:12px;display:grid;place-items:center}
+.price-mode-title strong{display:block;font-size:16px;color:var(--navy);font-family:Fredoka}
+.price-mode-title p{margin:2px 0 0;font-size:12px;color:var(--muted);font-weight:700}
+.mode-badge{font-size:12px;font-weight:900;padding:6px 14px;border-radius:999px;background:linear-gradient(90deg,#7b4dff,#2563eb);color:#fff;box-shadow:0 4px 14px #7b4dff40;letter-spacing:.3px}
+.mode-selector-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:768px){.mode-selector-grid{grid-template-columns:1fr}}
+.mode-option{display:flex;position:relative;border:2px solid #e3e8f6;border-radius:16px;padding:14px 16px;background:#fff;cursor:pointer;transition:all .2s ease}
+.mode-option input[type="radio"]{position:absolute;opacity:0;pointer-events:none}
+.mode-option:hover{border-color:#b9a2ff;transform:translateY(-2px);box-shadow:0 6px 16px #7b4dff18}
+.mode-option.active{border-color:var(--purple);background:#f7f3ff;box-shadow:0 6px 20px #7b4dff28}
+.mode-opt-content{width:100%}
+.mode-opt-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.mode-name{font-weight:900;font-size:14px;color:var(--navy)}
+.mode-val{font-family:Fredoka;font-size:16px;font-weight:700;color:var(--purple)}
+.mode-desc{display:block;font-size:11px;color:var(--muted);font-weight:700;line-height:1.4}
+.custom-input-wrap input{height:38px;font-size:14px;padding:0 12px;border-radius:10px;border:2px solid #d6c9ff;background:#fff;width:100%;font-weight:800;color:var(--purple);margin-top:6px}
+.custom-input-wrap input:focus{border-color:var(--purple);box-shadow:0 0 0 3px #7b4dff33}
+
 .live-price-bar{background:#fff;border:2px solid #e1d8ff;border-radius:20px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;box-shadow:0 8px 24px #7b4dff14}
 .live-price-info strong{display:block;font-size:18px;color:var(--navy);font-family:Fredoka}
 .live-price-info span{font-size:13px;color:var(--muted);font-weight:700}
@@ -170,6 +191,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;font-weight:800;paddi
 @media(max-width:900px){.hero{grid-template-columns:1fr;text-align:center}.hero p{margin:0 auto 16px}.pay-grid{grid-template-columns:1fr}}
 @media(max-width:640px){.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.prebook-banner{flex-direction:column;gap:12px;text-align:center}.progress{display:none}}
 </style>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
 
@@ -193,26 +215,26 @@ footer{text-align:center;color:var(--muted);font-size:13px;font-weight:800;paddi
   <div class="progress" id="progress">
     <span class="pstep active"><i>1</i>Students &amp; Family</span><span class="pline"></span>
     <span class="pstep"><i>2</i>Review &amp; Terms</span><span class="pline"></span>
-    <span class="pstep"><i>3</i>₹1000 Payment</span>
+    <span class="pstep"><i>3</i><span id="step3NavPrice">₹2</span> Payment</span>
   </div>
-  <a class="prebook-pill" href="#step1">⚡ Pre-Book @ ₹1,000</a>
+  <a class="prebook-pill" href="#step1" id="headerPill">⚡ Pre-Book @ ₹2</a>
 </header>
 
 <main>
 <section class="hero">
   <div>
-    <div class="badge"><span class="live"></span> EARLY-BIRD SEAT RESERVATION • ₹1,000 / STUDENT</div>
+    <div class="badge" id="heroBadge"><span class="live"></span> EARLY-BIRD SEAT RESERVATION • ₹2 / STUDENT</div>
     <h1>Reserve Your AI Explorer Seat with <span class="grad2">Pre-Booking!</span></h1>
     <div class="hero-bar"></div>
-    <p>Secure your child's priority admission for our flagship AI &amp; Robotics program with a minimal deposit of ₹1,000 per student. If you have 2 or 3 children in your family, easily add multiple students in a single registration!</p>
+    <p>Secure your child's priority admission for our flagship AI &amp; Robotics program with an adjustable deposit of <strong id="heroDepositPrice">₹2</strong> per student. If you have 2 or 3 children in your family, easily add multiple students in a single registration!</p>
   </div>
 
   <div class="prebook-banner">
     <div>
       <h3>Priority Batch Access</h3>
-      <p>₹1,000 per student is fully adjustable against the course fee.</p>
+      <p><span id="bannerAdjustablePrice">₹2</span> per student is fully adjustable against the course fee.</p>
     </div>
-    <div class="price-tag-big" id="bannerPriceTag">₹1,000 / Seat</div>
+    <div class="price-tag-big" id="bannerPriceTag">₹2 / Seat</div>
   </div>
 </section>
 
@@ -226,13 +248,65 @@ footer{text-align:center;color:var(--muted);font-size:13px;font-weight:800;paddi
     <span class="step-num">01 / 03</span>
   </div>
 
+  <!-- PAYMENT AMOUNT MODE SWITCHER (TEST ₹2 vs REAL ₹1000 vs CUSTOM) -->
+  <div class="price-mode-card">
+    <div class="price-mode-header">
+      <div class="price-mode-title">
+        <span class="mode-icon">⚡</span>
+        <div>
+          <strong>Razorpay Payment Amount Mode</strong>
+          <p>Switch between ₹2 Live Gateway Test and ₹1,000 Real Admission Deposit</p>
+        </div>
+      </div>
+      <div class="mode-badge" id="currentModeBadge">🧪 Test Mode Active (₹2)</div>
+    </div>
+
+    <div class="mode-selector-grid">
+      <label class="mode-option active" id="optTestMode">
+        <input type="radio" name="priceMode" value="2" checked onchange="handlePriceModeChange(this.value)">
+        <div class="mode-opt-content">
+          <div class="mode-opt-top">
+            <span class="mode-name">🧪 Test Mode</span>
+            <span class="mode-val">₹2 / Student</span>
+          </div>
+          <span class="mode-desc">Safe minimal amount for testing Razorpay live gateway</span>
+        </div>
+      </label>
+
+      <label class="mode-option" id="optRealMode">
+        <input type="radio" name="priceMode" value="1000" onchange="handlePriceModeChange(this.value)">
+        <div class="mode-opt-content">
+          <div class="mode-opt-top">
+            <span class="mode-name">🎯 Real Amount</span>
+            <span class="mode-val">₹1,000 / Student</span>
+          </div>
+          <span class="mode-desc">Official priority pre-booking seat reservation fee</span>
+        </div>
+      </label>
+
+      <label class="mode-option" id="optCustomMode">
+        <input type="radio" name="priceMode" value="custom" onchange="handlePriceModeChange(this.value)">
+        <div class="mode-opt-content">
+          <div class="mode-opt-top">
+            <span class="mode-name">✏️ Custom Amount</span>
+            <span class="mode-val" id="customValDisplay">₹ / Student</span>
+          </div>
+          <span class="mode-desc">Enter any custom amount for testing or custom fee</span>
+          <div class="custom-input-wrap" id="customInputWrap" style="display:none">
+            <input type="number" id="customAmountInput" min="1" step="any" placeholder="Enter ₹ / student" value="100" onclick="event.stopPropagation()" oninput="handleCustomAmountInput(this.value)">
+          </div>
+        </div>
+      </label>
+    </div>
+  </div>
+
   <!-- LIVE PRICE BREAKDOWN BAR -->
   <div class="live-price-bar">
     <div class="live-price-info">
       <strong id="livePriceTitle">1 Student Registered</strong>
-      <span>₹1,000 per student • Fully adjustable at batch start</span>
+      <span id="livePriceSub">₹2 per student • Fully adjustable at batch start</span>
     </div>
-    <div class="live-price-amount" id="livePriceAmount">₹1,000</div>
+    <div class="live-price-amount" id="livePriceAmount">₹2</div>
   </div>
 
   <form id="prebookForm" novalidate>
@@ -332,7 +406,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;font-weight:800;paddi
     <h4>✨ Exclusive Pre-Booking Privileges:</h4>
     <ul>
       <li>Priority guaranteed seat reservation for AI Explorer batch 2026.</li>
-      <li>₹1,000 per student deposit is 100% credited against your final tuition fee.</li>
+      <li>₹2 per student deposit is 100% credited against your final tuition fee.</li>
       <li>Complimentary starter AI toolkit &amp; 1-on-1 career orientation session.</li>
     </ul>
   </div>
@@ -344,7 +418,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;font-weight:800;paddi
 
   <div class="actions">
     <button class="secondary" type="button" onclick="showStep(1)">← Back to Edit</button>
-    <button class="primary" id="toStep3Btn" type="button" disabled>Proceed to Pay ₹1,000 / Student →</button>
+    <button class="primary" id="toStep3Btn" type="button" disabled>Proceed to Pay ₹2 / Student →</button>
   </div>
 </section>
 
@@ -353,7 +427,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;font-weight:800;paddi
   <div class="step-title">
     <div>
       <h2><span class="emo">🔐</span>Secure Pre-Booking Payment</h2>
-      <p>Complete payment of ₹1,000 per student to lock in your reservation.</p>
+      <p>Complete payment of ₹2 per student to lock in your reservation.</p>
     </div>
     <span class="step-num">03 / 03</span>
   </div>
@@ -366,21 +440,21 @@ footer{text-align:center;color:var(--muted);font-size:13px;font-weight:800;paddi
     <div>
       <h3 style="margin:0 0 8px;color:var(--navy)">Payment Method</h3>
       <div class="pay-options">
-        <div class="pay-option selected" data-method="UPI" tabindex="0">
+        <div class="pay-option" data-method="UPI" tabindex="0">
           <div class="pi">📲</div>
           <strong>UPI / QR</strong>
           <span>GPay / PhonePe / Paytm</span>
         </div>
-        <div class="pay-option" data-method="Cashfree" tabindex="0">
+        <div class="pay-option selected" data-method="Razorpay" tabindex="0">
           <div class="pi">💳</div>
           <strong>Cards &amp; NetBanking</strong>
-          <span>Cashfree PG Gateway</span>
+          <span>Razorpay Standard Checkout</span>
         </div>
       </div>
 
       <div class="pay-total">
         <small>Total Pre-Booking Amount</small>
-        <div class="pay-amount" id="step3PayAmount">₹1,000</div>
+        <div class="pay-amount" id="step3PayAmount">₹2</div>
       </div>
 
       <button class="primary" style="width:100%" id="payBtn" type="button">
@@ -431,19 +505,81 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 let studentsList = [];
 let parentInfo = {};
 let currentOrderId = '';
-let selectedMethod = 'UPI';
+let selectedMethod = 'Razorpay';
+let pricePerStudent = 2; // Default to ₹2 for live Razorpay test
 
 const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+function handlePriceModeChange(val) {
+  const customWrap = document.getElementById('customInputWrap');
+  document.querySelectorAll('.mode-option').forEach(el => el.classList.remove('active'));
+
+  if (val === 'custom') {
+    document.getElementById('optCustomMode').classList.add('active');
+    customWrap.style.display = 'block';
+    const customInput = document.getElementById('customAmountInput');
+    customInput.focus();
+    pricePerStudent = Math.max(1, parseFloat(customInput.value) || 1);
+    document.getElementById('customValDisplay').textContent = `₹${pricePerStudent.toLocaleString('en-IN')} / Student`;
+    document.getElementById('currentModeBadge').textContent = `✏️ Custom Mode (₹${pricePerStudent.toLocaleString('en-IN')})`;
+  } else {
+    customWrap.style.display = 'none';
+    pricePerStudent = parseFloat(val) || 2;
+    if (pricePerStudent === 2) {
+      document.getElementById('optTestMode').classList.add('active');
+      document.getElementById('currentModeBadge').textContent = '🧪 Test Mode Active (₹2)';
+    } else {
+      document.getElementById('optRealMode').classList.add('active');
+      document.getElementById('currentModeBadge').textContent = '🎯 Real Amount Active (₹1,000)';
+    }
+  }
+
+  updatePriceWidgets();
+}
+
+function handleCustomAmountInput(val) {
+  const num = Math.max(1, parseFloat(val) || 1);
+  pricePerStudent = num;
+  document.getElementById('customValDisplay').textContent = `₹${pricePerStudent.toLocaleString('en-IN')} / Student`;
+  document.getElementById('currentModeBadge').textContent = `✏️ Custom Mode (₹${pricePerStudent.toLocaleString('en-IN')})`;
+  updatePriceWidgets();
+}
+
 function updatePriceWidgets() {
-  const count = document.querySelectorAll('.student-card').length;
-  const total = count * 1000;
+  const count = document.querySelectorAll('.student-card').length || 1;
+  const total = count * pricePerStudent;
   const totalFormatted = `₹${total.toLocaleString('en-IN')}`;
+  const perStudentFormatted = `₹${pricePerStudent.toLocaleString('en-IN')}`;
   
-  document.getElementById('livePriceTitle').textContent = `${count} Student${count > 1 ? 's' : ''} Registered`;
-  document.getElementById('livePriceAmount').textContent = totalFormatted;
-  document.getElementById('bannerPriceTag').textContent = `${totalFormatted} Total`;
-  document.getElementById('step3PayAmount').textContent = totalFormatted;
+  const livePriceTitle = document.getElementById('livePriceTitle');
+  if (livePriceTitle) livePriceTitle.textContent = `${count} Student${count > 1 ? 's' : ''} Registered`;
+  
+  const livePriceSub = document.getElementById('livePriceSub');
+  if (livePriceSub) livePriceSub.textContent = `${perStudentFormatted} per student • Fully adjustable at batch start`;
+
+  const livePriceAmount = document.getElementById('livePriceAmount');
+  if (livePriceAmount) livePriceAmount.textContent = totalFormatted;
+
+  const bannerPriceTag = document.getElementById('bannerPriceTag');
+  if (bannerPriceTag) bannerPriceTag.textContent = `${perStudentFormatted} / Seat`;
+
+  const bannerAdj = document.getElementById('bannerAdjustablePrice');
+  if (bannerAdj) bannerAdj.textContent = perStudentFormatted;
+
+  const heroDep = document.getElementById('heroDepositPrice');
+  if (heroDep) heroDep.textContent = perStudentFormatted;
+
+  const headerPill = document.getElementById('headerPill');
+  if (headerPill) headerPill.textContent = `⚡ Pre-Book @ ${perStudentFormatted}`;
+
+  const heroBadge = document.getElementById('heroBadge');
+  if (heroBadge) heroBadge.innerHTML = `<span class="live"></span> EARLY-BIRD SEAT RESERVATION • ${perStudentFormatted} / STUDENT`;
+
+  const step3Nav = document.getElementById('step3NavPrice');
+  if (step3Nav) step3Nav.textContent = totalFormatted;
+
+  const step3Pay = document.getElementById('step3PayAmount');
+  if (step3Pay) step3Pay.textContent = totalFormatted;
 
   // Toggle remove button visibility (only show if > 1 student)
   const cards = document.querySelectorAll('.student-card');
@@ -611,6 +747,7 @@ const row = (k, v) => `<div class="summary-row"><span>${k}</span><b>${esc(v)}</b
 document.getElementById('toStep2Btn').addEventListener('click', () => {
   if (!validateStep1()) return;
 
+  const perStudentFormatted = `₹${pricePerStudent.toLocaleString('en-IN')}`;
   let studentsHtml = '<div class="student-pill-list">';
   studentsList.forEach((s, idx) => {
     studentsHtml += `
@@ -619,13 +756,13 @@ document.getElementById('toStep2Btn').addEventListener('click', () => {
           <strong>#${idx + 1} ${esc(s.studentName)}</strong>
           <span style="display:block;font-size:12px;color:var(--muted)">${esc(s.standard)} • ${esc(s.school)}</span>
         </div>
-        <span style="font-weight:900;color:var(--purple)">₹1,000</span>
+        <span style="font-weight:900;color:var(--purple)">${perStudentFormatted}</span>
       </div>
     `;
   });
   studentsHtml += '</div>';
 
-  const totalAmount = studentsList.length * 1000;
+  const totalAmount = studentsList.length * pricePerStudent;
   const reviewHtml =
     row("Total Children", `${studentsList.length} Student(s)`) +
     `<div><span style="font-size:13px;color:var(--muted);font-weight:800">Students List:</span>${studentsHtml}</div>` +
@@ -633,6 +770,7 @@ document.getElementById('toStep2Btn').addEventListener('click', () => {
     row("Email Address", parentInfo.email) +
     row("Primary Phone", parentInfo.fatherPhone) +
     row("Residential Address", parentInfo.address) +
+    row("Rate per Student", `${perStudentFormatted} / Student`) +
     row("Total Pre-Booking Fee", `₹${totalAmount.toLocaleString('en-IN')}`);
 
   document.getElementById('reviewSummary').innerHTML = reviewHtml;
@@ -646,14 +784,15 @@ document.getElementById('declareBox').addEventListener('change', e => {
 });
 
 document.getElementById('toStep3Btn').addEventListener('click', () => {
-  const totalAmount = studentsList.length * 1000;
+  const totalAmount = studentsList.length * pricePerStudent;
+  const perStudentFormatted = `₹${pricePerStudent.toLocaleString('en-IN')}`;
   let summaryHtml =
     row("Registered Students", `${studentsList.length} Child(ren)`) +
     row("Parent Name", parentInfo.fatherName) +
     row("Email", parentInfo.email) +
     row("Contact Phone", parentInfo.fatherPhone) +
     row("Program", "AI Explorer Pre-Booking") +
-    row("Rate", "₹1,000 / Student") +
+    row("Rate", `${perStudentFormatted} / Student`) +
     row("Total Payable", `₹${totalAmount.toLocaleString('en-IN')}`);
 
   document.getElementById('paySummary').innerHTML = summaryHtml;
@@ -706,11 +845,11 @@ document.getElementById('payBtn').addEventListener('click', async () => {
   payBtn.disabled = true;
   payBtn.textContent = 'Processing Pre-Booking...';
 
-  const totalAmount = studentsList.length * 1000;
+  const totalAmount = studentsList.length * pricePerStudent;
   const payload = {
     students: studentsList,
     totalStudents: studentsList.length,
-    amountPerStudent: 1000,
+    amountPerStudent: pricePerStudent,
     amount: totalAmount,
     totalAmount: totalAmount,
     fatherName: parentInfo.fatherName,
@@ -724,35 +863,136 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     declarationAccepted: true
   };
 
+  // If Razorpay is chosen, use Razorpay Standard Checkout flow
+  if (selectedMethod === 'Razorpay') {
+    try {
+      // STEP 1: BACKEND - Create Order
+      const orderRes = await fetch(`${API_BASE}/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: totalAmount * 100, // paise (minimum 100 paise)
+          currency: 'INR',
+          receipt: `rcpt_aip_${Date.now()}`,
+          purpose: 'AI_EXPLORER_PREBOOKING',
+          customer: {
+            name: parentInfo.fatherName || 'Parent',
+            email: parentInfo.email,
+            phone: parentInfo.fatherPhone
+          },
+          notes: {
+            studentsCount: studentsList.length,
+            parentName: parentInfo.fatherName
+          }
+        })
+      });
+
+      const orderData = await orderRes.json();
+      const order = orderData.data || orderData;
+      const orderId = order.order_id || order.orderId;
+      const keyId = order.key_id || order.keyId || 'rzp_live_TnMVbzGus2s2u0';
+
+      if (!orderRes.ok || !orderId) {
+        throw new Error(orderData.message || 'Failed to initiate Razorpay order');
+      }
+
+      // STEP 2: FRONTEND - Open Razorpay Modal
+      const rzpOptions = {
+        key: keyId,
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        name: 'WeGrow Skill Campus & B School',
+        description: `AI Explorer Pre-Booking (${studentsList.length} Student(s))`,
+        image: 'https://www.wegrowbschool.in/favicon.ico',
+        order_id: orderId,
+        prefill: {
+          name: parentInfo.fatherName || '',
+          email: parentInfo.email || '',
+          contact: parentInfo.fatherPhone || ''
+        },
+        theme: {
+          color: '#7b4dff'
+        },
+        handler: async function (response) {
+          payBtn.textContent = 'Verifying Payment...';
+          try {
+            // STEP 3: BACKEND - Verify Signature
+            const verifyRes = await fetch(`${API_BASE}/verify-payment`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+
+            const verifyResult = await verifyRes.json();
+            if (verifyRes.ok) {
+              // Enroll booking in database
+              const enrollRes = await fetch(`${API_BASE}/ai-explorer/prebooking/enroll`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  ...payload,
+                  utr: response.razorpay_payment_id,
+                  notes: `Razorpay Order: ${response.razorpay_order_id}, Payment: ${response.razorpay_payment_id}`
+                })
+              });
+              const enrollResult = await enrollRes.json();
+              const prebookingId = enrollResult?.data?.prebookingId || `AIP26-${Math.floor(1000 + Math.random() * 9000)}`;
+              showSuccessModal(prebookingId, totalAmount);
+            } else {
+              alert('Payment signature verification failed: ' + (verifyResult.message || 'Invalid signature'));
+            }
+          } catch (err) {
+            console.error('Verification error:', err);
+            alert('Error verifying payment. Please contact support.');
+          } finally {
+            payBtn.disabled = false;
+            payBtn.textContent = 'Pay & Confirm Pre-Booking 🎉';
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            payBtn.disabled = false;
+            payBtn.textContent = 'Pay & Confirm Pre-Booking 🎉';
+            alert('Payment cancelled by user. You can retry whenever you are ready.');
+          }
+        }
+      };
+
+      const rzpInstance = new Razorpay(rzpOptions);
+      rzpInstance.on('payment.failed', function (resp) {
+        console.error('Payment failed:', resp.error);
+        alert('Payment failed: ' + (resp.error?.description || 'Transaction unsuccessful'));
+        payBtn.disabled = false;
+        payBtn.textContent = 'Pay & Confirm Pre-Booking 🎉';
+      });
+      rzpInstance.open();
+      return;
+    } catch (err) {
+      console.error('Razorpay initialization error:', err);
+      alert('Could not start Razorpay payment: ' + err.message);
+      payBtn.disabled = false;
+      payBtn.textContent = 'Pay & Confirm Pre-Booking 🎉';
+      return;
+    }
+  }
+
+  // UPI or direct confirmation fallback
   try {
-    const res = await fetch(`${API_BASE}/ai-explorer/prebooking/create-order`, {
+    const res = await fetch(`${API_BASE}/ai-explorer/prebooking/enroll`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
     const result = await res.json();
-    if (res.ok && result.success) {
-      const data = result.data || {};
-      currentOrderId = data.orderId || '';
-      const prebookingId = data.prebookingId || `AIP26-${Math.floor(1000 + Math.random() * 9000)}`;
-
-      // Show success modal
-      showSuccessModal(prebookingId, totalAmount);
-    } else {
-      // Fallback direct enroll
-      const enrollRes = await fetch(`${API_BASE}/ai-explorer/prebooking/enroll`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const enrollResult = await enrollRes.json();
-      const prebookingId = enrollResult?.data?.prebookingId || `AIP26-${Math.floor(1000 + Math.random() * 9000)}`;
-      showSuccessModal(prebookingId, totalAmount);
-    }
+    const prebookingId = result?.data?.prebookingId || `AIP26-${Math.floor(1000 + Math.random() * 9000)}`;
+    showSuccessModal(prebookingId, totalAmount);
   } catch (err) {
-    console.error('Payment order error:', err);
-    // Offline fallback confirmation
+    console.error('Enrollment error:', err);
     const prebookingId = `AIP26-${Math.floor(1000 + Math.random() * 9000)}`;
     showSuccessModal(prebookingId, totalAmount);
   } finally {
@@ -775,11 +1015,11 @@ document.getElementById('submitUtrBtn').addEventListener('click', async () => {
   submitBtn.disabled = true;
   submitBtn.textContent = 'Verifying UTR...';
 
-  const totalAmount = studentsList.length * 1000;
+  const totalAmount = studentsList.length * pricePerStudent;
   const payload = {
     students: studentsList,
     totalStudents: studentsList.length,
-    amountPerStudent: 1000,
+    amountPerStudent: pricePerStudent,
     amount: totalAmount,
     totalAmount: totalAmount,
     fatherName: parentInfo.fatherName,

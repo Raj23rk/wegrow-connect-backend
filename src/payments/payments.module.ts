@@ -6,6 +6,7 @@ import {
   SingAlongBookingSchema,
 } from '../sing-along/schemas/sing-along-booking.schema';
 import { PaymentsController } from './payments.controller';
+import { RazorpayApiController } from './razorpay-api.controller';
 import { PaymentsService } from './payments.service';
 
 @Module({
@@ -15,7 +16,7 @@ import { PaymentsService } from './payments.service';
       { name: SingAlongBooking.name, schema: SingAlongBookingSchema },
     ]),
   ],
-  controllers: [PaymentsController],
+  controllers: [PaymentsController, RazorpayApiController],
   providers: [PaymentsService],
   exports: [PaymentsService],
 })

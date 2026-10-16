@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Razorpay Standard Web Checkout | WeGrow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <!-- STEP 2: RAZORPAY STANDARD CHECKOUT SCRIPT -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    :root {
+      --primary: #3399cc;
+      --primary-hover: #2284b5;
+      --primary-dark: #0c2340;
+      --accent: #528ff0;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top right, #1e1b4b 0%, #0f172a 50%, #020617 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 40px rgba(51, 153, 204, 0.15);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .badge-gateway {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(51, 153, 204, 0.15);
+      border: 1px solid rgba(51, 153, 204, 0.4);
+      color: #7dd3fc;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .badge-gateway .pulse {
+      width: 8px;
+      height: 8px;
+      background: #38bdf8;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #38bdf8;
+    }
+
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .order-box {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 22px;
+    }
+
+    .order-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .order-row:last-child {
+      margin-bottom: 0;
+      padding-top: 10px;
+      border-top: 1px dashed var(--card-border);
+      font-weight: 700;
+      color: #ffffff;
+      font-size: 16px;
+    }
+
+    .amount-highlight {
+      color: #38bdf8;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(51, 153, 204, 0.2);
+    }
+
+    .amount-presets {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 480px) {
+      .amount-presets {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .preset-btn {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      border-radius: 8px;
+      padding: 8px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      text-align: center;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .preset-btn.active {
+      background: rgba(51, 153, 204, 0.2);
+      border-color: var(--primary);
+      color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+    }
+
+    .pay-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #3399cc 0%, #2563eb 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+      box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+      margin-top: 20px;
+    }
+
+    .pay-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.6);
+      filter: brightness(1.1);
+    }
+
+    .pay-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .pay-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status-card {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .status-card.active {
+      display: block;
+    }
+
+    .status-card.info {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #7dd3fc;
+    }
+
+    .status-card.success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+    }
+
+    .status-card.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+
+    .details-table {
+      margin-top: 10px;
+      width: 100%;
+      border-collapse: collapse;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .details-table td {
+      padding: 4px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      word-break: break-all;
+    }
+
+    .details-table td:first-child {
+      font-weight: 700;
+      color: #94a3b8;
+      width: 35%;
+    }
+
+    .secure-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 22px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .secure-footer svg {
+      width: 16px;
+      height: 16px;
+      fill: #10b981;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <div class="badge-gateway">
+        <span class="pulse"></span> Razorpay Standard Checkout
+      </div>
+      <h1>Secure Payment Portal</h1>
+      <p class="subtitle">Complete your transaction with Razorpay Standard Modal</p>
+    </div>
+
+    <div class="order-box">
+      <div class="order-row">
+        <span>Product / Service</span>
+        <span style="color:#ffffff;font-weight:600">WeGrow Skill Campus Course</span>
+      </div>
+      <div class="order-row">
+        <span>Payment Currency</span>
+        <span>INR (₹)</span>
+      </div>
+      <div class="order-row">
+        <span>Total Payable</span>
+        <span class="amount-highlight" id="displayAmount">₹2.00</span>
+      </div>
+    </div>
+
+    <form id="checkoutForm" onsubmit="event.preventDefault(); startCheckout();">
+      <div class="form-group">
+        <label for="customerName">Full Name</label>
+        <input type="text" id="customerName" value="Raj Kumar" required placeholder="Enter your full name">
+      </div>
+
+      <div class="form-group">
+        <label for="customerEmail">Email Address</label>
+        <input type="email" id="customerEmail" value="raj@example.com" required placeholder="name@example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="customerPhone">Phone Number</label>
+        <input type="tel" id="customerPhone" value="9876543210" required placeholder="10-digit mobile number">
+      </div>
+
+      <div class="form-group">
+        <label for="payAmount">Amount (INR)</label>
+        <div class="amount-presets">
+          <button type="button" class="preset-btn active" id="preset2" onclick="setAmountPreset(2, this)">🧪 Test (₹2)</button>
+          <button type="button" class="preset-btn" id="preset1000" onclick="setAmountPreset(1000, this)">🎯 Real Fee (₹1,000)</button>
+          <button type="button" class="preset-btn" id="preset500" onclick="setAmountPreset(500, this)">₹500</button>
+          <button type="button" class="preset-btn" id="preset100" onclick="setAmountPreset(100, this)">₹100</button>
+        </div>
+        <input type="number" id="payAmount" value="2" min="1" step="any" required placeholder="Minimum ₹1 (100 paise)">
+      </div>
+
+      <button type="submit" class="pay-btn" id="payBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+          <line x1="1" y1="10" x2="23" y2="10"></line>
+        </svg>
+        <span id="btnText">Pay with Razorpay</span>
+      </button>
+    </form>
+
+    <div id="statusCard" class="status-card">
+      <div id="statusTitle" style="font-weight:700;font-size:14px;margin-bottom:6px"></div>
+      <div id="statusMessage"></div>
+      <table class="details-table" id="detailsTable" style="display:none"></table>
+    </div>
+
+    <div class="secure-footer">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5zm-2 16l-4-4 1.41-1.41L10 15.17l6.59-6.59L18 10l-8 8z"/>
+      </svg>
+      <span>256-bit Encrypted • 100% Secure via Razorpay Gateway</span>
+    </div>
+  </div>
+
+  <script>
+    function setAmountPreset(amt, btn) {
+      const input = document.getElementById('payAmount');
+      input.value = amt;
+      document.getElementById('displayAmount').textContent = '₹' + parseFloat(amt).toFixed(2);
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+    }
+
+    // Live update total display
+    document.getElementById('payAmount').addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 0;
+      document.getElementById('displayAmount').textContent = '₹' + val.toFixed(2);
+      document.querySelectorAll('.preset-btn').forEach(b => {
+        const amt = parseFloat(b.textContent.replace(/[^\d.]/g, ''));
+        b.classList.toggle('active', amt === val);
+      });
+    });
+
+    const statusCard = document.getElementById('statusCard');
+    const statusTitle = document.getElementById('statusTitle');
+    const statusMessage = document.getElementById('statusMessage');
+    const detailsTable = document.getElementById('detailsTable');
+    const payBtn = document.getElementById('payBtn');
+    const btnText = document.getElementById('btnText');
+
+    function showStatus(type, title, message, details = null) {
+      statusCard.className = 'status-card active ' + type;
+      statusTitle.textContent = title;
+      statusMessage.textContent = message;
+
+      if (details) {
+        detailsTable.innerHTML = '';
+        detailsTable.style.display = 'table';
+        Object.entries(details).forEach(([key, val]) => {
+          const row = detailsTable.insertRow();
+          const kCell = row.insertCell(0);
+          const vCell = row.insertCell(1);
+          kCell.textContent = key;
+          vCell.textContent = typeof val === 'object' ? JSON.stringify(val) : val;
+        });
+      } else {
+        detailsTable.style.display = 'none';
+      }
+    }
+
+    async function startCheckout() {
+      const name = document.getElementById('customerName').value.trim();
+      const email = document.getElementById('customerEmail').value.trim();
+      const phone = document.getElementById('customerPhone').value.trim();
+      const amountRupees = parseFloat(document.getElementById('payAmount').value);
+
+      if (!amountRupees || amountRupees <= 0) {
+        alert('Please enter a valid amount.');
+        return;
+      }
+
+      const amountInPaise = Math.round(amountRupees * 100);
+      if (amountInPaise < 100) {
+        alert('Minimum transaction amount is 100 paise (₹1.00).');
+        return;
+      }
+
+      payBtn.disabled = true;
+      btnText.textContent = 'Creating Order...';
+      showStatus('info', 'Step 1: Creating Order', 'Communicating with backend create-order API...');
+
+      try {
+        // STEP 1: BACKEND - Create Order
+        // Endpoint: POST /api/create-order (or /api/v1/create-order or /api/v1/payments/create-order)
+        const orderRes = await fetch('/api/create-order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: amountInPaise,
+            currency: 'INR',
+            receipt: 'rcpt_' + Date.now(),
+            purpose: 'WEGROW_COURSE_CHECKOUT',
+            customer: {
+              name,
+              email,
+              phone
+            }
+          })
+        });
+
+        const orderJson = await orderRes.json();
+        const orderData = orderJson.data || orderJson;
+
+        if (!orderRes.ok) {
+          throw new Error(orderJson.message || 'Failed to create Razorpay order');
+        }
+
+        const orderId = orderData.order_id || orderData.orderId;
+        const keyId = orderData.key_id || orderData.keyId || 'rzp_live_TnMVbzGus2s2u0';
+
+        showStatus('info', 'Step 2: Opening Checkout Modal', `Order ${orderId} created. Waiting for payment...`);
+
+        // STEP 2: FRONTEND - Razorpay Standard Modal
+        const options = {
+          key: keyId,
+          amount: amountInPaise,
+          currency: orderData.currency || 'INR',
+          name: 'WeGrow Skill Campus',
+          description: 'Payment for WeGrow Connect',
+          image: 'https://www.wegrowbschool.in/favicon.ico',
+          order_id: orderId,
+          handler: async function (response) {
+            // Received on payment success:
+            // response.razorpay_payment_id
+            // response.razorpay_order_id
+            // response.razorpay_signature
+            showStatus('info', 'Step 3: Verifying Signature', 'Verifying HMAC-SHA256 signature with backend...');
+            btnText.textContent = 'Verifying Payment...';
+
+            try {
+              // STEP 3: BACKEND - Verify Signature
+              // Endpoint: POST /api/verify-payment
+              const verifyRes = await fetch('/api/verify-payment', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature
+                })
+              });
+
+              const verifyJson = await verifyRes.json();
+
+              if (verifyRes.ok) {
+                showStatus('success', '🎉 Payment Successful & Verified!', 'Your payment has been authenticated and captured successfully.', {
+                  'Order ID': response.razorpay_order_id,
+                  'Payment ID': response.razorpay_payment_id,
+                  'Signature': response.razorpay_signature.slice(0, 20) + '...',
+                  'Amount Paid': '₹' + (amountInPaise / 100).toFixed(2),
+                  'Status': 'CAPTURED / VERIFIED'
+                });
+              } else {
+                showStatus('error', 'Signature Verification Failed', verifyJson.message || 'Payment signature mismatch. Transaction not marked as paid.');
+              }
+            } catch (vErr) {
+              showStatus('error', 'Verification Request Failed', vErr.message);
+            } finally {
+              payBtn.disabled = false;
+              btnText.textContent = 'Pay with Razorpay';
+            }
+          },
+          prefill: {
+            name: name,
+            email: email,
+            contact: phone
+          },
+          theme: {
+            color: '#3399cc'
+          },
+          modal: {
+            ondismiss: function () {
+              payBtn.disabled = false;
+              btnText.textContent = 'Pay with Razorpay';
+              showStatus('error', 'Payment Cancelled', 'Razorpay checkout modal was closed without completing payment.');
+            }
+          }
+        };
+
+        const rzp = new Razorpay(options);
+
+        // Handle payment failure event
+        rzp.on('payment.failed', function (response) {
+          payBtn.disabled = false;
+          btnText.textContent = 'Pay with Razorpay';
+          showStatus('error', 'Payment Failed', response.error?.description || 'Your transaction could not be processed.', {
+            'Error Code': response.error?.code,
+            'Reason': response.error?.reason,
+            'Order ID': response.error?.metadata?.order_id,
+            'Payment ID': response.error?.metadata?.payment_id
+          });
+        });
+
+        rzp.open();
+
+      } catch (err) {
+        payBtn.disabled = false;
+        btnText.textContent = 'Pay with Razorpay';
+        showStatus('error', 'Order Creation Error', err.message);
+      }
+    }
+  </script>
+</body>
+</html>

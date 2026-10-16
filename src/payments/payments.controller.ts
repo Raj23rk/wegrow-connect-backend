@@ -31,7 +31,7 @@ export class PaymentsController {
   // =====================================================
   // CREATE PAYMENT ORDER
   // =====================================================
-  @Post('create-order')
+  @Post(['create-order', 'order'])
   @ApiOperation({ summary: 'Create a new Razorpay payment order' })
   async createOrder(@Body() dto: CreatePaymentOrderDto) {
     const data = await this.paymentsService.createOrder(dto);
@@ -45,7 +45,7 @@ export class PaymentsController {
   // =====================================================
   // VERIFY PAYMENT SIGNATURE
   // =====================================================
-  @Post('verify')
+  @Post(['verify', 'verify-payment'])
   @ApiOperation({ summary: 'Verify Razorpay payment signature & capture' })
   async verifyPayment(@Body() dto: VerifyPaymentDto) {
     const data = await this.paymentsService.verifyPayment(dto);

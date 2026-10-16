@@ -4,8 +4,10 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { ConfigService } from '@nestjs/config';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
 import Razorpay from 'razorpay';
@@ -25,7 +27,7 @@ import {
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
-  private readonly razorpay: Razorpay | null = null;
+  private razorpay: Razorpay | null = null;
   private readonly keyId: string;
   private readonly keySecret: string;
 
@@ -34,167 +36,245 @@ export class PaymentsService {
     private readonly paymentModel: Model<PaymentDocument>,
     @InjectModel(SingAlongBooking.name)
     private readonly singAlongBookingModel: Model<SingAlongBookingDocument>,
+    private readonly configService: ConfigService,
   ) {
-    this.keyId = process.env.RAZORPAY_KEY_ID || '';
-    this.keySecret = process.env.RAZORPAY_KEY_SECRET || '';
+    this.keyId = (
+      this.configService.get<string>('RAZORPAY_KEY_ID') ||
+      process.env.RAZORPAY_KEY_ID ||
+      ''
+    ).trim();
 
+    this.keySecret = (
+      this.configService.get<string>('RAZORPAY_KEY_SECRET') ||
+      process.env.RAZORPAY_KEY_SECRET ||
+      ''
+    ).trim();
+
+    this.initRazorpay();
+  }
+
+  private initRazorpay(): void {
     if (this.keyId && this.keySecret && this.keyId !== 'RAZORPAY_KEY_ID') {
       try {
         this.razorpay = new Razorpay({
           key_id: this.keyId,
           key_secret: this.keySecret,
         });
-        this.logger.log('Razorpay SDK initialized successfully with live key');
+        this.logger.log('Razorpay SDK initialized successfully');
       } catch (err: any) {
-        this.logger.warn(`Failed to initialize Razorpay SDK: ${err.message}`);
+        this.logger.error(`Failed to initialize Razorpay SDK: ${err.message}`);
       }
     } else {
       this.logger.warn(
-        'Razorpay credentials not configured or placeholder detected. Sandbox test mode active.',
+        'Razorpay credentials not fully configured in environment.',
       );
     }
   }
 
   /**
-   * Return public configuration for frontend checkout
+   * Return public configuration for frontend checkout (KEY_ID only, never secret)
    */
   getConfig() {
     return {
-      keyId: this.keyId !== 'RAZORPAY_KEY_ID' ? this.keyId : 'rzp_test_placeholder',
+      keyId: this.keyId,
+      key_id: this.keyId,
       currency: 'INR',
       isLive: Boolean(this.razorpay),
     };
   }
 
   // =========================================================================
-  // CREATE PAYMENT ORDER (PUBLIC)
+  // STEP 1: CREATE PAYMENT ORDER
   // =========================================================================
   async createOrder(dto: CreatePaymentOrderDto) {
-    const amount = Number(dto.amount);
-    if (!amount || amount <= 0) {
-      throw new BadRequestException('Payment amount must be greater than 0');
+    if (!this.razorpay) {
+      this.initRazorpay();
     }
 
-    const amountInPaise = Math.round(amount * 100);
+    if (!this.keyId || !this.keySecret) {
+      throw new UnauthorizedException(
+        'Razorpay credentials are not configured on the server',
+      );
+    }
+
+    // Amount validation: must be in paise and >= 100 paise (₹1)
+    let amountInPaise: number;
+    if (dto.inRupees) {
+      amountInPaise = Math.round(Number(dto.amount) * 100);
+    } else {
+      amountInPaise = Math.round(Number(dto.amountInPaise || dto.amount));
+    }
+
+    if (isNaN(amountInPaise) || amountInPaise < 100) {
+      throw new BadRequestException(
+        'Payment amount must be at least 100 paise (₹1.00)',
+      );
+    }
+
     const currency = (dto.currency || 'INR').toUpperCase();
-    const receipt = dto.receipt || `rcpt_${Date.now()}`;
+    const receipt =
+      dto.receipt || `rcpt_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
     const purpose = dto.purpose || 'GENERAL';
     const notes = dto.notes || {};
 
     let orderId = '';
 
-    if (this.razorpay) {
-      try {
-        const order = await this.razorpay.orders.create({
-          amount: amountInPaise,
-          currency,
-          receipt,
-          notes: {
-            purpose,
-            ...notes,
-          },
-        });
-        orderId = order.id;
-      } catch (error: any) {
-        this.logger.error(`Razorpay order creation failed: ${error.message}`);
-        throw new InternalServerErrorException(
-          error.error?.description || error.message || 'Razorpay order creation failed',
-        );
+    try {
+      if (!this.razorpay) {
+        throw new UnauthorizedException('Razorpay client is not initialized');
       }
-    } else {
-      // Sandbox fallback order ID
-      orderId = `order_test_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
-      this.logger.log(`Created sandbox mock order: ${orderId}`);
+
+      const order = await this.razorpay.orders.create({
+        amount: amountInPaise,
+        currency,
+        receipt,
+        notes: {
+          purpose,
+          ...notes,
+        },
+      });
+
+      orderId = order.id;
+      amountInPaise = order.amount as number;
+    } catch (error: any) {
+      const statusCode = error.statusCode || error.status;
+      const desc =
+        error.error?.description ||
+        error.description ||
+        error.message ||
+        (typeof error === 'object' ? JSON.stringify(error) : String(error)) ||
+        'Razorpay order creation failed';
+
+      this.logger.error(`Razorpay order creation failed: ${desc}`);
+
+      // Handle auth failures (return 401)
+      if (
+        statusCode === 401 ||
+        /auth|unauthorized|invalid\s*(key|secret)|bad_request_error/i.test(desc)
+      ) {
+        throw new UnauthorizedException(desc);
+      }
+
+      // Handle other Razorpay API errors (return 500)
+      throw new InternalServerErrorException(desc);
     }
 
-    // Save payment record in DB
-    const payment = await this.paymentModel.create({
-      orderId,
-      amount,
-      amountInPaise,
-      currency,
-      status: PaymentStatus.CREATED,
-      purpose,
-      receipt,
-      customer: dto.customer || {},
-      notes,
-    });
+    // Save payment record in DB if model available
+    try {
+      if (this.paymentModel) {
+        await this.paymentModel.create({
+          orderId,
+          amount: amountInPaise / 100,
+          amountInPaise,
+          currency,
+          status: PaymentStatus.CREATED,
+          purpose,
+          receipt,
+          customer: dto.customer || {},
+          notes,
+        });
+      }
+    } catch (dbErr: any) {
+      this.logger.warn(`Could not save payment record to DB: ${dbErr.message}`);
+    }
 
     return {
-      orderId: payment.orderId,
-      amount: payment.amount,
-      amountInPaise: payment.amountInPaise,
-      currency: payment.currency,
-      receipt: payment.receipt,
-      keyId: this.getConfig().keyId,
-      purpose: payment.purpose,
-      customer: payment.customer,
-      createdAt: (payment as any).createdAt,
+      order_id: orderId,
+      orderId: orderId,
+      amount: amountInPaise,
+      currency,
+      receipt,
+      key_id: this.keyId,
+      keyId: this.keyId,
+      purpose,
+      notes,
     };
   }
 
   // =========================================================================
-  // VERIFY PAYMENT (PUBLIC)
+  // STEP 3: VERIFY PAYMENT SIGNATURE
   // =========================================================================
   async verifyPayment(dto: VerifyPaymentDto) {
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = dto;
+    const razorpayOrderId =
+      dto.razorpay_order_id ||
+      dto.razorpayOrderId ||
+      dto.order_id ||
+      dto.orderId;
+    const razorpayPaymentId =
+      dto.razorpay_payment_id ||
+      dto.razorpayPaymentId ||
+      dto.payment_id ||
+      dto.paymentId;
+    const razorpaySignature =
+      dto.razorpay_signature ||
+      dto.razorpaySignature ||
+      dto.signature;
 
+    // Validate missing fields: return 400
     if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
       throw new BadRequestException(
-        'razorpayOrderId, razorpayPaymentId, and razorpaySignature are required',
+        'Missing required fields: order_id, payment_id, and signature are required',
       );
     }
 
-    let isSignatureValid = false;
-
-    if (this.keySecret && this.keySecret !== 'Gmbgy4Z5x45YsKO63IJnqDof') {
-      const generatedSignature = crypto
-        .createHmac('sha256', this.keySecret)
-        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-        .digest('hex');
-
-      isSignatureValid = generatedSignature === razorpaySignature;
-    } else {
-      // In sandbox mode without custom secret, allow valid mock signature or sha256
-      const generatedSignature = crypto
-        .createHmac('sha256', this.keySecret || 'test_secret')
-        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-        .digest('hex');
-
-      isSignatureValid =
-        generatedSignature === razorpaySignature ||
-        razorpaySignature === 'simulated_test_signature' ||
-        razorpayPaymentId.startsWith('pay_');
+    if (!this.keySecret) {
+      throw new InternalServerErrorException(
+        'Razorpay secret key is not configured on the server',
+      );
     }
 
+    // Algorithm: HMAC-SHA256(order_id + "|" + payment_id, KEY_SECRET)
+    const generatedSignature = crypto
+      .createHmac('sha256', this.keySecret)
+      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+      .digest('hex');
+
+    const isSignatureValid = generatedSignature === razorpaySignature;
+
+    // Signature mismatch: return 400, do NOT mark as paid
     if (!isSignatureValid) {
-      this.logger.warn(`Invalid Razorpay signature for order: ${razorpayOrderId}`);
-      await this.paymentModel.findOneAndUpdate(
-        { orderId: razorpayOrderId },
-        { status: PaymentStatus.FAILED },
+      this.logger.warn(
+        `Invalid Razorpay signature mismatch for order: ${razorpayOrderId}`,
       );
-      throw new BadRequestException('Invalid payment signature verification failed');
+      if (this.paymentModel) {
+        try {
+          await this.paymentModel.findOneAndUpdate(
+            { orderId: razorpayOrderId },
+            { status: PaymentStatus.FAILED },
+          );
+        } catch {}
+      }
+      throw new BadRequestException(
+        'Payment signature verification failed: signature mismatch',
+      );
     }
 
     // Update payment record in MongoDB
-    const payment = await this.paymentModel.findOneAndUpdate(
-      { orderId: razorpayOrderId },
-      {
-        paymentId: razorpayPaymentId,
-        signature: razorpaySignature,
-        status: PaymentStatus.SUCCESS,
-        metadata: dto.metadata || {},
-      },
-      { new: true, upsert: true },
-    );
+    let payment: any = null;
+    if (this.paymentModel) {
+      try {
+        payment = await this.paymentModel.findOneAndUpdate(
+          { orderId: razorpayOrderId },
+          {
+            paymentId: razorpayPaymentId,
+            signature: razorpaySignature,
+            status: PaymentStatus.SUCCESS,
+            metadata: dto.metadata || {},
+          },
+          { new: true, upsert: true },
+        );
+      } catch (dbErr: any) {
+        this.logger.warn(`Could not update payment record in DB: ${dbErr.message}`);
+      }
+    }
 
-    // If payment is linked to a Sing Along Booking, auto-confirm it!
+    // If payment is linked to a Sing Along Booking, auto-confirm it
     const targetBookingId =
       dto.bookingId ||
-      payment.notes?.bookingId ||
+      payment?.notes?.bookingId ||
       dto.metadata?.bookingId;
 
-    if (targetBookingId) {
+    if (targetBookingId && this.singAlongBookingModel) {
       try {
         await this.singAlongBookingModel.findOneAndUpdate(
           { bookingId: targetBookingId },
@@ -213,14 +293,17 @@ export class PaymentsService {
     }
 
     return {
+      success: true,
       verified: true,
-      message: 'Payment verified and captured successfully',
-      paymentId: razorpayPaymentId,
+      message: 'Payment verified successfully',
+      order_id: razorpayOrderId,
       orderId: razorpayOrderId,
-      amount: payment.amount,
-      currency: payment.currency,
-      purpose: payment.purpose,
-      status: payment.status,
+      payment_id: razorpayPaymentId,
+      paymentId: razorpayPaymentId,
+      signature: razorpaySignature,
+      amount: payment?.amountInPaise || payment?.amount,
+      currency: payment?.currency || 'INR',
+      status: 'PAID',
     };
   }
 
@@ -228,6 +311,10 @@ export class PaymentsService {
   // GET PAYMENT BY ID OR ORDER ID
   // =========================================================================
   async getPayment(id: string) {
+    if (!this.paymentModel) {
+      throw new NotFoundException('Payment database not available');
+    }
+
     const payment = await this.paymentModel
       .findOne({
         $or: [
@@ -254,7 +341,7 @@ export class PaymentsService {
     const event = body?.event;
     const paymentEntity = body?.payload?.payment?.entity;
 
-    if (paymentEntity?.order_id) {
+    if (paymentEntity?.order_id && this.paymentModel) {
       if (event === 'payment.captured') {
         await this.paymentModel.findOneAndUpdate(
           { orderId: paymentEntity.order_id },
