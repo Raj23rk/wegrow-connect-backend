@@ -46,4 +46,8 @@ export class QueryAiExplorerPrebookingDto {
   @IsString()
   @IsOptional()
   endDate?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by active status (true/false)' })
+  @IsOptional()
+  isActive?: boolean | string;
 }

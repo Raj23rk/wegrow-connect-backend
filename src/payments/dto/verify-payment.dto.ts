@@ -103,4 +103,17 @@ export class VerifyPaymentDto {
   })
   @IsOptional()
   metadata?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'Payment purpose (e.g. AI_EXPLORER_PREBOOKING, GENERAL)',
+  })
+  @IsOptional()
+  @IsString()
+  purpose?: string;
+
+  @ApiPropertyOptional({
+    description: 'Payment amount in INR',
+  })
+  @IsOptional()
+  amount?: number;
 }

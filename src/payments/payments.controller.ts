@@ -5,6 +5,7 @@ import {
   Headers,
   Param,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
@@ -26,6 +27,28 @@ export class PaymentsController {
       success: true,
       data: this.paymentsService.getConfig(),
     };
+  }
+
+  // =====================================================
+  // GET ALL PAYMENTS (LIST WITH PAGINATION & SEARCH)
+  // =====================================================
+  @Get()
+  @ApiOperation({ summary: 'Get all payments stored in payments collection' })
+  async getAllPayments(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('purpose') purpose?: string,
+  ) {
+    const data = await this.paymentsService.getAllPayments({
+      page,
+      limit,
+      search,
+      status,
+      purpose,
+    });
+    return data;
   }
 
   // =====================================================

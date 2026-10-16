@@ -23,6 +23,16 @@ import {
   SingAlongBookingDocument,
   SingAlongBookingStatus,
 } from '../sing-along/schemas/sing-along-booking.schema';
+import {
+  AiExplorerPrebooking,
+  AiExplorerPrebookingDocument,
+  AiPrebookingPaymentStatus,
+  AiPrebookingStatus,
+} from '../ai-explorer/schemas/ai-explorer-prebooking.schema';
+import {
+  AiExplorerCounter,
+  AiExplorerCounterDocument,
+} from '../ai-explorer/schemas/ai-explorer-counter.schema';
 
 @Injectable()
 export class PaymentsService {
@@ -36,6 +46,10 @@ export class PaymentsService {
     private readonly paymentModel: Model<PaymentDocument>,
     @InjectModel(SingAlongBooking.name)
     private readonly singAlongBookingModel: Model<SingAlongBookingDocument>,
+    @InjectModel(AiExplorerPrebooking.name)
+    private readonly aiExplorerPrebookingModel: Model<AiExplorerPrebookingDocument>,
+    @InjectModel(AiExplorerCounter.name)
+    private readonly counterModel: Model<AiExplorerCounterDocument>,
     private readonly configService: ConfigService,
   ) {
     this.keyId = (
@@ -292,6 +306,100 @@ export class PaymentsService {
       }
     }
 
+    // If payment is linked to an AI Explorer Prebooking, auto-create / confirm it in MongoDB
+    const isAiExplorerPrebooking =
+      dto.purpose === 'AI_EXPLORER_PREBOOKING' ||
+      dto.purpose === 'AI_EXPLORER_PRE_BOOKING' ||
+      payment?.purpose === 'AI_EXPLORER_PREBOOKING' ||
+      payment?.purpose === 'AI_EXPLORER_PRE_BOOKING' ||
+      payment?.notes?.bookingType === 'AI_EXPLORER_PRE_BOOKING' ||
+      payment?.notes?.purpose === 'AI_EXPLORER_PREBOOKING' ||
+      (dto.metadata && dto.metadata.bookingType === 'AI_EXPLORER_PRE_BOOKING') ||
+      targetBookingId?.startsWith('AIP');
+
+    if (isAiExplorerPrebooking && this.aiExplorerPrebookingModel) {
+      try {
+        let prebooking = await this.aiExplorerPrebookingModel.findOne({
+          $or: [
+            { orderId: razorpayOrderId },
+            ...(targetBookingId ? [{ prebookingId: targetBookingId }] : []),
+          ],
+        });
+
+        if (prebooking) {
+          prebooking.paymentStatus = AiPrebookingPaymentStatus.COMPLETED;
+          prebooking.status = AiPrebookingStatus.CONFIRMED;
+          prebooking.paymentId = razorpayPaymentId;
+          prebooking.utr = razorpayPaymentId;
+          prebooking.isActive = true;
+          prebooking.adminNotes = `Paid via Razorpay: ${razorpayPaymentId} (Order: ${razorpayOrderId})`;
+          await prebooking.save();
+          this.logger.log(`Auto-confirmed existing AI Explorer prebooking: ${prebooking.prebookingId}`);
+        } else {
+          // Generate unique Prebooking ID
+          let prebookingId = targetBookingId || '';
+          if (!prebookingId && this.counterModel) {
+            try {
+              const counter = await this.counterModel.findOneAndUpdate(
+                { id: 'ai_explorer_prebooking' },
+                { $inc: { seq: 1 } },
+                { new: true, upsert: true, setDefaultsOnInsert: true },
+              );
+              const year = new Date().getFullYear().toString().slice(-2);
+              prebookingId = `AIP${year}-${counter.seq}`;
+            } catch {
+              prebookingId = `AIP26-${Math.floor(1000 + Math.random() * 9000)}`;
+            }
+          }
+          if (!prebookingId) {
+            prebookingId = `AIP26-${Math.floor(1000 + Math.random() * 9000)}`;
+          }
+
+          const customer = payment?.customer || {};
+          const notes = payment?.notes || {};
+          const studentName = notes.students || customer.name || 'Student';
+          const fatherPhone = notes.fatherPhone || customer.phone || '9999999999';
+          const motherPhone = notes.motherPhone || '';
+          const email = customer.email || 'student@wegrowbschool.in';
+          const totalStudents = Number(notes.studentCount) || 1;
+          const amount = payment?.amount || (dto as any).amount || 2;
+
+          prebooking = await this.aiExplorerPrebookingModel.create({
+            prebookingId,
+            students: [
+              {
+                studentName,
+                standard: notes.standard || 'AI Explorer',
+                school: notes.school || 'WeGrow Skill Campus',
+              },
+            ],
+            totalStudents,
+            amountPerStudent: Math.round(amount / totalStudents),
+            totalAmount: amount,
+            email,
+            fatherName: customer.name || 'Parent',
+            motherName: '',
+            fatherPhone,
+            motherPhone,
+            address: notes.address || 'Direct Web Pre-Booking',
+            courseName: 'AI Explorer Pre-Booking',
+            paymentMethod: 'Razorpay',
+            paymentStatus: AiPrebookingPaymentStatus.COMPLETED,
+            orderId: razorpayOrderId,
+            paymentId: razorpayPaymentId,
+            utr: razorpayPaymentId,
+            declarationAccepted: true,
+            status: AiPrebookingStatus.CONFIRMED,
+            adminNotes: `Paid via Razorpay: ${razorpayPaymentId} (Order: ${razorpayOrderId})`,
+            isActive: true,
+          });
+          this.logger.log(`Auto-created confirmed AI Explorer prebooking: ${prebookingId}`);
+        }
+      } catch (aiErr: any) {
+        this.logger.error(`Error saving AI Explorer prebooking: ${aiErr.message}`);
+      }
+    }
+
     return {
       success: true,
       verified: true,
@@ -304,6 +412,74 @@ export class PaymentsService {
       amount: payment?.amountInPaise || payment?.amount,
       currency: payment?.currency || 'INR',
       status: 'PAID',
+    };
+  }
+
+  // =========================================================================
+  // GET ALL PAYMENTS (WITH PAGINATION & SEARCH)
+  // =========================================================================
+  async getAllPayments(query: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    purpose?: string;
+  }) {
+    if (!this.paymentModel) {
+      throw new NotFoundException('Payment database not available');
+    }
+
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.max(1, Math.min(200, Number(query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const filter: Record<string, any> = {};
+
+    if (query.status && query.status.trim()) {
+      filter.status = query.status.trim().toUpperCase();
+    }
+
+    if (query.purpose && query.purpose.trim()) {
+      filter.purpose = { $regex: query.purpose.trim(), $options: 'i' };
+    }
+
+    if (query.search && query.search.trim()) {
+      const s = query.search.trim();
+      filter.$or = [
+        { orderId: { $regex: s, $options: 'i' } },
+        { paymentId: { $regex: s, $options: 'i' } },
+        { 'customer.name': { $regex: s, $options: 'i' } },
+        { 'customer.email': { $regex: s, $options: 'i' } },
+        { 'customer.phone': { $regex: s, $options: 'i' } },
+        { receipt: { $regex: s, $options: 'i' } },
+        { purpose: { $regex: s, $options: 'i' } },
+      ];
+    }
+
+    const [total, items] = await Promise.all([
+      this.paymentModel.countDocuments(filter),
+      this.paymentModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .select('-__v')
+        .lean(),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      success: true,
+      data: items,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     };
   }
 
