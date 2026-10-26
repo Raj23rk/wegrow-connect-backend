@@ -1,0 +1,2092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spin & Win — Skill Edition | WeGrow B-School</title>
+  <meta name="description" content="Spin the wheel at WeGrow B-School campus to win scholarships, workshop passes, project reviews and exclusive course benefits!" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Outfit:wght@400;500;600;700;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #0a0514;
+      --card-bg: rgba(26, 15, 46, 0.85);
+      --card-border: rgba(255, 187, 0, 0.28);
+      --gold-1: #ffe066;
+      --gold-2: #f59e0b;
+      --gold-3: #d97706;
+      --gold-grad: linear-gradient(135deg, #ffe066 0%, #f59e0b 50%, #b45309 100%);
+      --fire-grad: linear-gradient(135deg, #ff4d4d, #f59e0b);
+      --purple-grad: linear-gradient(135deg, #4c1d95, #7c3aed);
+      --text-white: #ffffff;
+      --text-muted: #d1c7e6;
+      --glow-gold: 0 0 25px rgba(245, 158, 11, 0.55);
+      --glow-neon: 0 0 35px rgba(255, 115, 0, 0.65);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-white);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Festive Diwali / Celebration Background */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(245, 158, 11, 0.18) 0%, transparent 60%),
+        radial-gradient(circle at 10% 80%, rgba(124, 58, 237, 0.22) 0%, transparent 50%),
+        radial-gradient(circle at 90% 80%, rgba(219, 39, 119, 0.2) 0%, transparent 50%),
+        linear-gradient(180deg, #130924 0%, #080311 100%);
+    }
+
+    /* Garland lights along top */
+    .garland-lights {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 90px;
+      background-image: 
+        radial-gradient(circle at 5% 15px, #f59e0b 4px, transparent 6px),
+        radial-gradient(circle at 12% 35px, #ff4444 5px, transparent 7px),
+        radial-gradient(circle at 20% 20px, #ffe066 4px, transparent 6px),
+        radial-gradient(circle at 28% 42px, #10b981 5px, transparent 7px),
+        radial-gradient(circle at 37% 18px, #f59e0b 4px, transparent 6px),
+        radial-gradient(circle at 45% 38px, #ec4899 5px, transparent 7px),
+        radial-gradient(circle at 54% 22px, #ffe066 4px, transparent 6px),
+        radial-gradient(circle at 63% 40px, #06b6d4 5px, transparent 7px),
+        radial-gradient(circle at 72% 16px, #f59e0b 4px, transparent 6px),
+        radial-gradient(circle at 80% 36px, #ff4444 5px, transparent 7px),
+        radial-gradient(circle at 89% 20px, #ffe066 4px, transparent 6px),
+        radial-gradient(circle at 96% 38px, #10b981 5px, transparent 7px);
+      filter: drop-shadow(0 0 10px rgba(255, 200, 50, 0.8));
+      animation: twinkle 3s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    @keyframes twinkle {
+      0% { opacity: 0.6; filter: drop-shadow(0 0 8px rgba(255, 200, 50, 0.6)); }
+      100% { opacity: 1; filter: drop-shadow(0 0 16px rgba(255, 220, 100, 1)); }
+    }
+
+    /* Hanging Floral Marigold Toran / Garlands on sides */
+    .side-garland {
+      position: fixed;
+      top: 0;
+      width: 70px;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.85;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding-top: 10px;
+    }
+    .side-garland.left { left: 8px; }
+    .side-garland.right { right: 8px; }
+    .marigold-flower {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ff8800 20%, #ff5500 70%, #cc3300 100%);
+      box-shadow: 0 0 12px rgba(255, 120, 0, 0.7);
+      animation: sway 4s ease-in-out infinite alternate;
+    }
+    .marigold-flower.yellow {
+      background: radial-gradient(circle, #ffe600 20%, #f59e0b 70%, #d97706 100%);
+      box-shadow: 0 0 12px rgba(255, 210, 0, 0.7);
+      animation-delay: -2s;
+    }
+
+    @keyframes sway {
+      0% { transform: translateY(0) rotate(-3deg); }
+      100% { transform: translateY(4px) rotate(3deg); }
+    }
+
+    /* Main Container */
+    .app-wrapper {
+      position: relative;
+      z-index: 2;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+
+    /* Top Navigation / Brand Bar */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 187, 0, 0.2);
+      margin-bottom: 24px;
+    }
+
+    .brand-logo-area {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-emblem {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--gold-grad);
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      font-weight: 900;
+      color: #3b1b00;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+    }
+
+    .brand-text h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      background: var(--gold-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn-reception {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 187, 0, 0.35);
+      color: var(--gold-1);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-reception:hover {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: var(--gold-1);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+      transform: translateY(-1px);
+    }
+
+    /* Grand Festive Hero Header */
+    .festive-hero-title {
+      text-align: center;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .festive-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(255, 187, 0, 0.4);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--gold-1);
+      margin-bottom: 12px;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+    }
+
+    .hero-h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(34px, 5vw, 54px);
+      font-weight: 900;
+      letter-spacing: 2px;
+      line-height: 1.1;
+      text-transform: uppercase;
+      color: #fff6d9;
+      text-shadow: 
+        0 0 20px rgba(245, 158, 11, 0.8),
+        0 0 40px rgba(217, 119, 6, 0.5),
+        0 4px 10px rgba(0, 0, 0, 0.9);
+      margin-bottom: 8px;
+    }
+
+    .hero-h1 span.highlight {
+      background: var(--gold-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+
+    .hero-sub {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 680px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    .campus-banner-pill {
+      margin-top: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(90deg, rgba(234, 88, 12, 0.2), rgba(124, 58, 237, 0.2));
+      border: 1px solid rgba(255, 187, 0, 0.3);
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #ffe699;
+      font-weight: 600;
+    }
+
+    /* Main Grid Layout */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 40px;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 1024px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+        gap: 50px;
+      }
+      .side-garland { display: none; }
+    }
+
+    /* Left Card: Multi-Step Interactive Form */
+    .registration-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 34px;
+      box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.6),
+        0 0 30px rgba(245, 158, 11, 0.12);
+      backdrop-filter: blur(16px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .registration-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--gold-grad);
+    }
+
+    /* Stepper Header */
+    .steps-indicator {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 26px;
+      position: relative;
+    }
+
+    .steps-indicator::before {
+      content: "";
+      position: absolute;
+      top: 15px;
+      left: 20px;
+      right: 20px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 0;
+    }
+
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-bubble {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #1c142c;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: #a79cb8;
+      transition: all 0.3s ease;
+    }
+
+    .step-item.active .step-bubble {
+      background: var(--gold-grad);
+      border-color: #ffe066;
+      color: #3b1b00;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.7);
+    }
+
+    .step-item.completed .step-bubble {
+      background: #10b981;
+      border-color: #34d399;
+      color: #fff;
+    }
+
+    .step-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .step-item.active .step-label {
+      color: var(--gold-1);
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #f1edff;
+    }
+
+    label span.req {
+      color: #f59e0b;
+      margin-left: 2px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: #a79cb8;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    select {
+      width: 100%;
+      background: rgba(13, 7, 24, 0.75);
+      border: 1px solid rgba(255, 187, 0, 0.22);
+      border-radius: 12px;
+      padding: 12px 14px 12px 42px;
+      font-size: 14px;
+      color: #ffffff;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--gold-2);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+      background: rgba(18, 10, 33, 0.95);
+    }
+
+    select {
+      cursor: pointer;
+    }
+    select option {
+      background: #1a0f2e;
+      color: #fff;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      width: 100%;
+      background: var(--gold-grad);
+      color: #2b1200;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 22px;
+      font-size: 16px;
+      font-weight: 800;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+      transition: all 0.25s ease;
+      margin-top: 8px;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(245, 158, 11, 0.65);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* OTP Inputs */
+    .otp-container {
+      text-align: center;
+      padding: 10px 0 20px;
+    }
+
+    .otp-info {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .otp-email-badge {
+      display: inline-block;
+      color: var(--gold-1);
+      font-weight: 700;
+      background: rgba(245, 158, 11, 0.15);
+      padding: 3px 10px;
+      border-radius: 8px;
+    }
+
+    .otp-inputs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .otp-box {
+      width: 50px;
+      height: 56px;
+      border-radius: 12px;
+      background: rgba(13, 7, 24, 0.9);
+      border: 2px solid rgba(255, 187, 0, 0.35);
+      text-align: center;
+      font-size: 26px;
+      font-weight: 900;
+      color: #fff;
+      font-family: 'Space Mono', monospace;
+      outline: none;
+      padding: 0;
+      transition: all 0.2s;
+    }
+
+    .otp-box:focus {
+      border-color: #ffe066;
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.5);
+      background: rgba(26, 15, 46, 1);
+    }
+
+    .otp-timer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    .resend-btn {
+      background: none;
+      border: none;
+      color: var(--gold-1);
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 13px;
+      text-decoration: underline;
+    }
+    .resend-btn:disabled {
+      color: #6c637a;
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+
+    /* Right Column: Festive Wheel Area */
+    .wheel-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Rangoli Mat Base under the wheel */
+    .rangoli-base {
+      position: absolute;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      background: 
+        radial-gradient(circle, transparent 60%, rgba(245, 158, 11, 0.15) 75%, transparent 100%),
+        repeating-conic-gradient(from 0deg, rgba(234, 88, 12, 0.1) 0deg 15deg, rgba(124, 58, 237, 0.1) 15deg 30deg);
+      border: 2px dashed rgba(255, 187, 0, 0.35);
+      box-shadow: 0 0 60px rgba(245, 158, 11, 0.2);
+      animation: rotateRangoli 60s linear infinite;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    @keyframes rotateRangoli {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Glowing Diyas / Lamps around the base */
+    .diyas-container {
+      position: absolute;
+      width: 560px;
+      height: 560px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .diya {
+      position: absolute;
+      font-size: 26px;
+      filter: drop-shadow(0 0 12px rgba(255, 180, 0, 0.9));
+      animation: flicker 2s infinite alternate;
+    }
+
+    @keyframes flicker {
+      0% { filter: drop-shadow(0 0 10px rgba(255, 160, 0, 0.8)); transform: scale(0.98); }
+      100% { filter: drop-shadow(0 0 20px rgba(255, 220, 50, 1)); transform: scale(1.05); }
+    }
+
+    .diya-1 { top: 12%; left: 4%; }
+    .diya-2 { top: 12%; right: 4%; }
+    .diya-3 { bottom: 10%; left: 8%; }
+    .diya-4 { bottom: 10%; right: 8%; }
+    .diya-5 { bottom: -2%; left: 47%; }
+
+    /* Wheel Main Frame */
+    .wheel-assembly {
+      position: relative;
+      width: 440px;
+      height: 440px;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.85));
+    }
+
+    @media (max-width: 500px) {
+      .wheel-assembly {
+        width: 330px;
+        height: 330px;
+      }
+      .rangoli-base {
+        width: 370px;
+        height: 370px;
+      }
+      .diyas-container {
+        display: none;
+      }
+    }
+
+    /* Outer Golden Rim with Festive LED Bulbs */
+    .outer-rim {
+      position: absolute;
+      inset: -14px;
+      border-radius: 50%;
+      border: 12px solid #b45309;
+      background: radial-gradient(circle, transparent 92%, #ffe066 96%, #f59e0b 100%);
+      box-shadow: 
+        0 0 0 4px #78350f,
+        0 0 25px rgba(245, 158, 11, 0.8),
+        inset 0 0 15px rgba(0, 0, 0, 0.7);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* Flashing Rim Light Studs */
+    .rim-stud {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 8px #ffe066;
+      animation: bulbBlink 1.2s infinite alternate;
+    }
+
+    @keyframes bulbBlink {
+      0% { opacity: 0.4; filter: drop-shadow(0 0 3px #ffaa00); }
+      100% { opacity: 1; filter: drop-shadow(0 0 10px #ffffff); }
+    }
+
+    /* Canvas Element */
+    #wheelCanvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      display: block;
+      cursor: grab;
+      transition: transform 0.05s ease-out;
+    }
+
+    /* Center Hub Cap */
+    .wheel-hub {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffe699, #f59e0b 60%, #78350f 100%);
+      border: 5px solid #fff;
+      box-shadow: 
+        0 0 20px rgba(0, 0, 0, 0.8),
+        0 0 15px rgba(245, 158, 11, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      pointer-events: none;
+      text-align: center;
+    }
+
+    .wheel-hub span.icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .wheel-hub span.label {
+      font-size: 9px;
+      font-weight: 900;
+      color: #3b1b00;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* Triangular Pointer (At 12 o'clock) */
+    .wheel-pointer {
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-top: 42px solid #ef4444;
+      z-index: 10;
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8));
+      transition: transform 0.08s ease;
+      transform-origin: 50% 0%;
+    }
+
+    .wheel-pointer::after {
+      content: "";
+      position: absolute;
+      top: -42px;
+      left: -13px;
+      width: 0;
+      height: 0;
+      border-left: 13px solid transparent;
+      border-right: 13px solid transparent;
+      border-top: 28px solid #ffe066;
+    }
+
+    .wheel-pointer.ticking {
+      transform: translateX(-50%) rotate(-12deg);
+    }
+
+    /* Grand Glowing "SPIN NOW" Button below wheel */
+    .spin-btn-container {
+      margin-top: 36px;
+      z-index: 4;
+      text-align: center;
+    }
+
+    .btn-spin-now {
+      background: linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #dc2626 100%);
+      color: #ffffff;
+      border: 4px solid #ffe066;
+      border-radius: 999px;
+      padding: 16px 48px;
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+      box-shadow: 
+        0 0 25px rgba(245, 158, 11, 0.7),
+        0 8px 30px rgba(0, 0, 0, 0.8);
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-spin-now:hover:not(:disabled) {
+      transform: scale(1.06);
+      box-shadow: 
+        0 0 40px rgba(255, 200, 50, 0.9),
+        0 12px 35px rgba(234, 88, 12, 0.9);
+    }
+
+    .btn-spin-now:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+      filter: grayscale(0.5);
+    }
+
+    .spin-status-note {
+      font-size: 13px;
+      color: #e2d9f3;
+      margin-top: 10px;
+      font-weight: 500;
+    }
+
+    /* Reward Budget Badges Row */
+    .rules-row {
+      margin-top: 35px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 187, 0, 0.2);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-around;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .rule-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+
+    .rule-item i {
+      font-style: normal;
+      font-size: 16px;
+      color: var(--gold-1);
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 2, 12, 0.88);
+      backdrop-filter: blur(14px);
+      z-index: 100;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-overlay.open {
+      display: grid;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .voucher-card-modal {
+      background: linear-gradient(170deg, #1f113a 0%, #120924 100%);
+      border: 2px solid var(--gold-1);
+      border-radius: 26px;
+      max-width: 580px;
+      width: 100%;
+      padding: 34px 28px;
+      text-align: center;
+      box-shadow: 
+        0 25px 60px rgba(0, 0, 0, 0.9),
+        0 0 50px rgba(245, 158, 11, 0.4);
+      position: relative;
+      animation: scaleUp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes scaleUp {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .close-modal-btn {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    .close-modal-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .winner-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-grad);
+      color: #3b1b00;
+      font-weight: 900;
+      font-size: 13px;
+      padding: 6px 18px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+    }
+
+    .winner-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(24px, 4vw, 32px);
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .winner-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+
+    /* Digital Voucher Ticket */
+    .voucher-ticket {
+      background: #0d071a;
+      border: 1px dashed rgba(255, 187, 0, 0.45);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 22px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+      align-items: center;
+      text-align: left;
+    }
+
+    @media (max-width: 500px) {
+      .voucher-ticket {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+    }
+
+    .voucher-code-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--gold-1);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .voucher-code-pill {
+      font-family: 'Space Mono', monospace;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #ffffff;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(255, 187, 0, 0.3);
+      padding: 6px 12px;
+      border-radius: 8px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .voucher-student-meta {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    .qr-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-img {
+      width: 130px;
+      height: 130px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 6px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .qr-caption {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Campus Visit Instructions Card */
+    .campus-claim-instructions {
+      background: rgba(245, 158, 11, 0.08);
+      border-left: 4px solid var(--gold-2);
+      border-radius: 12px;
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 13px;
+      color: #f1edff;
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+
+    .campus-claim-instructions strong {
+      color: var(--gold-1);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Staff Scanner / Verification Modal */
+    .staff-modal-card {
+      background: #140b28;
+      border: 1px solid rgba(255, 187, 0, 0.3);
+      border-radius: 20px;
+      max-width: 520px;
+      width: 100%;
+      padding: 30px;
+      position: relative;
+    }
+
+    /* Toasts */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: #1e1238;
+      border: 1px solid var(--gold-2);
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient background elements -->
+  <div class="ambient-bg"></div>
+  <div class="garland-lights"></div>
+
+  <!-- Hanging Marigold Garlands on left & right -->
+  <div class="side-garland left">
+    <div class="marigold-flower"></div>
+    <div class="marigold-flower yellow"></div>
+    <div class="marigold-flower"></div>
+    <div class="marigold-flower yellow"></div>
+    <div class="marigold-flower"></div>
+    <div class="marigold-flower yellow"></div>
+    <div class="marigold-flower"></div>
+    <div class="marigold-flower yellow"></div>
+  </div>
+  <div class="side-garland right">
+    <div class="marigold-flower yellow"></div>
+    <div class="marigold-flower"></div>
+    <div class="marigold-flower yellow"></div>
+    <div class="marigold-flower"></div>
+    <div class="marigold-flower yellow"></div>
+    <div class="marigold-flower"></div>
+    <div class="marigold-flower yellow"></div>
+    <div class="marigold-flower"></div>
+  </div>
+
+  <div class="app-wrapper">
+    <!-- Header -->
+    <header>
+      <div class="brand-logo-area">
+        <div class="brand-emblem">W</div>
+        <div class="brand-text">
+          <h2>WeGrow B-School</h2>
+          <p>Campus Skill Fest &bull; 2026</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-reception" id="openStaffPortalBtn" type="button">
+          <span>🏛️</span>
+          <span>Campus Reception Portal</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Grand Hero Title -->
+    <div class="festive-hero-title">
+      <div class="festive-badge">
+        <span>✨</span> DIWALI &amp; CAMPUS DEALS <span>✨</span>
+      </div>
+      <h1 class="hero-h1">
+        SPIN THE WHEEL &amp; <span class="highlight">WIN!</span>
+      </h1>
+      <p class="hero-sub">
+        Skill Edition &bull; Register below, verify your student email, and spin to win exclusive scholarships, workshop passes, project mentorship &amp; campus rewards.
+      </p>
+      <div class="campus-banner-pill">
+        <span>📍</span>
+        <span>Claim your reward upon visiting the WeGrow B-School Campus!</span>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="content-grid">
+      
+      <!-- Left Column: Registration & Verification Form -->
+      <div class="registration-card">
+        
+        <!-- Stepper -->
+        <div class="steps-indicator">
+          <div class="step-item active" id="stepIndicator1">
+            <div class="step-bubble">1</div>
+            <div class="step-label">Student Details</div>
+          </div>
+          <div class="step-item" id="stepIndicator2">
+            <div class="step-bubble">2</div>
+            <div class="step-label">Email OTP</div>
+          </div>
+          <div class="step-item" id="stepIndicator3">
+            <div class="step-bubble">3</div>
+            <div class="step-label">Spin &amp; Claim</div>
+          </div>
+        </div>
+
+        <!-- STEP 1: Registration Form -->
+        <div id="step1Container">
+          <form id="studentRegistrationForm">
+            
+            <div class="form-group">
+              <label for="name">Full Name <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <span class="input-icon">👤</span>
+                <input type="text" id="name" placeholder="Enter your full name" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="email">Student Email <span class="req">*</span></label>
+                <div class="input-wrapper">
+                  <span class="input-icon">✉️</span>
+                  <input type="email" id="email" placeholder="student@example.com" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="mobileNo">Your Mobile No <span class="req">*</span></label>
+                <div class="input-wrapper">
+                  <span class="input-icon">📱</span>
+                  <input type="tel" id="mobileNo" placeholder="10-digit number" pattern="[0-9]{10}" maxlength="10" required />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="fatherMobile">Father's Contact No <span class="req">*</span></label>
+                <div class="input-wrapper">
+                  <span class="input-icon">👨</span>
+                  <input type="tel" id="fatherMobile" placeholder="Father's phone" pattern="[0-9]{10}" maxlength="10" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="motherMobile">Mother's Contact No <span class="req">*</span></label>
+                <div class="input-wrapper">
+                  <span class="input-icon">👩</span>
+                  <input type="tel" id="motherMobile" placeholder="Mother's phone" pattern="[0-9]{10}" maxlength="10" required />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="courseInterested">Interested Course / Program <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <span class="input-icon">🎯</span>
+                <select id="courseInterested" required>
+                  <option value="" disabled selected>Select the course you want to explore</option>
+                  <option value="AI & Data Science (B.Tech / Specialization)">🤖 AI & Data Science (B.Tech / Specialization)</option>
+                  <option value="MBA / BBA in Entrepreneurship & Innovation">📈 MBA / BBA in Entrepreneurship & Innovation</option>
+                  <option value="Full Stack Software Engineering">💻 Full Stack Software Engineering</option>
+                  <option value="Digital Growth & Performance Marketing">🚀 Digital Growth & Performance Marketing</option>
+                  <option value="Fintech, Banking & Business Analytics">💳 Fintech, Banking & Business Analytics</option>
+                  <option value="UI/UX & Product Management">🎨 UI/UX & Product Management</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="campusPreference">WeGrow B-School Campus Visit Preference</label>
+              <div class="input-wrapper">
+                <span class="input-icon">🏛️</span>
+                <select id="campusPreference">
+                  <option value="WeGrow B-School Main Campus (This Week)">WeGrow B-School Main Campus (This Week)</option>
+                  <option value="WeGrow B-School Main Campus (Weekend Open House)">WeGrow B-School Main Campus (Weekend Open House)</option>
+                  <option value="WeGrow Innovation Lab & Tech Center">WeGrow Innovation Lab & Tech Center</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" id="btnSendOtp">
+              <span>Send Email Verification OTP</span>
+              <span>📨</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- STEP 2: OTP Verification Container -->
+        <div id="step2Container" style="display: none;">
+          <div class="otp-container">
+            <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Verify Your Email</h3>
+            <p class="otp-info">
+              We have dispatched a 6-digit verification code to<br />
+              <span class="otp-email-badge" id="displayTargetEmail">student@example.com</span>
+            </p>
+
+            <div class="otp-inputs">
+              <input type="text" class="otp-box" maxlength="1" data-index="0" inputmode="numeric" />
+              <input type="text" class="otp-box" maxlength="1" data-index="1" inputmode="numeric" />
+              <input type="text" class="otp-box" maxlength="1" data-index="2" inputmode="numeric" />
+              <input type="text" class="otp-box" maxlength="1" data-index="3" inputmode="numeric" />
+              <input type="text" class="otp-box" maxlength="1" data-index="4" inputmode="numeric" />
+              <input type="text" class="otp-box" maxlength="1" data-index="5" inputmode="numeric" />
+            </div>
+
+            <div class="otp-timer-row">
+              <span id="timerText" style="color: #a79cb8;">Expires in: <strong id="countdown">10:00</strong></span>
+              <button class="resend-btn" id="btnResendOtp" type="button">Resend Code</button>
+            </div>
+
+            <button type="button" class="btn-primary" id="btnVerifyOtp">
+              <span>Verify &amp; Unlock Spinning Wheel</span>
+              <span>🎡</span>
+            </button>
+
+            <button type="button" class="btn-secondary" id="btnBackToForm" style="width: 100%; margin-top: 12px; justify-content: center;">
+              <span>← Change Details</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 3: Spin Ready Status Card -->
+        <div id="step3Container" style="display: none;">
+          <div style="text-align: center; padding: 20px 10px;">
+            <div style="font-size: 46px; margin-bottom: 12px;">🎉</div>
+            <h3 style="font-size: 22px; font-weight: 800; color: #ffe066; margin-bottom: 8px;">
+              Email Verified Successfully!
+            </h3>
+            <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+              Welcome, <strong id="verifiedStudentName" style="color: #fff;">Student</strong>!<br />
+              Your eligibility is confirmed for <strong id="verifiedCourseName" style="color: #f59e0b;">Course</strong>.
+              Tap the glowing <strong style="color: #ffe066;">SPIN NOW</strong> button on the wheel to claim your reward!
+            </p>
+            <div style="background: rgba(245, 158, 11, 0.12); border: 1px dashed rgba(255, 187, 0, 0.4); border-radius: 14px; padding: 14px; font-size: 13px; color: #ffe699;">
+              ⚡ <strong>1 Spin Guaranteed Per Student:</strong> Your reward voucher will be generated instantly and valid upon visiting WeGrow B-School campus!
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Festive Wheel Showcase -->
+      <div class="wheel-column">
+        
+        <!-- Rangoli Base Under Wheel -->
+        <div class="rangoli-base"></div>
+
+        <!-- Diyas around wheel -->
+        <div class="diyas-container">
+          <div class="diya diya-1">🪔</div>
+          <div class="diya diya-2">🪔</div>
+          <div class="diya diya-3">🪔</div>
+          <div class="diya diya-4">🪔</div>
+          <div class="diya diya-5">🪔</div>
+        </div>
+
+        <!-- Wheel Assembly -->
+        <div class="wheel-assembly">
+          <!-- Flashing Outer Rim -->
+          <div class="outer-rim" id="outerRim"></div>
+          
+          <!-- Triangular Pointer Arrow -->
+          <div class="wheel-pointer" id="wheelPointer"></div>
+
+          <!-- HTML5 Canvas Wheel -->
+          <canvas id="wheelCanvas" width="880" height="880"></canvas>
+
+          <!-- Center Hub with WeGrow Brand -->
+          <div class="wheel-hub">
+            <span class="icon">✨</span>
+            <span class="label">WeGrow</span>
+          </div>
+        </div>
+
+        <!-- Big Spin Button -->
+        <div class="spin-btn-container">
+          <button class="btn-spin-now" id="btnSpinWheel" disabled>
+            SPIN NOW
+          </button>
+          <div class="spin-status-note" id="spinStatusNote">
+            🔒 Register &amp; verify OTP on the left to unlock wheel
+          </div>
+        </div>
+
+        <!-- Budget & Fair Rules Badges -->
+        <div class="rules-row">
+          <div class="rule-item">
+            <i>🛡️</i> <span>Fair &amp; Skill-Based</span>
+          </div>
+          <div class="rule-item">
+            <i>🎯</i> <span>Fixed Reward Budget</span>
+          </div>
+          <div class="rule-item">
+            <i>🚫</i> <span>Zero Cash Gambling</span>
+          </div>
+          <div class="rule-item">
+            <i>🏛️</i> <span>Campus Redeemable</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- WINNER VOUCHER MODAL -->
+  <div class="modal-overlay" id="winnerModal">
+    <div class="voucher-card-modal">
+      <button class="close-modal-btn" id="closeWinnerModal">&times;</button>
+      
+      <div class="winner-badge" id="modalRewardBadge">50% SCHOLARSHIP</div>
+      <h2 class="winner-title" id="modalRewardTitle">50% Course Scholarship</h2>
+      <p class="winner-desc" id="modalRewardDesc">
+        Congratulations! You have unlocked an exclusive benefit on your WeGrow B-School enrollment.
+      </p>
+
+      <!-- Digital Voucher Ticket -->
+      <div class="voucher-ticket">
+        <div>
+          <div class="voucher-code-title">Official Claim Voucher</div>
+          <div class="voucher-code-pill" id="modalVoucherCode">WGW-SPIN-00000</div>
+          <div class="voucher-student-meta">
+            <div><strong>Student:</strong> <span id="modalStudentName">Name</span></div>
+            <div><strong>Course:</strong> <span id="modalCourseName">AI & Data Science</span></div>
+            <div><strong>Campus:</strong> WeGrow B-School Hub</div>
+          </div>
+        </div>
+        <div class="qr-side">
+          <img src="" id="modalQrCodeImg" class="qr-img" alt="Campus Scan QR" />
+          <div class="qr-caption">Scan at Campus Reception</div>
+        </div>
+      </div>
+
+      <!-- Campus Visit Instructions -->
+      <div class="campus-claim-instructions">
+        <strong>📍 How to Claim Your Reward:</strong><br />
+        Visit the <strong>WeGrow B-School Campus</strong> and present this voucher or QR code at reception. Our academic team will verify your entry and apply your reward immediately.<br />
+        <span style="font-size: 11px; color: #a79cb8;">A permanent copy of this voucher has also been emailed to your verified address!</span>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-primary" id="btnPrintVoucher" style="margin-top: 0;">
+          <span>Print / Download Voucher</span>
+          <span>🎟️</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CAMPUS RECEPTION DESK / STAFF MODAL -->
+  <div class="modal-overlay" id="staffModal">
+    <div class="staff-modal-card">
+      <button class="close-modal-btn" id="closeStaffModal">&times;</button>
+      
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div style="font-size: 32px; margin-bottom: 6px;">🏛️</div>
+        <h3 style="font-size: 20px; font-weight: 800; color: #ffe066;">WeGrow Campus Reception Desk</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">Verify and redeem student Spin &amp; Win vouchers on campus arrival</p>
+      </div>
+
+      <div class="form-group">
+        <label for="staffSearchCode">Enter Voucher Code</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="staffSearchCode" placeholder="e.g. WGW-SPIN-49201" style="text-transform: uppercase;" />
+          <button class="btn-primary" id="btnVerifyVoucherStaff" style="width: auto; margin-top: 0; padding: 0 18px;">
+            Search
+          </button>
+        </div>
+      </div>
+
+      <div id="staffResultArea" style="margin-top: 18px; display: none;"></div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // ============================================================
+    // STATE & CONFIG
+    // ============================================================
+    const API_BASE = '/api/v1/spin-wheel';
+    let currentStep = 1;
+    let verifiedEmail = '';
+    let registeredStudent = null;
+    let otpCountdownInterval = null;
+    let isSpinning = false;
+    let wheelRewards = [];
+    let currentRotation = 0; // in radians
+
+    // Audio Context (Synthesizer for click ticks & fanfare)
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    function playTickSound() {
+      try {
+        const ctx = getAudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(580, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.05);
+      } catch (e) {}
+    }
+
+    function playFanfareSound() {
+      try {
+        const ctx = getAudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.25, ctx.currentTime + idx * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.4);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.12);
+          osc.stop(ctx.currentTime + idx * 0.12 + 0.45);
+        });
+      } catch (e) {}
+    }
+
+    // ============================================================
+    // TOAST NOTIFICATIONS
+    // ============================================================
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+      toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = '0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // ============================================================
+    // WHEEL CANVAS RENDERING
+    // ============================================================
+    const canvas = document.getElementById('wheelCanvas');
+    const ctx = canvas.getContext('2d');
+    const pointer = document.getElementById('wheelPointer');
+
+    // Generate Stud Lights around Outer Rim
+    function buildRimLights() {
+      const rim = document.getElementById('outerRim');
+      const numStuds = 24;
+      const radius = 226; // px
+      for (let i = 0; i < numStuds; i++) {
+        const angle = (i * 2 * Math.PI) / numStuds;
+        const stud = document.createElement('div');
+        stud.className = 'rim-stud';
+        const x = 220 + radius * Math.cos(angle) - 5;
+        const y = 220 + radius * Math.sin(angle) - 5;
+        stud.style.left = `${x}px`;
+        stud.style.top = `${y}px`;
+        stud.style.animationDelay = `${(i % 2) * 0.6}s`;
+        rim.appendChild(stud);
+      }
+    }
+
+    async function loadRewards() {
+      try {
+        const res = await fetch(`${API_BASE}/rewards`);
+        const json = await res.json();
+        const payload = json.data || json;
+        const rewardsArray = Array.isArray(payload) ? payload : (payload && Array.isArray(payload.data) ? payload.data : null);
+        if (rewardsArray && rewardsArray.length > 0) {
+          wheelRewards = rewardsArray;
+        } else {
+          fallbackRewards();
+        }
+      } catch (err) {
+        fallbackRewards();
+      }
+      drawWheel(currentRotation);
+    }
+
+    function fallbackRewards() {
+      wheelRewards = [
+        { rewardId: 'bonus_masterclass', title: 'Bonus Masterclass', badge: 'FREE PASS', color: '#f59e0b', icon: '🎓' },
+        { rewardId: 'discount_50', title: '50% Scholarship', badge: '50% OFF', color: '#0284c7', icon: '⭐' },
+        { rewardId: 'project_review', title: '1-on-1 Project Review', badge: 'FREE AUDIT', color: '#7c3aed', icon: '💻' },
+        { rewardId: 'bogo_course', title: 'Buy 1 Get 1 Free', badge: 'BOGO', color: '#059669', icon: '👥' },
+        { rewardId: 'workshop_pass', title: '2-Day Workshop Pass', badge: 'FREE PASS', color: '#db2777', icon: '🎟️' },
+        { rewardId: 'campus_voucher', title: '₹3,000 Voucher', badge: '₹3,000 OFF', color: '#ea580c', icon: '⚡' },
+        { rewardId: 'discount_20', title: '20% Scholarship', badge: '20% OFF', color: '#4f46e5', icon: '🚀' },
+        { rewardId: 'welcome_kit', title: 'Student Welcome Kit', badge: 'GIFT', color: '#0d9488', icon: '🎁' },
+      ];
+    }
+
+    function drawWheel(rotationAngle) {
+      const numSectors = wheelRewards.length;
+      if (numSectors === 0) return;
+
+      const width = canvas.width;
+      const height = canvas.height;
+      const cx = width / 2;
+      const cy = height / 2;
+      const radius = width / 2 - 20;
+      const arc = (2 * Math.PI) / numSectors;
+
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rotationAngle);
+
+      for (let i = 0; i < numSectors; i++) {
+        const sector = wheelRewards[i];
+        const startAngle = i * arc;
+        const endAngle = startAngle + arc;
+
+        // Draw Wedge
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = sector.color;
+        ctx.fill();
+
+        // Wedge Inner Glow / Stroke
+        ctx.strokeStyle = '#ffe066';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Wedge Pattern overlay for rich texture
+        ctx.save();
+        ctx.rotate(startAngle + arc / 2);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#ffffff';
+
+        // Draw Icon
+        ctx.font = 'bold 36px "Outfit", sans-serif';
+        ctx.fillText(sector.icon || '🎁', radius - 40, -10);
+
+        // Draw Title
+        ctx.font = 'bold 26px "Outfit", sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 8;
+        ctx.fillText(sector.badge || sector.title, radius - 40, 26);
+
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    // ============================================================
+    // STEP 1: REGISTRATION SUBMIT & OTP TRIGGER
+    // ============================================================
+    const studentForm = document.getElementById('studentRegistrationForm');
+    const btnSendOtp = document.getElementById('btnSendOtp');
+
+    studentForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim().toLowerCase(),
+        mobileNo: document.getElementById('mobileNo').value.trim(),
+        fatherMobile: document.getElementById('fatherMobile').value.trim(),
+        motherMobile: document.getElementById('motherMobile').value.trim(),
+        courseInterested: document.getElementById('courseInterested').value,
+        campusPreference: document.getElementById('campusPreference').value,
+      };
+
+      btnSendOtp.disabled = true;
+      btnSendOtp.innerHTML = `<span>Sending OTP...</span><span>⏳</span>`;
+
+      try {
+        const res = await fetch(`${API_BASE}/send-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (data.alreadySpun) {
+          // Student already spun! Show their winning voucher directly
+          showToast('You have already spun! Loading your voucher ticket.', 'info');
+          displayVoucherModal(data.data);
+          btnSendOtp.disabled = false;
+          btnSendOtp.innerHTML = `<span>Send Email Verification OTP</span><span>📨</span>`;
+          return;
+        }
+
+        if (res.ok && data.success) {
+          verifiedEmail = payload.email;
+          registeredStudent = payload;
+          showToast(data.message, 'success');
+          goToStep(2);
+          startOtpCountdown();
+
+          // If in dev mode and devOtp returned, quick hint for convenience
+          if (data.devOtp) {
+            console.log(`[DEV OTP]: ${data.devOtp}`);
+            showToast(`Dev OTP Hint: ${data.devOtp}`, 'info');
+          }
+        } else {
+          showToast(data.message || 'Failed to send OTP. Please check inputs.', 'error');
+        }
+      } catch (err) {
+        showToast('Network error while requesting OTP. Please try again.', 'error');
+      } finally {
+        btnSendOtp.disabled = false;
+        btnSendOtp.innerHTML = `<span>Send Email Verification OTP</span><span>📨</span>`;
+      }
+    });
+
+    // ============================================================
+    // STEP 2: OTP INPUT HANDLING & VERIFY
+    // ============================================================
+    const otpBoxes = document.querySelectorAll('.otp-box');
+    const btnVerifyOtp = document.getElementById('btnVerifyOtp');
+    const btnResendOtp = document.getElementById('btnResendOtp');
+    const countdownEl = document.getElementById('countdown');
+
+    otpBoxes.forEach((box, idx) => {
+      box.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (val.length === 1 && idx < otpBoxes.length - 1) {
+          otpBoxes[idx + 1].focus();
+        }
+      });
+
+      box.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+          otpBoxes[idx - 1].focus();
+        }
+      });
+
+      box.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData('text').trim();
+        if (/^\d{6}$/.test(pasted)) {
+          pasted.split('').forEach((char, i) => {
+            if (otpBoxes[i]) otpBoxes[i].value = char;
+          });
+          otpBoxes[5].focus();
+        }
+      });
+    });
+
+    function getEnteredOtp() {
+      let code = '';
+      otpBoxes.forEach((b) => (code += b.value));
+      return code.trim();
+    }
+
+    function startOtpCountdown(seconds = 600) {
+      if (otpCountdownInterval) clearInterval(otpCountdownInterval);
+      let left = seconds;
+      btnResendOtp.disabled = true;
+
+      otpCountdownInterval = setInterval(() => {
+        left--;
+        const mins = Math.floor(left / 60);
+        const secs = left % 60;
+        countdownEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+        if (left <= 0) {
+          clearInterval(otpCountdownInterval);
+          countdownEl.textContent = '00:00';
+          btnResendOtp.disabled = false;
+        }
+      }, 1000);
+    }
+
+    btnResendOtp.addEventListener('click', async () => {
+      btnResendOtp.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/send-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(registeredStudent),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('New OTP sent to your email!', 'success');
+          startOtpCountdown();
+        } else {
+          showToast(data.message || 'Failed to resend OTP', 'error');
+          btnResendOtp.disabled = false;
+        }
+      } catch (e) {
+        showToast('Error requesting new OTP', 'error');
+        btnResendOtp.disabled = false;
+      }
+    });
+
+    document.getElementById('btnBackToForm').addEventListener('click', () => {
+      goToStep(1);
+    });
+
+    btnVerifyOtp.addEventListener('click', async () => {
+      const otp = getEnteredOtp();
+      if (otp.length < 6) {
+        showToast('Please enter all 6 digits of the OTP code.', 'error');
+        return;
+      }
+
+      btnVerifyOtp.disabled = true;
+      btnVerifyOtp.innerHTML = `<span>Verifying...</span><span>⏳</span>`;
+
+      try {
+        const res = await fetch(`${API_BASE}/verify-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: verifiedEmail, otp }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          showToast(data.message, 'success');
+          document.getElementById('verifiedStudentName').textContent = registeredStudent.name;
+          document.getElementById('verifiedCourseName').textContent = registeredStudent.courseInterested;
+          goToStep(3);
+
+          // Unlock Wheel
+          const spinBtn = document.getElementById('btnSpinWheel');
+          spinBtn.disabled = false;
+          spinBtn.style.animation = 'pulse 1.5s infinite';
+          document.getElementById('spinStatusNote').innerHTML = 
+            '✨ <strong>Wheel Unlocked!</strong> Click SPIN NOW to win your learning reward.';
+        } else {
+          showToast(data.message || 'Invalid or expired OTP', 'error');
+        }
+      } catch (err) {
+        showToast('Verification failed. Please check network.', 'error');
+      } finally {
+        btnVerifyOtp.disabled = false;
+        btnVerifyOtp.innerHTML = `<span>Verify &amp; Unlock Spinning Wheel</span><span>🎡</span>`;
+      }
+    });
+
+    // Step Switcher
+    function goToStep(step) {
+      currentStep = step;
+      document.getElementById('step1Container').style.display = step === 1 ? 'block' : 'none';
+      document.getElementById('step2Container').style.display = step === 2 ? 'block' : 'none';
+      document.getElementById('step3Container').style.display = step === 3 ? 'block' : 'none';
+
+      document.getElementById('stepIndicator1').className = `step-item ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}`;
+      document.getElementById('stepIndicator2').className = `step-item ${step === 2 ? 'active' : step > 2 ? 'completed' : ''}`;
+      document.getElementById('stepIndicator3').className = `step-item ${step === 3 ? 'active' : ''}`;
+
+      if (step === 2) {
+        document.getElementById('displayTargetEmail').textContent = verifiedEmail;
+        otpBoxes[0].focus();
+      }
+    }
+
+    // ============================================================
+    // STEP 3: PHYSICAL SMOOTH DECELERATING SPIN ANIMATION
+    // ============================================================
+    const btnSpin = document.getElementById('btnSpinWheel');
+
+    btnSpin.addEventListener('click', async () => {
+      if (isSpinning || !verifiedEmail) return;
+
+      isSpinning = true;
+      btnSpin.disabled = true;
+      document.getElementById('spinStatusNote').textContent = '🎡 Spinning the wheel... Best of luck!';
+
+      // Request winning sector from server
+      let spinResult = null;
+      try {
+        const res = await fetch(`${API_BASE}/spin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: verifiedEmail }),
+        });
+        spinResult = await res.json();
+
+        if (!spinResult.success) {
+          showToast(spinResult.message || 'Spin request failed', 'error');
+          isSpinning = false;
+          btnSpin.disabled = false;
+          return;
+        }
+      } catch (err) {
+        showToast('Error contacting spin server', 'error');
+        isSpinning = false;
+        btnSpin.disabled = false;
+        return;
+      }
+
+      // Execute smooth physics-based rotation to the target sector
+      animateSpinToSector(spinResult.sectorIndex, spinResult.totalSectors, () => {
+        isSpinning = false;
+        playFanfareSound();
+
+        // Confetti explosion!
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#ffe066', '#f59e0b', '#7c3aed', '#ec4899', '#10b981'],
+        });
+
+        // Open Winner Modal
+        setTimeout(() => {
+          displayVoucherModal({
+            rewardTitle: spinResult.reward.title,
+            rewardBadge: spinResult.reward.badge,
+            rewardDescription: spinResult.reward.description,
+            voucherCode: spinResult.voucherCode,
+            qrCodeDataUrl: spinResult.qrCodeDataUrl,
+            studentName: registeredStudent.name,
+            courseInterested: registeredStudent.courseInterested,
+          });
+        }, 600);
+      });
+    });
+
+    function animateSpinToSector(targetIndex, totalSectors, onComplete) {
+      const arc = (2 * Math.PI) / totalSectors;
+      // Target alignment: The pointer is at 12 o'clock (-Math.PI / 2).
+      // We want sector center to land at -Math.PI / 2
+      const sectorCenter = targetIndex * arc + arc / 2;
+      const targetAngleAtPointer = -Math.PI / 2 - sectorCenter;
+
+      // Full extra rotations for cinematic suspense (6 full turns)
+      const extraSpins = 6 * 2 * Math.PI;
+      const finalAngle = currentRotation + extraSpins + ((targetAngleAtPointer - (currentRotation % (2 * Math.PI)) + 4 * Math.PI) % (2 * Math.PI));
+
+      const duration = 6500; // ms
+      const startTime = performance.now();
+      const initialRotation = currentRotation;
+      let lastSectorTick = -1;
+
+      function frame(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Ease-out quintic for realistic deceleration
+        const ease = 1 - Math.pow(1 - progress, 4.5);
+        currentRotation = initialRotation + (finalAngle - initialRotation) * ease;
+
+        drawWheel(currentRotation);
+
+        // Calculate sector under pointer for mechanical clicking sound & pointer wobble
+        const normalizedAngle = (-Math.PI / 2 - (currentRotation % (2 * Math.PI)) + 4 * Math.PI) % (2 * Math.PI);
+        const currentSectorIdx = Math.floor(normalizedAngle / arc);
+
+        if (currentSectorIdx !== lastSectorTick) {
+          lastSectorTick = currentSectorIdx;
+          playTickSound();
+          pointer.classList.add('ticking');
+          setTimeout(() => pointer.classList.remove('ticking'), 60);
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          currentRotation = finalAngle;
+          drawWheel(currentRotation);
+          if (onComplete) onComplete();
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    // ============================================================
+    // VOUCHER MODAL & PRINTING
+    // ============================================================
+    const winnerModal = document.getElementById('winnerModal');
+    const closeWinnerModal = document.getElementById('closeWinnerModal');
+
+    function displayVoucherModal(data) {
+      document.getElementById('modalRewardBadge').textContent = data.rewardBadge || 'WINNER';
+      document.getElementById('modalRewardTitle').textContent = data.rewardTitle || 'Skill Benefit';
+      document.getElementById('modalRewardDesc').textContent = data.rewardDescription || 'Offer valid on visiting WeGrow B-School location.';
+      document.getElementById('modalVoucherCode').textContent = data.voucherCode || 'WGW-SPIN';
+      document.getElementById('modalStudentName').textContent = data.studentName || (registeredStudent ? registeredStudent.name : 'Student');
+      document.getElementById('modalCourseName').textContent = data.courseInterested || (registeredStudent ? registeredStudent.courseInterested : 'Course');
+
+      if (data.qrCodeDataUrl) {
+        document.getElementById('modalQrCodeImg').src = data.qrCodeDataUrl;
+      }
+
+      winnerModal.classList.add('open');
+    }
+
+    closeWinnerModal.addEventListener('click', () => {
+      winnerModal.classList.remove('open');
+    });
+
+    document.getElementById('btnPrintVoucher').addEventListener('click', () => {
+      window.print();
+    });
+
+    // ============================================================
+    // CAMPUS RECEPTION / STAFF VERIFICATION PORTAL
+    // ============================================================
+    const staffModal = document.getElementById('staffModal');
+    const openStaffPortalBtn = document.getElementById('openStaffPortalBtn');
+    const closeStaffModal = document.getElementById('closeStaffModal');
+    const btnVerifyVoucherStaff = document.getElementById('btnVerifyVoucherStaff');
+    const staffSearchCode = document.getElementById('staffSearchCode');
+    const staffResultArea = document.getElementById('staffResultArea');
+
+    openStaffPortalBtn.addEventListener('click', () => {
+      staffModal.classList.add('open');
+      staffSearchCode.focus();
+    });
+
+    closeStaffModal.addEventListener('click', () => {
+      staffModal.classList.remove('open');
+    });
+
+    btnVerifyVoucherStaff.addEventListener('click', async () => {
+      const code = staffSearchCode.value.trim().toUpperCase();
+      if (!code) {
+        showToast('Please enter a voucher code', 'error');
+        return;
+      }
+
+      staffResultArea.style.display = 'block';
+      staffResultArea.innerHTML = `<div style="text-align:center; padding:15px; color:#ffe066;">Checking voucher... ⏳</div>`;
+
+      try {
+        const res = await fetch(`${API_BASE}/verify-voucher/${code}`);
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          const isRedeemed = data.isRedeemed;
+          staffResultArea.innerHTML = `
+            <div style="background: rgba(255,255,255,0.06); border: 1px solid ${isRedeemed ? '#ef4444' : '#10b981'}; border-radius: 12px; padding: 16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                <span style="font-weight:900; font-size:16px; color:#ffe066;">${data.voucherCode}</span>
+                <span style="padding:3px 10px; border-radius:999px; font-size:11px; font-weight:800; background:${isRedeemed ? '#ef4444' : '#10b981'}; color:#fff;">
+                  ${isRedeemed ? 'ALREADY REDEEMED' : 'VALID / UNCLAIMED'}
+                </span>
+              </div>
+              <div style="font-size:13px; color:#e2d9f3; line-height:1.6; margin-bottom: 14px;">
+                <div><strong>Student:</strong> ${data.student.name}</div>
+                <div><strong>Email:</strong> ${data.student.email}</div>
+                <div><strong>Student Mobile:</strong> ${data.student.mobileNo}</div>
+                <div><strong>Father's No:</strong> ${data.student.fatherMobile}</div>
+                <div><strong>Mother's No:</strong> ${data.student.motherMobile}</div>
+                <div><strong>Course:</strong> ${data.student.courseInterested}</div>
+                <div><strong>Reward Won:</strong> <span style="color:#ffe066; font-weight:700;">${data.reward.title}</span></div>
+              </div>
+              ${!isRedeemed ? `
+                <button class="btn-primary" id="btnRedeemAction" style="margin-top:0; width:100%;">
+                  <span>Mark as Campus Visit Claimed &amp; Redeem</span>
+                  <span>✅</span>
+                </button>
+              ` : `
+                <div style="font-size:12px; color:#f87171;">
+                  Redeemed on: ${new Date(data.redeemedAt).toLocaleString()} by ${data.redeemedBy || 'Staff'}
+                </div>
+              `}
+            </div>
+          `;
+
+          if (!isRedeemed) {
+            document.getElementById('btnRedeemAction').addEventListener('click', async () => {
+              try {
+                const redRes = await fetch(`${API_BASE}/redeem-voucher`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ voucherCode: data.voucherCode, staffNote: 'Verified at Campus Reception' }),
+                });
+                const redData = await redRes.json();
+                if (redRes.ok && redData.success) {
+                  showToast('Voucher successfully marked as REDEEMED!', 'success');
+                  btnVerifyVoucherStaff.click();
+                } else {
+                  showToast(redData.message || 'Redemption failed', 'error');
+                }
+              } catch (e) {
+                showToast('Redemption request failed', 'error');
+              }
+            });
+          }
+        } else {
+          staffResultArea.innerHTML = `<div style="text-align:center; padding:15px; color:#f87171;">❌ ${data.message || 'Voucher not found'}</div>`;
+        }
+      } catch (err) {
+        staffResultArea.innerHTML = `<div style="text-align:center; padding:15px; color:#f87171;">❌ Network error</div>`;
+      }
+    });
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    buildRimLights();
+    loadRewards();
+
+    // Check if URL has voucher param e.g. /spin-and-win.html?voucher=WGW-SPIN-XXXXX
+    const urlParams = new URLSearchParams(window.location.search);
+    const voucherQuery = urlParams.get('voucher');
+    if (voucherQuery) {
+      setTimeout(() => {
+        openStaffPortalBtn.click();
+        staffSearchCode.value = voucherQuery;
+        btnVerifyVoucherStaff.click();
+      }, 500);
+    }
+  </script>
+</body>
+</html>

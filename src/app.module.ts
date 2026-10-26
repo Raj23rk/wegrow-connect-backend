@@ -28,6 +28,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { BusinessDependencyModule } from './business-dependency/business-dependency.module';
 import { EventTeaserModule } from './event-teaser/event-teaser.module';
 import { AiExplorerModule } from './ai-explorer/ai-explorer.module';
+import { SpinWheelModule } from './spin-wheel/spin-wheel.module';
 
 @Module({
   imports: [
@@ -107,6 +108,7 @@ import { AiExplorerModule } from './ai-explorer/ai-explorer.module';
     BusinessDependencyModule,
     EventTeaserModule,
     AiExplorerModule,
+    SpinWheelModule,
   ],
 
   controllers: [AppController],

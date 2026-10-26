@@ -61,6 +61,8 @@ async function bootstrap() {
       'verify-payment',
       'checkout',
       'checkout.html',
+      'spin-and-win',
+      'spin-and-win.html',
     ],
   });
 
