@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diwali QR Skill Quest — 20-Question Challenge | WeGrow B-School</title>
+  <meta name="description" content="Scan the Diwali QR code at WeGrow B-School campus! Complete the 20-question challenge to score 80+ and unlock a 1-Week Free Live Demo Batch + Course Scholarship." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Outfit:wght@400;500;600;700;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #0a0414;
+      --card-bg: rgba(23, 12, 38, 0.9);
+      --card-border: rgba(255, 187, 0, 0.3);
+      --gold-1: #ffe066;
+      --gold-2: #f59e0b;
+      --gold-grad: linear-gradient(135deg, #ffe066 0%, #f59e0b 50%, #b45309 100%);
+      --text-white: #ffffff;
+      --text-muted: #cdbfe6;
+      --accent-green: #10b981;
+      --accent-purple: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-white);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Festive Background */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 50% 15%, rgba(245, 158, 11, 0.2) 0%, transparent 60%),
+        radial-gradient(circle at 10% 85%, rgba(139, 92, 246, 0.22) 0%, transparent 50%),
+        radial-gradient(circle at 90% 85%, rgba(236, 72, 153, 0.2) 0%, transparent 50%),
+        linear-gradient(180deg, #130722 0%, #07020d 100%);
+    }
+
+    /* Hanging Lights across top */
+    .garland-lights {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background-image: 
+        radial-gradient(circle at 6% 15px, #f59e0b 4px, transparent 6px),
+        radial-gradient(circle at 14% 30px, #ff4444 5px, transparent 7px),
+        radial-gradient(circle at 22% 18px, #ffe066 4px, transparent 6px),
+        radial-gradient(circle at 31% 32px, #10b981 5px, transparent 7px),
+        radial-gradient(circle at 40% 16px, #f59e0b 4px, transparent 6px),
+        radial-gradient(circle at 50% 34px, #ec4899 5px, transparent 7px),
+        radial-gradient(circle at 60% 18px, #ffe066 4px, transparent 6px),
+        radial-gradient(circle at 70% 32px, #06b6d4 5px, transparent 7px),
+        radial-gradient(circle at 80% 16px, #f59e0b 4px, transparent 6px),
+        radial-gradient(circle at 90% 30px, #10b981 5px, transparent 7px);
+      filter: drop-shadow(0 0 12px rgba(255, 200, 50, 0.9));
+      animation: twinkle 3s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    @keyframes twinkle {
+      0% { opacity: 0.65; filter: drop-shadow(0 0 8px rgba(255, 200, 50, 0.6)); }
+      100% { opacity: 1; filter: drop-shadow(0 0 16px rgba(255, 220, 100, 1)); }
+    }
+
+    .app-container {
+      position: relative;
+      z-index: 2;
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+
+    /* Top Brand Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 187, 0, 0.22);
+      margin-bottom: 24px;
+    }
+
+    .brand-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--gold-grad);
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      font-weight: 900;
+      color: #3b1b00;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+    }
+
+    .brand-text h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      background: var(--gold-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .btn-header-reception {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 187, 0, 0.35);
+      color: var(--gold-1);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-header-reception:hover {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: var(--gold-1);
+    }
+
+    /* Grand Hero Banner */
+    .hero-banner {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .diwali-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 16px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(255, 187, 0, 0.4);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold-1);
+      margin-bottom: 10px;
+    }
+
+    .hero-h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(26px, 4.5vw, 42px);
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      line-height: 1.15;
+      text-transform: uppercase;
+      color: #fff6d9;
+      text-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
+      margin-bottom: 8px;
+    }
+
+    .hero-h1 span.highlight {
+      background: var(--gold-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto 14px;
+      line-height: 1.5;
+    }
+
+    .metric-pills {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 187, 0, 0.25);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffe699;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Main Container Cards */
+    .card-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      padding: 32px 28px;
+      box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.7),
+        0 0 30px rgba(245, 158, 11, 0.12);
+      backdrop-filter: blur(14px);
+      position: relative;
+    }
+
+    /* STEP 1: ENROLLMENT FORM */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #f1edff;
+    }
+
+    label span.req {
+      color: #f59e0b;
+      margin-left: 2px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    select {
+      width: 100%;
+      background: rgba(12, 6, 22, 0.85);
+      border: 1px solid rgba(255, 187, 0, 0.25);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: #ffffff;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--gold-2);
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+      background: rgba(18, 9, 32, 0.95);
+    }
+
+    select option {
+      background: #170c26;
+      color: #fff;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--gold-grad);
+      color: #2b1200;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 22px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+      transition: all 0.25s ease;
+      margin-top: 10px;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(245, 158, 11, 0.65);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* STEP 2: QUIZ INTERFACE */
+    .quiz-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .quiz-timer {
+      background: rgba(239, 68, 68, 0.18);
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      padding: 6px 14px;
+      border-radius: 999px;
+      color: #fca5a5;
+      font-weight: 800;
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .quiz-progress-text {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* 1-20 Question Navigator Pills */
+    .question-nav-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 6px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 600px) {
+      .question-nav-grid {
+        grid-template-columns: repeat(5, 1fr);
+      }
+    }
+
+    .q-pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .q-pill.active {
+      border-color: var(--gold-1);
+      background: var(--gold-grad);
+      color: #2b1200;
+      font-weight: 900;
+    }
+
+    .q-pill.answered {
+      background: #10b981;
+      border-color: #34d399;
+      color: #fff;
+    }
+
+    .question-card {
+      background: rgba(12, 6, 22, 0.65);
+      border: 1px solid rgba(255, 187, 0, 0.2);
+      border-radius: 16px;
+      padding: 24px 20px;
+      margin-bottom: 22px;
+    }
+
+    .q-category-tag {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--gold-1);
+      margin-bottom: 8px;
+    }
+
+    .q-text {
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #ffffff;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .option-btn:hover {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(255, 187, 0, 0.4);
+    }
+
+    .option-btn.selected {
+      background: rgba(245, 158, 11, 0.22);
+      border-color: var(--gold-1);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
+      color: #fff;
+    }
+
+    .option-letter {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    .option-btn.selected .option-letter {
+      background: var(--gold-1);
+      color: #2b1200;
+    }
+
+    .quiz-nav-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    /* STEP 3: RESULT & DEMO PASS CARD */
+    .result-container {
+      text-align: center;
+    }
+
+    .result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-grad);
+      color: #2b1200;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 6px 18px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+    }
+
+    .result-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(26px, 4vw, 36px);
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .score-circle {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 6px solid var(--gold-2);
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+      margin: 16px auto 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, #25133d 0%, #120722 100%);
+    }
+
+    .score-val {
+      font-size: 42px;
+      font-weight: 900;
+      color: #fff;
+      font-family: 'Space Mono', monospace;
+      line-height: 1;
+    }
+
+    .score-sub {
+      font-size: 11px;
+      color: #a79cb8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    /* Digital Free Demo Pass Ticket */
+    .demo-pass-ticket {
+      background: #0d0618;
+      border: 1px dashed rgba(255, 187, 0, 0.45);
+      border-radius: 18px;
+      padding: 22px;
+      margin: 24px 0;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+      align-items: center;
+      text-align: left;
+    }
+
+    @media (max-width: 600px) {
+      .demo-pass-ticket {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+    }
+
+    .ticket-code-badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #ffffff;
+      background: rgba(245, 158, 11, 0.18);
+      border: 1px solid rgba(255, 187, 0, 0.35);
+      padding: 6px 14px;
+      border-radius: 8px;
+      display: inline-block;
+      margin: 6px 0 12px;
+    }
+
+    .ticket-meta {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    .qr-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-img {
+      width: 130px;
+      height: 130px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 6px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Staff Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 2, 14, 0.88);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      display: none;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open { display: grid; }
+
+    .modal-box {
+      background: #160c28;
+      border: 1px solid rgba(255, 187, 0, 0.3);
+      border-radius: 20px;
+      max-width: 500px;
+      width: 100%;
+      padding: 28px;
+      position: relative;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    /* Toasts */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1f1238;
+      border: 1px solid var(--gold-2);
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 999;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-bg"></div>
+  <div class="garland-lights"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header>
+      <div class="brand-area">
+        <div class="brand-logo">W</div>
+        <div class="brand-text">
+          <h2>WeGrow B-School</h2>
+          <p>Diwali Skill Quest &bull; 2026</p>
+        </div>
+      </div>
+      <button class="btn-header-reception" id="btnOpenStaffModal" type="button">
+        <span>🏛️</span>
+        <span>Campus Reception Desk</span>
+      </button>
+    </header>
+
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+      <div class="diwali-tag">
+        <span>🪔</span> SCAN THE CAMPUS DIWALI QR <span>🪔</span>
+      </div>
+      <h1 class="hero-h1">
+        20-Question Coding &amp; <span class="highlight">Skill Quest</span>
+      </h1>
+      <p class="hero-sub">
+        Complete the challenge to test your knowledge! Score <strong>80+ marks</strong> (out of 100) to instantly unlock a <strong>1-Week Free Live Demo Batch</strong> + exclusive course scholarship!
+      </p>
+      <div class="metric-pills">
+        <div class="pill"><span>📝</span> 20 Questions</div>
+        <div class="pill"><span>⭐</span> 5 Marks Each (Total: 100)</div>
+        <div class="pill"><span>🎯</span> 80+ Marks = 1-Week Free Demo</div>
+        <div class="pill"><span>⏳</span> 20-Min Timer</div>
+      </div>
+    </div>
+
+    <!-- MAIN CARD BOX -->
+    <div class="card-box">
+
+      <!-- STEP 1: STUDENT ENROLLMENT DETAILS -->
+      <div id="stepEnrollment">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h3 style="font-size: 20px; font-weight: 800; color: #ffe066;">Student Enrollment Details</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+            Fill in your contact details before starting the timed 20-question test.
+          </p>
+        </div>
+
+        <form id="enrollmentForm">
+          <div class="form-group">
+            <label for="studentName">Student Full Name <span class="req">*</span></label>
+            <input type="text" id="studentName" placeholder="Enter your full name" required />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Student Email <span class="req">*</span></label>
+              <input type="email" id="email" placeholder="student@example.com" required />
+            </div>
+            <div class="form-group">
+              <label for="mobileNo">Mobile Number <span class="req">*</span></label>
+              <input type="tel" id="mobileNo" placeholder="10-digit mobile number" pattern="[0-9]{10}" maxlength="10" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="collegeOrSchool">College / School Name</label>
+              <input type="text" id="collegeOrSchool" placeholder="e.g. RV College, PES, BMS, etc." />
+            </div>
+            <div class="form-group">
+              <label for="courseInterested">Interested Course / Program <span class="req">*</span></label>
+              <select id="courseInterested" required>
+                <option value="" disabled selected>Select course you wish to explore</option>
+                <option value="AI & Data Science (B.Tech / Specialization)">🤖 AI & Data Science (B.Tech / Specialization)</option>
+                <option value="MBA / BBA in Entrepreneurship & Innovation">📈 MBA / BBA in Entrepreneurship & Innovation</option>
+                <option value="Full Stack Software Engineering">💻 Full Stack Software Engineering</option>
+                <option value="Digital Growth & Performance Marketing">🚀 Digital Growth & Performance Marketing</option>
+                <option value="Fintech, Banking & Business Analytics">💳 Fintech, Banking & Business Analytics</option>
+                <option value="UI/UX & Product Management">🎨 UI/UX & Product Management</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="btnStartChallenge">
+            <span>Start 20-Question Challenge (20 Mins)</span>
+            <span>🚀</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- STEP 2: 20-QUESTION QUIZ INTERFACE -->
+      <div id="stepQuiz" style="display: none;">
+        <div class="quiz-header">
+          <div>
+            <div class="quiz-progress-text" id="quizQuestionCount">Question 1 of 20</div>
+            <div style="font-size: 11px; color: #ffe066; font-weight: 700;">5 Marks per question &bull; 80+ to Pass</div>
+          </div>
+          <div class="quiz-timer">
+            <span>⏱️</span>
+            <span id="quizTimerDisplay">20:00</span>
+          </div>
+        </div>
+
+        <!-- 1-20 Question Navigator -->
+        <div class="question-nav-grid" id="questionNavGrid"></div>
+
+        <!-- Question Body -->
+        <div class="question-card">
+          <div class="q-category-tag" id="qCategory">Category</div>
+          <div class="q-text" id="qText">Question title will render here</div>
+          <div class="options-list" id="optionsContainer"></div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="quiz-nav-actions">
+          <button type="button" class="btn-secondary" id="btnPrevQ">← Previous</button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-secondary" id="btnNextQ">Next →</button>
+            <button type="button" class="btn-primary" id="btnSubmitQuiz" style="margin-top: 0; padding: 12px 24px;">
+              <span>Submit Challenge</span>
+              <span>✅</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: RESULT & DEMO PASS -->
+      <div id="stepResult" style="display: none;">
+        <div class="result-container">
+          <div class="result-badge" id="resBadge">RESULT SUMMARY</div>
+          <h2 class="result-title" id="resTitle">Your Challenge Score</h2>
+          <p id="resSubtext" style="color: var(--text-muted); font-size: 14px; margin-bottom: 12px;"></p>
+
+          <div class="score-circle">
+            <div class="score-val" id="resScore">85</div>
+            <div class="score-sub" id="resSubScore">17 / 20 Correct</div>
+          </div>
+
+          <!-- QUALIFIED DEMO PASS BLOCK -->
+          <div id="qualifiedPassBlock" style="display: none;">
+            <div class="demo-pass-ticket">
+              <div>
+                <div style="font-size: 11px; font-weight: 800; color: #f59e0b; letter-spacing: 1.5px; text-transform: uppercase;">
+                  🎟️ 1-Week Free Live Demo Pass Unlocked!
+                </div>
+                <div class="ticket-code-badge" id="ticketCodeVal">WGW-DEMO-00000</div>
+                <div class="ticket-meta">
+                  <div><strong>Student:</strong> <span id="ticketStudentName">Name</span></div>
+                  <div><strong>Course:</strong> <span id="ticketCourseName">AI & Data Science</span></div>
+                  <div><strong>Batch:</strong> Starts Upcoming Monday (Live / Campus)</div>
+                  <div><strong>Bonus:</strong> ₹5,000 WeGrow Published Course Scholarship</div>
+                </div>
+              </div>
+              <div class="qr-box">
+                <img src="" id="ticketQrImg" class="qr-img" alt="Demo Verification QR" />
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+                  Scan at Campus Desk
+                </div>
+              </div>
+            </div>
+
+            <div style="background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--gold-2); border-radius: 12px; padding: 14px 16px; text-align: left; font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
+              <strong>📍 How to Attend Your Free Demo:</strong><br />
+              Present this digital pass at the <strong>WeGrow B-School Campus</strong> reception or show the email confirmation code to attend your 1-Week Live Demo batch.<br />
+              <span style="font-size: 11px; color: #a79cb8;">A permanent copy of your pass has also been dispatched to your email!</span>
+            </div>
+
+            <button type="button" class="btn-primary" onclick="window.print()" style="max-width: 320px; margin: 0 auto;">
+              <span>Download / Print Demo Pass</span>
+              <span>🎟️</span>
+            </button>
+          </div>
+
+          <!-- NON-QUALIFIED CONSOLATION BLOCK -->
+          <div id="nonQualifiedBlock" style="display: none; background: rgba(255, 255, 255, 0.05); border-radius: 14px; padding: 20px; text-align: left; margin: 20px 0;">
+            <div style="font-size: 15px; font-weight: 800; color: #ffe066; margin-bottom: 6px;">
+              📘 Participation Perk Unlocked:
+            </div>
+            <div style="font-size: 13px; color: #cbd5e1; line-height: 1.6;">
+              You were close to the 80-mark cutoff! Visit the WeGrow B-School Innovation Lab this week to receive our <strong>Curated AI &amp; Tech Starter Handbook</strong> and a complimentary 1-on-1 career profile review with our mentors.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CAMPUS RECEPTION DESK MODAL -->
+  <div class="modal-overlay" id="staffModal">
+    <div class="modal-box">
+      <button class="close-btn" id="btnCloseStaffModal">&times;</button>
+      <div style="text-align: center; margin-bottom: 18px;">
+        <div style="font-size: 32px; margin-bottom: 4px;">🏛️</div>
+        <h3 style="font-size: 18px; font-weight: 800; color: #ffe066;">WeGrow Campus Reception</h3>
+        <p style="font-size: 12px; color: var(--text-muted);">Verify and activate student 1-Week Free Demo passes</p>
+      </div>
+
+      <div class="form-group">
+        <label for="searchTicketCode">Enter Demo Ticket Code</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="searchTicketCode" placeholder="e.g. WGW-DEMO-73921" style="text-transform: uppercase;" />
+          <button class="btn-primary" id="btnVerifyTicketStaff" style="width: auto; margin-top: 0; padding: 0 16px;">
+            Search
+          </button>
+        </div>
+      </div>
+
+      <div id="staffResultArea" style="margin-top: 14px; display: none;"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toastBox"></div>
+
+  <script>
+    const API_BASE = '/api/v1/diwali-challenge';
+    let currentStudent = null;
+    let questionsList = [];
+    let currentQIndex = 0;
+    let studentAnswers = new Map(); // questionId -> selectedOption (0, 1, 2, 3)
+    let timerSeconds = 20 * 60; // 20 minutes
+    let timerInterval = null;
+
+    function showToast(msg) {
+      const t = document.getElementById('toastBox');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => (t.style.display = 'none'), 4000);
+    }
+
+    // ==========================================
+    // STEP 1: ENROLLMENT FORM SUBMIT
+    // ==========================================
+    const enrollForm = document.getElementById('enrollmentForm');
+    const btnStart = document.getElementById('btnStartChallenge');
+
+    enrollForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        studentName: document.getElementById('studentName').value.trim(),
+        email: document.getElementById('email').value.trim().toLowerCase(),
+        mobileNo: document.getElementById('mobileNo').value.trim(),
+        collegeOrSchool: document.getElementById('collegeOrSchool').value.trim(),
+        courseInterested: document.getElementById('courseInterested').value,
+      };
+
+      btnStart.disabled = true;
+      btnStart.innerHTML = `<span>Loading Challenge...</span><span>⏳</span>`;
+
+      try {
+        const res = await fetch(`${API_BASE}/enroll`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const resJson = await res.json();
+        const data = resJson.data || resJson;
+
+        if (data.alreadySubmitted) {
+          // If already completed test, show score directly
+          displayResult({
+            score: data.data.score,
+            correctCount: data.data.correctCount,
+            isQualifiedForDemo: data.data.isQualifiedForDemo,
+            demoTicketCode: data.data.demoTicketCode,
+            qrCodeDataUrl: data.data.qrCodeDataUrl,
+            student: payload,
+          });
+          return;
+        }
+
+        if (res.ok && resJson.success) {
+          currentStudent = payload;
+          await loadQuestions();
+          startQuizView();
+        } else {
+          showToast(resJson.message || 'Enrollment failed');
+        }
+      } catch (err) {
+        showToast('Network error while enrolling');
+      } finally {
+        btnStart.disabled = false;
+        btnStart.innerHTML = `<span>Start 20-Question Challenge (20 Mins)</span><span>🚀</span>`;
+      }
+    });
+
+    // ==========================================
+    // LOAD QUESTIONS
+    // ==========================================
+    async function loadQuestions() {
+      const res = await fetch(`${API_BASE}/questions`);
+      const resJson = await res.json();
+      const payload = resJson.data || resJson;
+      questionsList = payload.questions || [];
+    }
+
+    function startQuizView() {
+      document.getElementById('stepEnrollment').style.display = 'none';
+      document.getElementById('stepQuiz').style.display = 'block';
+
+      buildQuestionNavigator();
+      renderQuestion(0);
+      startTimer();
+    }
+
+    function buildQuestionNavigator() {
+      const navGrid = document.getElementById('questionNavGrid');
+      navGrid.innerHTML = '';
+      questionsList.forEach((q, idx) => {
+        const pill = document.createElement('div');
+        pill.className = `q-pill ${idx === 0 ? 'active' : ''}`;
+        pill.textContent = idx + 1;
+        pill.id = `navPill_${q.id}`;
+        pill.onclick = () => renderQuestion(idx);
+        navGrid.appendChild(pill);
+      });
+    }
+
+    function renderQuestion(idx) {
+      if (idx < 0 || idx >= questionsList.length) return;
+      currentQIndex = idx;
+      const q = questionsList[idx];
+
+      document.getElementById('quizQuestionCount').textContent = `Question ${idx + 1} of 20`;
+      document.getElementById('qCategory').textContent = q.category;
+      document.getElementById('qText').textContent = q.question;
+
+      // Update pills
+      document.querySelectorAll('.q-pill').forEach((p, i) => {
+        p.classList.remove('active');
+        if (i === idx) p.classList.add('active');
+        const qId = questionsList[i].id;
+        if (studentAnswers.has(qId)) p.classList.add('answered');
+      });
+
+      // Render options
+      const container = document.getElementById('optionsContainer');
+      container.innerHTML = '';
+      const letters = ['A', 'B', 'C', 'D'];
+      const selected = studentAnswers.get(q.id);
+
+      q.options.forEach((opt, optIdx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `option-btn ${selected === optIdx ? 'selected' : ''}`;
+        btn.innerHTML = `<span class="option-letter">${letters[optIdx]}</span><span>${opt}</span>`;
+        btn.onclick = () => {
+          studentAnswers.set(q.id, optIdx);
+          document.getElementById(`navPill_${q.id}`).classList.add('answered');
+          renderQuestion(currentQIndex);
+        };
+        container.appendChild(btn);
+      });
+
+      document.getElementById('btnPrevQ').disabled = idx === 0;
+      document.getElementById('btnNextQ').disabled = idx === questionsList.length - 1;
+    }
+
+    document.getElementById('btnPrevQ').onclick = () => renderQuestion(currentQIndex - 1);
+    document.getElementById('btnNextQ').onclick = () => renderQuestion(currentQIndex + 1);
+
+    // Timer
+    function startTimer() {
+      const display = document.getElementById('quizTimerDisplay');
+      timerInterval = setInterval(() => {
+        timerSeconds--;
+        const mins = Math.floor(timerSeconds / 60);
+        const secs = timerSeconds % 60;
+        display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+        if (timerSeconds <= 0) {
+          clearInterval(timerInterval);
+          showToast('Time is up! Submitting your challenge now.');
+          submitChallenge();
+        }
+      }, 1000);
+    }
+
+    // ==========================================
+    // STEP 2: SUBMIT CHALLENGE
+    // ==========================================
+    document.getElementById('btnSubmitQuiz').onclick = () => {
+      const answeredCount = studentAnswers.size;
+      if (answeredCount < 20) {
+        if (!confirm(`You have answered ${answeredCount} of 20 questions. Do you want to submit now?`)) {
+          return;
+        }
+      }
+      submitChallenge();
+    };
+
+    async function submitChallenge() {
+      if (timerInterval) clearInterval(timerInterval);
+
+      const answersArray = [];
+      questionsList.forEach((q) => {
+        const sel = studentAnswers.has(q.id) ? studentAnswers.get(q.id) : -1;
+        answersArray.push({ questionId: q.id, selectedOption: sel });
+      });
+
+      const btn = document.getElementById('btnSubmitQuiz');
+      btn.disabled = true;
+      btn.textContent = 'Grading Test... ⏳';
+
+      try {
+        const res = await fetch(`${API_BASE}/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentStudent.email, answers: answersArray }),
+        });
+        const resJson = await res.json();
+        const data = resJson.data || resJson;
+
+        displayResult(data);
+      } catch (err) {
+        showToast('Submission error. Please check connection.');
+      }
+    }
+
+    // ==========================================
+    // STEP 3: DISPLAY RESULTS & DEMO TICKET
+    // ==========================================
+    function displayResult(data) {
+      document.getElementById('stepQuiz').style.display = 'none';
+      document.getElementById('stepEnrollment').style.display = 'none';
+      document.getElementById('stepResult').style.display = 'block';
+
+      const score = data.score !== undefined ? data.score : 0;
+      const isQualified = data.isQualifiedForDemo || score >= 80;
+
+      document.getElementById('resScore').textContent = score;
+      document.getElementById('resSubScore').textContent = `${data.correctCount || Math.round(score / 5)} / 20 Correct`;
+
+      if (isQualified) {
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#ffe066', '#f59e0b', '#10b981', '#8b5cf6'],
+        });
+
+        document.getElementById('resBadge').textContent = '🏆 QUALIFIED: 1-WEEK FREE DEMO';
+        document.getElementById('resTitle').textContent = 'Congratulations! You Won Free Demo Access!';
+        document.getElementById('resSubtext').textContent = 'You surpassed the 80-mark merit cutoff with flying colors!';
+
+        document.getElementById('qualifiedPassBlock').style.display = 'block';
+        document.getElementById('nonQualifiedBlock').style.display = 'none';
+
+        document.getElementById('ticketCodeVal').textContent = data.demoTicketCode || 'WGW-DEMO';
+        document.getElementById('ticketStudentName').textContent = (data.student && data.student.studentName) || (currentStudent && currentStudent.studentName) || 'Student';
+        document.getElementById('ticketCourseName').textContent = (data.student && data.student.courseInterested) || (currentStudent && currentStudent.courseInterested) || 'Course';
+
+        if (data.qrCodeDataUrl) {
+          document.getElementById('ticketQrImg').src = data.qrCodeDataUrl;
+        }
+      } else {
+        document.getElementById('resBadge').textContent = 'DIWALI PARTICIPANT';
+        document.getElementById('resTitle').textContent = 'Great Effort!';
+        document.getElementById('resSubtext').textContent = 'You scored below the 80-mark demo qualification threshold, but unlocked our campus participant perks.';
+
+        document.getElementById('qualifiedPassBlock').style.display = 'none';
+        document.getElementById('nonQualifiedBlock').style.display = 'block';
+      }
+    }
+
+    // ==========================================
+    // CAMPUS RECEPTION / STAFF CHECK
+    // ==========================================
+    const staffModal = document.getElementById('staffModal');
+    const openStaffBtn = document.getElementById('btnOpenStaffModal');
+    const closeStaffBtn = document.getElementById('btnCloseStaffModal');
+    const btnVerifyStaff = document.getElementById('btnVerifyTicketStaff');
+    const searchCodeInput = document.getElementById('searchTicketCode');
+    const staffResult = document.getElementById('staffResultArea');
+
+    openStaffBtn.onclick = () => {
+      staffModal.classList.add('open');
+      searchCodeInput.focus();
+    };
+    closeStaffBtn.onclick = () => staffModal.classList.remove('open');
+
+    btnVerifyStaff.onclick = async () => {
+      const code = searchCodeInput.value.trim().toUpperCase();
+      if (!code) return;
+
+      staffResult.style.display = 'block';
+      staffResult.innerHTML = '<div style="color:#ffe066;">Checking demo ticket... ⏳</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/verify-ticket/${code}`);
+        const resJson = await res.json();
+        const data = resJson.data || resJson;
+
+        if (res.ok && resJson.success) {
+          staffResult.innerHTML = `
+            <div style="background: rgba(255,255,255,0.06); border: 1px solid ${data.isRedeemed ? '#ef4444' : '#10b981'}; border-radius: 12px; padding: 16px; text-align: left;">
+              <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                <span style="font-weight:900; color:#ffe066;">${data.ticketCode}</span>
+                <span style="padding:2px 8px; border-radius:999px; font-size:11px; background:${data.isRedeemed ? '#ef4444' : '#10b981'}; color:#fff;">
+                  ${data.isRedeemed ? 'ALREADY REDEEMED' : 'VALID / UNCLAIMED'}
+                </span>
+              </div>
+              <div style="font-size:13px; color:#cbd5e1; line-height:1.6; margin-bottom: 12px;">
+                <div><strong>Student:</strong> ${data.student.name}</div>
+                <div><strong>Score:</strong> ${data.student.score} / 100 (${data.student.correctCount}/20 correct)</div>
+                <div><strong>Course:</strong> ${data.student.courseInterested}</div>
+                <div><strong>Mobile:</strong> ${data.student.mobileNo}</div>
+              </div>
+              ${!data.isRedeemed ? `
+                <button class="btn-primary" id="btnRedeemDemo" style="margin-top:0; width:100%;">
+                  <span>Activate 1-Week Free Demo</span>
+                  <span>✅</span>
+                </button>
+              ` : `
+                <div style="font-size:11px; color:#f87171;">Redeemed on ${new Date(data.redeemedAt).toLocaleString()}</div>
+              `}
+            </div>
+          `;
+
+          if (!data.isRedeemed) {
+            document.getElementById('btnRedeemDemo').onclick = async () => {
+              const redRes = await fetch(`${API_BASE}/redeem-ticket`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticketCode: data.ticketCode, staffNote: 'Activated by Campus Desk' }),
+              });
+              const redJson = await redRes.json();
+              if (redRes.ok && redJson.success) {
+                showToast('Ticket marked as CLAIMED!');
+                btnVerifyStaff.click();
+              }
+            };
+          }
+        } else {
+          staffResult.innerHTML = `<div style="color:#f87171;">❌ ${resJson.message || 'Ticket not found'}</div>`;
+        }
+      } catch (err) {
+        staffResult.innerHTML = '<div style="color:#f87171;">❌ Network error</div>';
+      }
+    };
+  </script>
+</body>
+</html>

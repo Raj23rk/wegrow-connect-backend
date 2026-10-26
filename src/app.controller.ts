@@ -15,4 +15,9 @@ export class AppController {
   getSpinAndWin(@Res() res: Response) {
     return res.redirect('/spin-and-win.html');
   }
+
+  @Get('diwali-challenge')
+  getDiwaliChallenge(@Res() res: Response) {
+    return res.redirect('/diwali-challenge.html');
+  }
 }

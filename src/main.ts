@@ -63,6 +63,8 @@ async function bootstrap() {
       'checkout.html',
       'spin-and-win',
       'spin-and-win.html',
+      'diwali-challenge',
+      'diwali-challenge.html',
     ],
   });
 

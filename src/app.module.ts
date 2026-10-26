@@ -29,6 +29,7 @@ import { BusinessDependencyModule } from './business-dependency/business-depende
 import { EventTeaserModule } from './event-teaser/event-teaser.module';
 import { AiExplorerModule } from './ai-explorer/ai-explorer.module';
 import { SpinWheelModule } from './spin-wheel/spin-wheel.module';
+import { DiwaliChallengeModule } from './diwali-challenge/diwali-challenge.module';
 
 @Module({
   imports: [
@@ -109,6 +110,7 @@ import { SpinWheelModule } from './spin-wheel/spin-wheel.module';
     EventTeaserModule,
     AiExplorerModule,
     SpinWheelModule,
+    DiwaliChallengeModule,
   ],
 
   controllers: [AppController],
