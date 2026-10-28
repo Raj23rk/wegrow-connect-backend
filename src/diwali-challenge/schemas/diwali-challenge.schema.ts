@@ -47,7 +47,7 @@ export class DiwaliChallenge {
   @Prop({ default: false, index: true })
   isQualifiedForDemo!: boolean; // true if score >= 80
 
-  @Prop({ default: '', trim: true, unique: true, sparse: true, index: true })
+  @Prop({ trim: true, unique: true, sparse: true })
   demoTicketCode?: string; // e.g. WGW-DEMO-73921
 
   @Prop({ default: '', trim: true })

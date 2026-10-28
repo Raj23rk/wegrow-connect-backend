@@ -174,6 +174,26 @@ export class SpinWheelService implements OnModuleInit {
 
   async onModuleInit() {
     await this.seedRewardBudgets();
+    await this.cleanEmptyVoucherCodes();
+  }
+
+  // ============================================================
+  // CLEAN LEGACY EMPTY VOUCHER CODES (PREVENTS UNIQUE INDEX CONFLICTS)
+  // ============================================================
+  private async cleanEmptyVoucherCodes() {
+    try {
+      const result = await this.participantModel.updateMany(
+        { voucherCode: { $in: ['', null] }, hasSpun: false },
+        { $unset: { voucherCode: '' } },
+      );
+      if (result.modifiedCount > 0) {
+        this.logger.log(
+          `Cleaned up ${result.modifiedCount} empty voucherCode entries from unspun participants.`,
+        );
+      }
+    } catch (err) {
+      this.logger.error('Failed to clean empty voucher codes', err);
+    }
   }
 
   // ============================================================

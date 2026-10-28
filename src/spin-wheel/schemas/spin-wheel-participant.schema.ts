@@ -59,7 +59,7 @@ export class SpinWheelParticipant {
   @Prop({ default: '', trim: true })
   rewardTerms?: string;
 
-  @Prop({ default: '', trim: true, unique: true, sparse: true, index: true })
+  @Prop({ trim: true, unique: true, sparse: true })
   voucherCode?: string;
 
   @Prop({ default: '', trim: true })
