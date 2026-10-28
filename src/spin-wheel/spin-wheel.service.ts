@@ -266,23 +266,7 @@ export class SpinWheelService implements OnModuleInit {
       throw new BadRequestException("Mother's contact number must be at least 10 digits.");
     }
 
-    // 2. Strict Check: Student, Father, and Mother numbers cannot be identical
-    if (cleanStudentMobile === cleanFatherMobile) {
-      throw new BadRequestException(
-        "Student mobile number and Father's contact number cannot be identical. Please provide distinct phone numbers.",
-      );
-    }
-    if (cleanStudentMobile === cleanMotherMobile) {
-      throw new BadRequestException(
-        "Student mobile number and Mother's contact number cannot be identical. Please provide distinct phone numbers.",
-      );
-    }
-    if (cleanFatherMobile === cleanMotherMobile) {
-      throw new BadRequestException(
-        "Father's contact number and Mother's contact number cannot be identical. Please provide distinct phone numbers.",
-      );
-    }
-
+    // 2. Family phone numbers (shared family phone allowed)
     // 3. Check if participant has already spun with this email
     const existingSpunEmail = await this.participantModel.findOne({
       email: cleanEmail,
@@ -333,11 +317,7 @@ export class SpinWheelService implements OnModuleInit {
       );
     }
 
-    // Generate secure 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-    // Upsert participant record cleanly
+    // Upsert participant record cleanly with email verified directly
     await this.participantModel.findOneAndUpdate(
       { email: cleanEmail },
       {
@@ -350,22 +330,22 @@ export class SpinWheelService implements OnModuleInit {
           courseInterested: dto.courseInterested.trim(),
           campusPreference:
             dto.campusPreference?.trim() || 'WeGrow B-School Main Campus',
-          emailOtp: otp,
-          otpExpiresAt,
-          isEmailVerified: false,
+          isEmailVerified: true,
         },
       },
       { upsert: true, new: true },
     );
 
-    // Send professional WeGrow OTP email
-    await this.sendOtpEmail(cleanEmail, dto.name.trim(), otp);
-
     return {
       success: true,
-      message: `Verification OTP has been sent to ${cleanEmail}. Please check your inbox or spam folder.`,
+      canSpin: true,
+      message: 'Registration confirmed! Spin wheel is unlocked.',
       email: cleanEmail,
-      devOtp: process.env.NODE_ENV !== 'production' ? otp : undefined,
+      student: {
+        name: dto.name.trim(),
+        email: cleanEmail,
+        courseInterested: dto.courseInterested.trim(),
+      },
     };
   }
 
@@ -393,18 +373,6 @@ export class SpinWheelService implements OnModuleInit {
         rewardTitle: participant.rewardTitle,
         qrCodeDataUrl: participant.qrCodeDataUrl,
       };
-    }
-
-    if (!participant.emailOtp || !participant.otpExpiresAt) {
-      throw new BadRequestException('No active OTP found. Please request a new OTP.');
-    }
-
-    if (new Date() > new Date(participant.otpExpiresAt)) {
-      throw new BadRequestException('OTP has expired. Please request a new OTP.');
-    }
-
-    if (participant.emailOtp.trim() !== dto.otp.trim()) {
-      throw new BadRequestException('Invalid OTP code. Please enter the correct 6-digit code.');
     }
 
     // Mark verified
@@ -436,12 +404,6 @@ export class SpinWheelService implements OnModuleInit {
 
     if (!participant) {
       throw new NotFoundException('Registration record not found. Please register first.');
-    }
-
-    if (!participant.isEmailVerified) {
-      throw new BadRequestException(
-        'Email is not verified yet. Please verify OTP before spinning.',
-      );
     }
 
     if (participant.hasSpun) {
